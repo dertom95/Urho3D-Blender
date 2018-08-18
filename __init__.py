@@ -1502,6 +1502,9 @@ def ExecuteUrhoExport(context):
     Scan(context, tDataList, settings.errorsMem, tOptions)
     if DEBUG: print("[TIME] Decompose in {:.4f} sec".format(time.time() - ttt) ) #!TIME
 
+    # keep track of all meshes that we processed and avoid multiple handling
+    processedMeshes = []
+
     # Export each decomposed object
     for tData in tDataList:
     
@@ -1527,12 +1530,22 @@ def ExecuteUrhoExport(context):
         uScene.Load(uExportData, tData.blenderObjectName, sOptions)
 
         for uModel in uExportData.models:
-            filepath = GetFilepath(PathType.MODELS, uModel.name, fOptions)
+            obj = bpy.data.objects[uModel.name]
+            uModel.meshName=obj.data.name
+            uModel.isEmpty=obj.draw_type=="WIRE" or obj.type=="EMPTY"
+            # check if the draw_type is on wire=>skip
+            # check if we already exported this mesh. if yes, skip it
+            filepath = GetFilepath(PathType.MODELS, uModel.meshName, fOptions)
             uScene.AddFile(PathType.MODELS, uModel.name, filepath[1])
-            if uModel.geometries:
-                if CheckFilepath(filepath[0], fOptions):
-                    log.info( "Creating model {:s}".format(filepath[1]) )
-                    UrhoWriteModel(uModel, filepath[0]) 
+
+            if obj.draw_type!="WIRE" and not uModel.meshName in processedMeshes:
+                # use the name of the mesh to make mesh sharing possible (no need to write one shared mesh multiple times)
+                if uModel.geometries:
+                    if CheckFilepath(filepath[0], fOptions):
+                        log.info( "Creating model {:s}".format(filepath[1]) )
+                        UrhoWriteModel(uModel, filepath[0])
+                        # mark this mesh to be processed and avoid another export
+                        processedMeshes.append(uModel.meshName)
             
         for uAnimation in uExportData.animations:
             filepath = GetFilepath(PathType.ANIMATIONS, uAnimation.name, fOptions)

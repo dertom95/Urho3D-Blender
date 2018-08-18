@@ -521,18 +521,26 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     # Export each decomposed object
     for uSceneModel in uScene.modelsList:
 
-        # Get model file relative path
-        modelFile = uScene.FindFile(PathType.MODELS, uSceneModel.name)
+        modelNode = uSceneModel.name
+        obj = bpy.data.objects[modelNode]
+        
+        isEmpty = (obj.draw_type=="WIRE" or obj.type=="EMPTY")
 
-        # Gather materials
-        materials = ""
-        for uSceneMaterial in uSceneModel.materialsList:
-            file = uScene.FindFile(PathType.MATERIALS, uSceneMaterial.name)
-            materials += ";" + file
+        modelFile = None
+        materials = None
+        if not isEmpty:
+            # Get model file relative path
+            modelFile = uScene.FindFile(PathType.MODELS, modelNode)
+
+            # Gather materials
+            materials = ""
+            for uSceneMaterial in uSceneModel.materialsList:
+                file = uScene.FindFile(PathType.MATERIALS, uSceneMaterial.name)
+                materials += ";" + file
 
         # Generate XML Content
         k += 1
-        modelNode = uSceneModel.name
+        
 
         # If child node, parent to parent object instead of root
         if uSceneModel.type == "StaticModel" and uSceneModel.parentObjectName and (uSceneModel.parentObjectName in a):
@@ -564,9 +572,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(m)].set("value", Vector3ToString(uSceneModel.scale))
             m += 1
         
-        obj = bpy.data.objects[modelNode]
-
-        if not obj.draw_type=="WIRE":
+        if not isEmpty:
             a["{:d}".format(m)] = ET.SubElement(a[modelNode], "component")
             a["{:d}".format(m)].set("type", uSceneModel.type)
             a["{:d}".format(m)].set("id", "{:d}".format(compoID))
