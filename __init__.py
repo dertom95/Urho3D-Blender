@@ -954,6 +954,25 @@ class UrhoExportCommandOperator(bpy.types.Operator):
 
 
 # The export panel, here we draw the panel using properties we have created earlier
+class UrhoExportObjectPanel(bpy.types.Panel):
+    
+    bl_idname = "urho.exportobjectpanel"
+    bl_label = "Urho export"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+    #bl_options = {'DEFAULT_CLOSED'}
+    
+    # Draw the export panel
+    def draw(self, context):
+        layout = self.layout
+        object = context.object
+        
+        row = layout.row()
+        row.label("NOTHING TO SEE ATM")
+        #row.prop(object,"exportNoMesh",text="NO mesh-export for object")
+
+# The export panel, here we draw the panel using properties we have created earlier
 class UrhoExportRenderPanel(bpy.types.Panel):
     
     bl_idname = "urho.exportrenderpanel"
@@ -1222,10 +1241,11 @@ def register():
     bpy.utils.register_class(UrhoExportResetOperator)
     bpy.utils.register_class(UrhoExportResetPathsOperator)
     bpy.utils.register_class(UrhoExportRenderPanel)
+    bpy.utils.register_class(UrhoExportObjectPanel)
+    
     bpy.utils.register_class(UrhoReportDialog)
     
     bpy.types.Scene.urho_exportsettings = bpy.props.PointerProperty(type=UrhoExportSettings)
-    
     #bpy.context.user_preferences.filepaths.use_relative_paths = False
     
     if not PostLoad in bpy.app.handlers.load_post:
@@ -1250,7 +1270,15 @@ def unregister():
     bpy.utils.unregister_class(UrhoExportCommandOperator)
     bpy.utils.unregister_class(UrhoExportResetOperator)
     bpy.utils.unregister_class(UrhoExportResetPathsOperator)    
-    bpy.utils.unregister_class(UrhoExportRenderPanel)
+    try:
+        bpy.utils.unregister_class(UrhoExportRenderPanel)
+    except:
+        pass
+    try:
+        bpy.utils.unregister_class(UrhoExportObjectPanel)
+    except:
+        pass
+
     bpy.utils.unregister_class(UrhoReportDialog)
     
     del bpy.types.Scene.urho_exportsettings

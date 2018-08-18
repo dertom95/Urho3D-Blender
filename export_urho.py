@@ -13,6 +13,7 @@ from collections import defaultdict
 import operator
 import os
 import random
+import bpy
 
 import logging
 log = logging.getLogger("ExportLogger")
@@ -522,6 +523,10 @@ def UrhoWriteModel(model, filename):
     if not model.vertexBuffers or not model.indexBuffers or not model.geometries:
         log.error("No model data to export in {:s}".format(filename))
         return
+
+    obj = bpy.data.objects[model.name]
+    if obj.draw_type=="WIRE": ## this object is marked to act as an empty (no mesh export)
+        return 
 
     fw = BinaryFileWriter()
     try:
