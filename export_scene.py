@@ -14,6 +14,14 @@ import os
 import logging
 import math
 
+jsonNodetreeAvailable = False
+try:
+    import JSONNodetree
+    import JSONNodetreeUtils
+    jsonNodetreeAvailable = True
+except:
+    print("NO JSONNODETREE")
+
 log = logging.getLogger("ExportLogger")
 
 #-------------------------
@@ -317,16 +325,38 @@ def UrhoWriteMaterialsList(uScene, uModel, filepath):
 # Export scene and nodes
 #------------------------
 
+def CreateNodeTreeXML(xmlroot,nodetreeID,nodeID):
+    nodetree = JSONNodetreeUtils.getNodetreeById(nodetreeID)
+    # get all changed values
+    # TODO: this might be a bit fragile. Maybe using an property-event to set a dirty-flag!?
+    exportNodeTree = JSONNodetree.exportNodes(nodetree,True)
+
+    # a node is in urho3d a component
+    for node in exportNodeTree["nodes"]:
+        bodyElem = ET.SubElement(xmlroot, "component")
+        bodyElem.set("type", node["name"])
+        nodeID += 1
+        bodyElem.set("id", "{:d}".format(nodeID))
+
+        # node-properties are the component-attributes
+        for prop in node["props"]:
+            modelElem = ET.SubElement(bodyElem, "attribute")
+            modelElem.set("name", prop["name"])
+            value = prop["value"]
+            if prop["type"].startswith("vector"):
+                value = value.replace("(","")
+                value = value.replace(")","")
+                value = value.replace(","," ")
+
+            modelElem.set("value", value)
+
+    return nodeID
+
+
 # Generate individual prefabs XML
 def IndividualPrefabXml(uScene, uSceneModel, sOptions):
 
-    jsonNodetreeAvailable = False
-    try:
-        import JSONNodetree
-        import JSONNodetreeUtils
-        jsonNodetreeAvailable = True
-    except:
-        print("NO JSONNODETREE")
+
 
     # Set first node ID
     nodeID = 0x1000000
@@ -343,81 +373,78 @@ def IndividualPrefabXml(uScene, uSceneModel, sOptions):
     # Generate xml prefab content
     rootNodeElem = ET.Element('node')
     rootNodeElem.set("id", "{:d}".format(nodeID))
-
-    obj = bpy.data.objects[uSceneModel.name]
-
-    processNodetree = False
-    if jsonNodetreeAvailable and obj.nodetreeId!=-1:
-        print("DO JSONNODETREE")
-    else:
-        print("GO ON AN USUAL")
-
-
     modelNameElem = ET.SubElement(rootNodeElem, "attribute")
     modelNameElem.set("name", "Name")
     modelNameElem.set("value", uSceneModel.name)
 
-    typeElem = ET.SubElement(rootNodeElem, "component")
-    typeElem.set("type", uSceneModel.type)
-    typeElem.set("id", "{:d}".format(nodeID))
+    obj = bpy.data.objects[uSceneModel.name]
 
-    modelElem = ET.SubElement(typeElem, "attribute")
-    modelElem.set("name", "Model")
-    modelElem.set("value", "Model;" + modelFile)
+    if jsonNodetreeAvailable and obj.nodetreeId!=-1:
+        # bypass nodeID and receive the new value
+        nodeID = CreateNodeTreeXML(rootNodeElem,obj.nodetreeId,nodeID)
+    else:
+        # the default-behaviour
+        typeElem = ET.SubElement(rootNodeElem, "component")
+        typeElem.set("type", uSceneModel.type)
+        typeElem.set("id", "{:d}".format(nodeID))
 
-    materialElem = ET.SubElement(typeElem, "attribute")
-    materialElem.set("name", "Material")
-    materialElem.set("value", "Material" + materials)
+        modelElem = ET.SubElement(typeElem, "attribute")
+        modelElem.set("name", "Model")
+        modelElem.set("value", "Model;" + modelFile)
 
-    if not sOptions.noPhysics:
-        #Use model's bounding box to compute CollisionShape's size and offset
-        physicsSettings = [sOptions.shape] #tData.physicsSettings = [sOptions.shape, obj.game.physics_type, obj.game.mass, obj.game.radius, obj.game.velocity_min, obj.game.velocity_max, obj.game.collision_group, obj.game.collision_mask, obj.game.use_ghost] **************************************
-        shapeType = physicsSettings[0]
-        bbox = uSceneModel.boundingBox
-        #Size
-        x = bbox.max[0] - bbox.min[0]
-        y = bbox.max[1] - bbox.min[1]
-        z = bbox.max[2] - bbox.min[2]
-        shapeSize = Vector((x, y, z))
-        #Offset
-        offsetX = bbox.max[0] - x / 2
-        offsetY = bbox.max[1] - y / 2
-        offsetZ = bbox.max[2] - z / 2
-        shapeOffset = Vector((offsetX, offsetY, offsetZ))
+        materialElem = ET.SubElement(typeElem, "attribute")
+        materialElem.set("name", "Material")
+        materialElem.set("value", "Material" + materials)
 
-        bodyElem = ET.SubElement(rootNodeElem, "component")
-        bodyElem.set("type", "RigidBody")
-        bodyElem.set("id", "{:d}".format(nodeID+1))
+        if not sOptions.noPhysics:
+            #Use model's bounding box to compute CollisionShape's size and offset
+            physicsSettings = [sOptions.shape] #tData.physicsSettings = [sOptions.shape, obj.game.physics_type, obj.game.mass, obj.game.radius, obj.game.velocity_min, obj.game.velocity_max, obj.game.collision_group, obj.game.collision_mask, obj.game.use_ghost] **************************************
+            shapeType = physicsSettings[0]
+            bbox = uSceneModel.boundingBox
+            #Size
+            x = bbox.max[0] - bbox.min[0]
+            y = bbox.max[1] - bbox.min[1]
+            z = bbox.max[2] - bbox.min[2]
+            shapeSize = Vector((x, y, z))
+            #Offset
+            offsetX = bbox.max[0] - x / 2
+            offsetY = bbox.max[1] - y / 2
+            offsetZ = bbox.max[2] - z / 2
+            shapeOffset = Vector((offsetX, offsetY, offsetZ))
 
-        collisionLayerElem = ET.SubElement(bodyElem, "attribute")
-        collisionLayerElem.set("name", "Collision Layer")
-        collisionLayerElem.set("value", "2")
+            bodyElem = ET.SubElement(rootNodeElem, "component")
+            bodyElem.set("type", "RigidBody")
+            bodyElem.set("id", "{:d}".format(nodeID+1))
 
-        gravityElem = ET.SubElement(bodyElem, "attribute")
-        gravityElem.set("name", "Use Gravity")
-        gravityElem.set("value", "false")
+            collisionLayerElem = ET.SubElement(bodyElem, "attribute")
+            collisionLayerElem.set("name", "Collision Layer")
+            collisionLayerElem.set("value", "2")
 
-        shapeElem = ET.SubElement(rootNodeElem, "component")
-        shapeElem.set("type", "CollisionShape")
-        shapeElem.set("id", "{:d}".format(nodeID+2))
+            gravityElem = ET.SubElement(bodyElem, "attribute")
+            gravityElem.set("name", "Use Gravity")
+            gravityElem.set("value", "false")
 
-        shapeTypeElem = ET.SubElement(shapeElem, "attribute")
-        shapeTypeElem.set("name", "Shape Type")
-        shapeTypeElem.set("value", shapeType)
+            shapeElem = ET.SubElement(rootNodeElem, "component")
+            shapeElem.set("type", "CollisionShape")
+            shapeElem.set("id", "{:d}".format(nodeID+2))
 
-        if shapeType == "TriangleMesh":
-            physicsModelElem = ET.SubElement(shapeElem, "attribute")
-            physicsModelElem.set("name", "Model")
-            physicsModelElem.set("value", "Model;" + modelFile)
+            shapeTypeElem = ET.SubElement(shapeElem, "attribute")
+            shapeTypeElem.set("name", "Shape Type")
+            shapeTypeElem.set("value", shapeType)
 
-        else:
-            shapeSizeElem = ET.SubElement(shapeElem, "attribute")
-            shapeSizeElem.set("name", "Size")
-            shapeSizeElem.set("value", Vector3ToString(shapeSize))
+            if shapeType == "TriangleMesh":
+                physicsModelElem = ET.SubElement(shapeElem, "attribute")
+                physicsModelElem.set("name", "Model")
+                physicsModelElem.set("value", "Model;" + modelFile)
 
-            shapeOffsetElem = ET.SubElement(shapeElem, "attribute")
-            shapeOffsetElem.set("name", "Offset Position")
-            shapeOffsetElem.set("value", Vector3ToString(shapeOffset))
+            else:
+                shapeSizeElem = ET.SubElement(shapeElem, "attribute")
+                shapeSizeElem.set("name", "Size")
+                shapeSizeElem.set("value", Vector3ToString(shapeSize))
+
+                shapeOffsetElem = ET.SubElement(shapeElem, "attribute")
+                shapeOffsetElem.set("name", "Offset Position")
+                shapeOffsetElem.set("value", Vector3ToString(shapeOffset))
 
     return rootNodeElem
 
@@ -573,87 +600,93 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             m += 1
         
         if not isEmpty:
-            a["{:d}".format(m)] = ET.SubElement(a[modelNode], "component")
-            a["{:d}".format(m)].set("type", uSceneModel.type)
-            a["{:d}".format(m)].set("id", "{:d}".format(compoID))
+            compID = m
+            a["{:d}".format(compID)] = ET.SubElement(a[modelNode], "component")
+            a["{:d}".format(compID)].set("type", uSceneModel.type)
+            a["{:d}".format(compID)].set("id", "{:d}".format(compoID))
             m += 1
 
-            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-1)], "attribute")
+            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
             a["{:d}".format(m)].set("name", "Model")
             a["{:d}".format(m)].set("value", "Model;" + modelFile)
             m += 1
 
-            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-2)], "attribute")
+            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
             a["{:d}".format(m)].set("name", "Material")
             a["{:d}".format(m)].set("value", "Material" + materials)
             m += 1
             compoID += 1
 
-            if sOptions.individualPhysics:
-                #Use model's bounding box to compute CollisionShape's size and offset
-                physicsSettings = [sOptions.shape] #tData.physicsSettings = [sOptions.shape, obj.game.physics_type, obj.game.mass, obj.game.radius, obj.game.velocity_min, obj.game.velocity_max, obj.game.collision_group, obj.game.collision_mask, obj.game.use_ghost] **************************************
-                shapeType = physicsSettings[0]
-                if not sOptions.mergeObjects and obj.game.use_collision_bounds:
-                    for shapeItems in sOptions.shapeItems:
-                        if shapeItems[0] == obj.game.collision_bounds_type:
-                            shapeType = shapeItems[1]
-                            break
-                bbox = uSceneModel.boundingBox
-                #Size
-                shapeSize = Vector()
-                if bbox.min and bbox.max:
-                    shapeSize.x = bbox.max[0] - bbox.min[0]
-                    shapeSize.y = bbox.max[1] - bbox.min[1]
-                    shapeSize.z = bbox.max[2] - bbox.min[2]
-                #Offset
-                shapeOffset = Vector()
-                if bbox.max:
-                    shapeOffset.x = bbox.max[0] - shapeSize.x / 2
-                    shapeOffset.y = bbox.max[1] - shapeSize.y / 2
-                    shapeOffset.z = bbox.max[2] - shapeSize.z / 2
+            if jsonNodetreeAvailable and obj.nodetreeId!=-1:
+                # bypass nodeID and receive the new value
+                compoID = CreateNodeTreeXML(a[modelNode],obj.nodetreeId,compoID)
+            else:
+                # the default-behaviour
+                if sOptions.individualPhysics:
+                    #Use model's bounding box to compute CollisionShape's size and offset
+                    physicsSettings = [sOptions.shape] #tData.physicsSettings = [sOptions.shape, obj.game.physics_type, obj.game.mass, obj.game.radius, obj.game.velocity_min, obj.game.velocity_max, obj.game.collision_group, obj.game.collision_mask, obj.game.use_ghost] **************************************
+                    shapeType = physicsSettings[0]
+                    if not sOptions.mergeObjects and obj.game.use_collision_bounds:
+                        for shapeItems in sOptions.shapeItems:
+                            if shapeItems[0] == obj.game.collision_bounds_type:
+                                shapeType = shapeItems[1]
+                                break
+                    bbox = uSceneModel.boundingBox
+                    #Size
+                    shapeSize = Vector()
+                    if bbox.min and bbox.max:
+                        shapeSize.x = bbox.max[0] - bbox.min[0]
+                        shapeSize.y = bbox.max[1] - bbox.min[1]
+                        shapeSize.z = bbox.max[2] - bbox.min[2]
+                    #Offset
+                    shapeOffset = Vector()
+                    if bbox.max:
+                        shapeOffset.x = bbox.max[0] - shapeSize.x / 2
+                        shapeOffset.y = bbox.max[1] - shapeSize.y / 2
+                        shapeOffset.z = bbox.max[2] - shapeSize.z / 2
 
-                a["{:d}".format(m)] = ET.SubElement(a[modelNode], "component")
-                a["{:d}".format(m)].set("type", "RigidBody")
-                a["{:d}".format(m)].set("id", "{:d}".format(compoID))
-                m += 1
+                    a["{:d}".format(m)] = ET.SubElement(a[modelNode], "component")
+                    a["{:d}".format(m)].set("type", "RigidBody")
+                    a["{:d}".format(m)].set("id", "{:d}".format(compoID))
+                    m += 1
 
-                a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-1)], "attribute")
-                a["{:d}".format(m)].set("name", "Collision Layer")
-                a["{:d}".format(m)].set("value", "2")
-                m += 1
+                    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-1)], "attribute")
+                    a["{:d}".format(m)].set("name", "Collision Layer")
+                    a["{:d}".format(m)].set("value", "2")
+                    m += 1
 
-                a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-2)], "attribute")
-                a["{:d}".format(m)].set("name", "Use Gravity")
-                a["{:d}".format(m)].set("value", "false")
-                m += 1
-
-                a["{:d}".format(m)] = ET.SubElement(a[modelNode], "component")
-                a["{:d}".format(m)].set("type", "CollisionShape")
-                a["{:d}".format(m)].set("id", "{:d}".format(compoID+1))
-                m += 1
-
-                a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-1)] , "attribute")
-                a["{:d}".format(m)].set("name", "Shape Type")
-                a["{:d}".format(m)].set("value", shapeType)
-                m += 1
-
-                if shapeType == "TriangleMesh":
                     a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-2)], "attribute")
-                    a["{:d}".format(m)].set("name", "Model")
-                    a["{:d}".format(m)].set("value", "Model;" + modelFile)
-
-                else:
-                    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-2)] , "attribute")
-                    a["{:d}".format(m)].set("name", "Size")
-                    a["{:d}".format(m)].set("value", Vector3ToString(shapeSize))
+                    a["{:d}".format(m)].set("name", "Use Gravity")
+                    a["{:d}".format(m)].set("value", "false")
                     m += 1
 
-                    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-3)] , "attribute")
-                    a["{:d}".format(m)].set("name", "Offset Position")
-                    a["{:d}".format(m)].set("value", Vector3ToString(shapeOffset))
+                    a["{:d}".format(m)] = ET.SubElement(a[modelNode], "component")
+                    a["{:d}".format(m)].set("type", "CollisionShape")
+                    a["{:d}".format(m)].set("id", "{:d}".format(compoID+1))
                     m += 1
 
-                compoID += 2
+                    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-1)] , "attribute")
+                    a["{:d}".format(m)].set("name", "Shape Type")
+                    a["{:d}".format(m)].set("value", shapeType)
+                    m += 1
+
+                    if shapeType == "TriangleMesh":
+                        a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-2)], "attribute")
+                        a["{:d}".format(m)].set("name", "Model")
+                        a["{:d}".format(m)].set("value", "Model;" + modelFile)
+
+                    else:
+                        a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-2)] , "attribute")
+                        a["{:d}".format(m)].set("name", "Size")
+                        a["{:d}".format(m)].set("value", Vector3ToString(shapeSize))
+                        m += 1
+
+                        a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(m-3)] , "attribute")
+                        a["{:d}".format(m)].set("name", "Offset Position")
+                        a["{:d}".format(m)].set("value", Vector3ToString(shapeOffset))
+                        m += 1
+
+                    compoID += 2
 
         # Write individual prefabs
         if sOptions.doIndividualPrefab:
