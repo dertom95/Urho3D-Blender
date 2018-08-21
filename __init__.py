@@ -1251,6 +1251,7 @@ def register():
     if not PostLoad in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(PostLoad)
 
+    print("installed addons: %s" % bpy.context.user_preferences.addons.keys())
 
 # Note: the script __init__.py is executed only the first time the addons is enabled. After that
 # disabling or enabling the script will only call unregister() or register(). So in unregister()

@@ -15,15 +15,14 @@ import logging
 import math
 
 jsonNodetreeAvailable = False
-try:
-    import JSONNodetree
-    import JSONNodetreeUtils
-    jsonNodetreeAvailable = True
-except:
-    print("NO JSONNODETREE")
-
 log = logging.getLogger("ExportLogger")
 
+jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.user_preferences.addons.keys()
+if jsonNodetreeAvailable:
+    from addon_jsonnodetree import JSONNodetree
+    from addon_jsonnodetree import JSONNodetreeUtils
+
+ 
 #-------------------------
 # Scene and nodes classes
 #-------------------------
@@ -379,7 +378,7 @@ def IndividualPrefabXml(uScene, uSceneModel, sOptions):
 
     obj = bpy.data.objects[uSceneModel.name]
 
-    if jsonNodetreeAvailable and obj.nodetreeId!=-1:
+    if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and obj.nodetreeId!=-1:
         # bypass nodeID and receive the new value
         nodeID = CreateNodeTreeXML(rootNodeElem,obj.nodetreeId,nodeID)
     else:
@@ -451,7 +450,6 @@ def IndividualPrefabXml(uScene, uSceneModel, sOptions):
 
 # Export scene and nodes
 def UrhoExportScene(context, uScene, sOptions, fOptions):
-
     blenderScene = bpy.data.scenes[uScene.blenderSceneName]
     
     '''
@@ -617,7 +615,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             m += 1
             compoID += 1
 
-            if jsonNodetreeAvailable and obj.nodetreeId!=-1:
+            if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and obj.nodetreeId!=-1:
                 # bypass nodeID and receive the new value
                 compoID = CreateNodeTreeXML(a[modelNode],obj.nodetreeId,compoID)
             else:
