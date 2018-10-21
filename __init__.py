@@ -1192,11 +1192,10 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.prop(settings, "scenePrefab")
             row.label("", icon='WORLD')
 
-            if settings.scenePrefab:
-                row = box.row()
-                row.separator()
-                row.separator()
-                row.prop(settings, "trasfObjects")
+            row = box.row()
+            row.separator()
+            row.separator()
+            row.prop(settings, "trasfObjects")
 
             row = box.row()
             row.separator()
