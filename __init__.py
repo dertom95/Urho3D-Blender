@@ -220,7 +220,10 @@ class UL_URHO_LIST_KEYVALUE(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data,active_propname, index):
 
         # We could write some code to decide which icon to use here...
-        custom_icon = 'OBJECT_DATAMODE'
+        if item.key.lower()=="tag":
+            custom_icon = 'INLINK'
+        else:
+            custom_icon = 'TEXT'
 
         # Make sure your code supports all 3 layout types
         if self.layout_type in {'DEFAULT', 'COMPACT'}:

@@ -604,12 +604,29 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(m)].set("name", "Variables")
             m += 1
 
+            tags = None
+
             for ud in obj.user_data:
-                a["{:d}".format(attribID)] = ET.SubElement(a["{:d}".format(attribID)], "Variant")
-                a["{:d}".format(attribID)].set("hash", str(SDBMHash(ud.key)))
-                a["{:d}".format(attribID)].set("type", "String")
-                a["{:d}".format(attribID)].set("value", ud.value)
+                if ud.key.lower() != "tag":
+                    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "Variant")
+                    a["{:d}".format(m)].set("hash", str(SDBMHash(ud.key)))
+                    a["{:d}".format(m)].set("type", "String")
+                    a["{:d}".format(m)].set("value", ud.value)
+                    m += 1
+                else:
+                    tags = ud.value
+
+            if tags:
+                tagsID = m
+                a["{:d}".format(tagsID)] = ET.SubElement(a[modelNode], "attribute")
+                a["{:d}".format(tagsID)].set("name", "Tags")
                 m += 1
+                for tag in tags.split(","):
+                    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(tagsID)], "string")
+                    a["{:d}".format(m)].set("value", tag.strip())
+                    m += 1                    
+
+
 
 
         if not isEmpty:
