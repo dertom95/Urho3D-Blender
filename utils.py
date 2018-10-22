@@ -277,3 +277,12 @@ class BinaryFileWriter:
     # Writes a 32 bits float
     def writeFloat(self, v):
         self.buffer.extend(struct.pack("<f", v))
+
+# --------------------------
+# Hash - Function (like StringHash in Urho3D)
+# --------------------------
+def SDBMHash(key):
+    hash = 0
+    for i in range(len(key)):
+        hash = ord(key[i]) + (hash << 6) + (hash << 16) - hash
+    return (hash & 0x7FFFFFFF)

@@ -210,6 +210,92 @@ class UrhoAddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "reportWidth")
         row.prop(self, "maxMessagesCount")
 
+class KeyValue(bpy.types.PropertyGroup):
+    key = bpy.props.StringProperty(name="key")
+    value = bpy.props.StringProperty(name="value")
+
+class UL_URHO_LIST_KEYVALUE(bpy.types.UIList):
+    """KeyValue UIList."""
+
+    def draw_item(self, context, layout, data, item, icon, active_data,active_propname, index):
+
+        # We could write some code to decide which icon to use here...
+        custom_icon = 'OBJECT_DATAMODE'
+
+        # Make sure your code supports all 3 layout types
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.label(item.key, icon = custom_icon)
+            layout.label(item.value)
+
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label("", icon = custom_icon)
+
+
+class UL_URHO_LIST_ITEM(bpy.types.Operator):
+    """Add a new item to the list."""
+
+    bl_idname = "urho_keyvalue.new_item"
+    bl_label = "Add a new item"
+
+    def execute(self, context):
+        context.active_object.user_data.add()
+
+        return{'FINISHED'}
+
+
+class UL_URHO_LIST_ITEM_DEL(bpy.types.Operator):
+    """Delete the selected item from the list."""
+
+    bl_idname = "urho_keyvalue.delete_item"
+    bl_label = "Deletes an item"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object.user_data
+
+    def execute(self, context):
+        kv_list = context.active_object.user_data
+        index = context.active_object.list_index
+
+        kv_list.remove(index)
+        context.active_object.list_index = min(max(0, index - 1), len(kv_list) - 1)
+
+        return{'FINISHED'}
+
+
+class UL_URHO_LIST_ITEM_MOVE(bpy.types.Operator):
+    """Move an item in the list."""
+
+    bl_idname = "urho_keyvalue.move_item"
+    bl_label = "Move an item in the list"
+
+    direction = bpy.props.EnumProperty(items=(('UP', 'Up', ""),
+                                              ('DOWN', 'Down', ""),))
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object.user_data
+
+    def move_index(self):
+        """ Move  """
+
+        index = bpy.context.active_object.list_index
+        list_length = len(bpy.context.active_object.user_data) - 1  # (index starts at 0)
+        new_index = index + (-1 if self.direction == 'UP' else 1)
+
+        bpy.context.active_object.list_index = max(0, min(new_index, list_length))
+
+    def execute(self, context):
+        kv_list = context.active_object.user_data
+        index = context.active_object.list_index
+
+        neighbor = index + (-1 if self.direction == 'UP' else 1)
+        kv_list.move(neighbor, index)
+        self.move_index()
+
+        return{'FINISHED'}
+
 
 # Here we define all the UI objects to be added in the export panel
 class UrhoExportSettings(bpy.types.PropertyGroup):
@@ -832,6 +918,11 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             description = "Save objects position/rotation/scale, works only with 'Front View = Back'",
             default = False)
 
+    export_userdata = BoolProperty(
+            name = "Export Object Userdata",
+            description = "Export the userdata of every object that have any specified in object-tab",
+            default = True)
+
     physics = EnumProperty(
             name = "Physics",
             description = "Generate physics RigidBody(s) & Shape(s)",
@@ -966,10 +1057,27 @@ class UrhoExportObjectPanel(bpy.types.Panel):
     # Draw the export panel
     def draw(self, context):
         layout = self.layout
-        object = context.object
-        
-        row = layout.row()
-        row.label("NOTHING TO SEE ATM")
+        obj = context.object
+
+        box = layout.box()
+        row = box.label("Userdata")
+        if obj.list_index >= 0 and obj.user_data:
+            item = obj.user_data[obj.list_index]
+
+            row = box.row()
+            row.prop(item, "key")
+            row.prop(item, "value")
+
+        row = box.row()
+        row.template_list("UL_URHO_LIST_KEYVALUE", "The_List", obj,
+                          "user_data", obj, "list_index")
+
+        row = box.row()
+        row.operator('urho_keyvalue.new_item', text='NEW')
+        row.operator('urho_keyvalue.delete_item', text='REMOVE')
+        row.operator('urho_keyvalue.move_item', text='UP').direction = 'UP'
+        row.operator('urho_keyvalue.move_item', text='DOWN').direction = 'DOWN'
+
         #row.prop(object,"exportNoMesh",text="NO mesh-export for object")
 
 # The export panel, here we draw the panel using properties we have created earlier
@@ -1199,6 +1307,11 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
             row = box.row()
             row.separator()
+            row.separator() 
+            row.prop(settings, "export_userdata")
+
+            row = box.row()
+            row.separator()
             row.prop(settings, "physics")
             row.label("", icon='PHYSICS')
 
@@ -1243,8 +1356,16 @@ def register():
     bpy.utils.register_class(UrhoExportObjectPanel)
     
     bpy.utils.register_class(UrhoReportDialog)
+    bpy.utils.register_class(KeyValue)
     
+    bpy.utils.register_class(UL_URHO_LIST_KEYVALUE)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE)
+
     bpy.types.Scene.urho_exportsettings = bpy.props.PointerProperty(type=UrhoExportSettings)
+    bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
+    bpy.types.Object.list_index = IntProperty(name = "Index for key value list",default = 0)
     #bpy.context.user_preferences.filepaths.use_relative_paths = False
     
     if not PostLoad in bpy.app.handlers.load_post:
@@ -1280,8 +1401,13 @@ def unregister():
         pass
 
     bpy.utils.unregister_class(UrhoReportDialog)
+    bpy.utils.unregister_class(UL_URHO_LIST_KEYVALUE)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE)
     
     del bpy.types.Scene.urho_exportsettings
+    del bpy.types.Object.user_data
     
     if PostLoad in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(PostLoad)
@@ -1467,6 +1593,7 @@ def ExecuteUrhoExport(context):
     sOptions.individualPhysics = (settings.physics == 'INDIVIDUAL')
     sOptions.globalPhysics = (settings.physics == 'GLOBAL')
     sOptions.trasfObjects = settings.trasfObjects
+    sOptions.exportUserdata = settings.export_userdata
     sOptions.globalOrigin = tOptions.globalOrigin
     sOptions.orientation = tOptions.orientation
 

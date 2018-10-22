@@ -5,7 +5,7 @@
 
 from .utils import PathType, GetFilepath, CheckFilepath, \
                    FloatToString, Vector3ToString, Vector4ToString, \
-                   WriteXmlFile
+                   WriteXmlFile, SDBMHash
 
 from xml.etree import ElementTree as ET
 from mathutils import Vector, Quaternion, Matrix
@@ -40,6 +40,7 @@ class SOptions:
         self.shape = None
         self.shapeItems = None
         self.trasfObjects = False
+        self.exportUserdata = True
         self.globalOrigin = False
         self.orientation = Quaternion((1.0, 0.0, 0.0, 0.0))
 
@@ -597,6 +598,20 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(m)].set("value", Vector3ToString(uSceneModel.scale))
             m += 1
         
+        if sOptions.exportUserdata and len(obj.user_data)>0:
+            attribID = m
+            a["{:d}".format(m)] = ET.SubElement(a[modelNode], "attribute")
+            a["{:d}".format(m)].set("name", "Variables")
+            m += 1
+
+            for ud in obj.user_data:
+                a["{:d}".format(attribID)] = ET.SubElement(a["{:d}".format(attribID)], "Variant")
+                a["{:d}".format(attribID)].set("hash", str(SDBMHash(ud.key)))
+                a["{:d}".format(attribID)].set("type", "String")
+                a["{:d}".format(attribID)].set("value", ud.value)
+                m += 1
+
+
         if not isEmpty:
             compID = m
             a["{:d}".format(compID)] = ET.SubElement(a[modelNode], "component")
