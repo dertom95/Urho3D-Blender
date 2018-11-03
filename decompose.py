@@ -2437,7 +2437,7 @@ def Scan(context, tDataList, errorsMem, tOptions):
                     tOptions.lodUpdatedGeometryIndices.clear() # request new LOD
                     if tData:
                         tData.hasLODs=True
-                        
+
                     if lodDistance <= tOptions.lodDistance:
                         log.warning("Wrong LOD sequence: {:d} then {:d}".format(tOptions.lodDistance, lodDistance) )
                 tOptions.lodDistance = lodDistance

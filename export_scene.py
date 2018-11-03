@@ -35,6 +35,7 @@ class SOptions:
         self.doScenePrefab = False
         self.noPhysics = False
         self.individualPhysics = False
+        self.individualPrefab_onlyRootObject = True
         self.globalPhysics = False
         self.mergeObjects = False
         self.shape = None
@@ -575,11 +576,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     # Sort the models by parent-child relationship
     uScene.SortModels()
 
+    # save the parent objects
+    parentObjects = []
     # Export each decomposed object
     for uSceneModel in uScene.modelsList:
 
         modelNode = uSceneModel.name
-
+        log.info ("Process %s" % modelNode)
         isEmpty = False
         obj = None
         try:
@@ -604,14 +607,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         k += 1
         
 
-        # If child node, parent to parent object instead of root
+        # Parenting: make sure parented objects are child of this in xml as well
         if uSceneModel.type == "StaticModel" and uSceneModel.parentObjectName and (uSceneModel.parentObjectName in a):
             for usm in uScene.modelsList:
                 if usm.name == uSceneModel.parentObjectName:
                     a[modelNode] = ET.SubElement(a[usm.name], "node")
                     break
-        else: 
+        else:
             a[modelNode] = ET.SubElement(root, "node")
+            parentObjects.append({'xml':a[modelNode],'uSceneModel':uSceneModel})
 
         a[modelNode].set("id", "{:d}".format(k))
 
@@ -733,7 +737,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 compoID = CreateNodeTreeXML(a[modelNode],obj.nodetreeId,compoID)
 
         # Write individual prefabs
-        if sOptions.doIndividualPrefab:
+        if sOptions.doIndividualPrefab and not sOptions.individualPrefab_onlyRootObject:
             filepath = GetFilepath(PathType.OBJECTS, uSceneModel.name, fOptions)
             if CheckFilepath(filepath[0], fOptions):
                 log.info( "Creating prefab {:s}".format(filepath[1]) )
@@ -745,6 +749,14 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             if CheckFilepath(filepath[0], fOptions):
                 log.info( "Creating scene prefab {:s}".format(filepath[1]) )
                 WriteXmlFile(sceneRoot, filepath[0], fOptions)
+
+    # Write individual prefabs
+    if sOptions.doIndividualPrefab and sOptions.individualPrefab_onlyRootObject:
+        for model in parentObjects:
+            filepath = GetFilepath(PathType.OBJECTS, model["uSceneModel"].name, fOptions)
+            if CheckFilepath(filepath[0], fOptions):
+                log.info( "!!Creating prefab {:s}".format(filepath[1]) )
+                WriteXmlFile(model["xml"], filepath[0], fOptions)
 
     # Write collective and scene prefab files
     if not sOptions.mergeObjects:

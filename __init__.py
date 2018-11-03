@@ -906,6 +906,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = False,
             update = update_func)
 
+    individualPrefab_onlyRootObject = BoolProperty(
+            name = "Only Root-Objects",
+            description = "Only export individual ROOT objects and pack children recursively inside",
+            default = True)
+
+
     collectivePrefab = BoolProperty(
             name = "One Collective",
             description = "Create one unic/global prefab containing every exported objects. An empty root node holds the objects.",
@@ -934,7 +940,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             items = (('DISABLE', "No physics", "Do not create physics stuff"),
                         ('GLOBAL', "Global", "Create a unic RigidBody + Shape at the root. Expects a 'Physics.mdl' model as TriangleMesh."),
                         ('INDIVIDUAL', "Individual", "Create individual physics RigidBodies and Shapes")),
-            default = 'INDIVIDUAL',
+            default = 'DISABLE',
             update = update_func2)
 
     shapeItems = [ ('BOX', "Box", ""), ('CAPSULE', "Capsule", ""), ('CONE', "Cone", ""), \
@@ -953,6 +959,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         items=(('Object', "Object-Name", "The object's mesh gets the name of the node, which can result in duplicated meshes saved as different mesh-files"),
                 ('Mesh', "Mesh-Name", "The object's mesh gets its name by the mesh preventing duplicated mesh-files")),
         default='Object')
+        
 
     bonesGlobalOrigin = BoolProperty(name = "Bones global origin", default = False)
     actionsGlobalOrigin = BoolProperty(name = "Actions global origin", default = False)
@@ -1305,7 +1312,16 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row = box.row()
             row.separator()
             row.prop(settings, "individualPrefab")
+
             row.label("", icon='MOD_BUILD')
+
+            if (settings.individualPrefab):
+                row = box.row()
+                row.separator()
+                row.separator()
+                row.prop(settings, "individualPrefab_onlyRootObject")
+
+
 
             if not settings.merge:
                 row = box.row()
@@ -1318,23 +1334,24 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.prop(settings, "scenePrefab")
             row.label("", icon='WORLD')
 
-            row = box.row()
-            row.separator()
-            row.separator()
+
+
+            specialBox = box.box()
+            row = specialBox.row()
             row.prop(settings, "trasfObjects")
 
-            row = box.row()
-            row.separator()
-            row.separator() 
+            row = specialBox.row()
             row.prop(settings, "export_userdata")
 
-            row = box.row()
-            row.separator()
+            row = specialBox.row()
+            # todo: make it possible to check if physics are used in component-nodes and otherwise take the default settings(!)
+            row.label("default physics settings are ignored for objects with component-nodes")
+
+            row = specialBox.row()
             row.prop(settings, "physics")
             row.label("", icon='PHYSICS')
 
-            row = box.row()
-            row.separator()
+            row = specialBox.row()
             row.prop(settings, "shape")
             row.label("", icon='GROUP')
 
@@ -1606,10 +1623,12 @@ def ExecuteUrhoExport(context):
 
     sOptions.mergeObjects = settings.merge
     sOptions.doIndividualPrefab = settings.individualPrefab
+    sOptions.individualPrefab_onlyRootObject = settings.individualPrefab_onlyRootObject
     sOptions.doCollectivePrefab = settings.collectivePrefab
     sOptions.doScenePrefab = settings.scenePrefab
     sOptions.noPhysics = (settings.physics == 'DISABLE')
     sOptions.individualPhysics = (settings.physics == 'INDIVIDUAL')
+
     sOptions.globalPhysics = (settings.physics == 'GLOBAL')
     sOptions.trasfObjects = settings.trasfObjects
     sOptions.exportUserdata = settings.export_userdata
