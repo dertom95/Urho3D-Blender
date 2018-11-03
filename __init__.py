@@ -947,6 +947,13 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = 'TRIANGLEMESH',
             update = update_func2)
 
+    meshnameDerivedBy = EnumProperty(
+        name = "meshnameDerivedBy",
+        description = "Meshname derived by",
+        items=(('Object', "Object-Name", "The object's mesh gets the name of the node, which can result in duplicated meshes saved as different mesh-files"),
+                ('Mesh', "Mesh-Name", "The object's mesh gets its name by the mesh preventing duplicated mesh-files")),
+        default='Object')
+
     bonesGlobalOrigin = BoolProperty(name = "Bones global origin", default = False)
     actionsGlobalOrigin = BoolProperty(name = "Actions global origin", default = False)
     
@@ -1122,6 +1129,12 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
         box.label("Output folder:")
         box.prop(settings, "outputPath")
+
+        row = box.row()
+        row.label("Modelname:")
+        row.prop(settings, "meshnameDerivedBy", expand=True)
+
+
         box.prop(settings, "fileOverwrite")
         row = box.row()
         row.prop(settings, "useSubDirs")
@@ -1589,6 +1602,7 @@ def ExecuteUrhoExport(context):
             tOptions.shape = shapeItems[1]
             sOptions.shape = shapeItems[1]
             break
+    tOptions.meshNameDerivedBy = settings.meshnameDerivedBy
 
     sOptions.mergeObjects = settings.merge
     sOptions.doIndividualPrefab = settings.individualPrefab
@@ -1662,12 +1676,18 @@ def ExecuteUrhoExport(context):
         uScene.Load(uExportData, tData.blenderObjectName, sOptions)
 
         for uModel in uExportData.models:
-            #TODO: Rethink again how to use the meshnames instead of the nodenames to prevent same meshes be copied as different files (using the node-name as filename)
             obj = None
             try:
                 obj = bpy.data.objects[uModel.name]
-                uModel.meshName=obj.data.name
                 uModel.isEmpty=obj.draw_type=="WIRE" or obj.type=="EMPTY"
+                if uModel.isEmpty:
+                    uModel.meshName=obj.name
+                else:
+                    if tOptions.meshNameDerivedBy == 'Object':
+                        uModel.meshName=uModel.name
+                    else:
+                        uModel.meshName=obj.data.name
+                
             except:
                 uModel.meshName=uModel.name
                 uModel.isEmpty=False
@@ -1679,7 +1699,9 @@ def ExecuteUrhoExport(context):
             filepath = GetFilepath(PathType.MODELS, uModel.meshName, fOptions)
             uScene.AddFile(PathType.MODELS, uModel.name, filepath[1])
 
-            if obj==None or (obj.draw_type!="WIRE" and not uModel.meshName in processedMeshes):
+            print("%s: hasLOD:%s\n" % (uModel.meshName, str(tData.hasLODs)))
+            # make sure that meshes with LOD gets written also there is a mesh with this name (that was created by a node that is referencing the root-mesh)
+            if obj==None or (obj.draw_type!="WIRE" and (not uModel.meshName in processedMeshes or tData.hasLODs)):
                 # use the name of the mesh to make mesh sharing possible (no need to write one shared mesh multiple times)
                 if uModel.geometries:
                     if CheckFilepath(filepath[0], fOptions):

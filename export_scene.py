@@ -734,7 +734,6 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
         # Write individual prefabs
         if sOptions.doIndividualPrefab:
-            xml = IndividualPrefabXml(uScene, uSceneModel, sOptions)
             filepath = GetFilepath(PathType.OBJECTS, uSceneModel.name, fOptions)
             if CheckFilepath(filepath[0], fOptions):
                 log.info( "Creating prefab {:s}".format(filepath[1]) )

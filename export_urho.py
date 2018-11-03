@@ -372,6 +372,8 @@ class UrhoModel:
         self.bones = []
         # Bounding box, contains each LOD of each geometry
         self.boundingBox = BoundingBox()
+        # has LODs
+        self.hasLODs = False
         
 # --- Animation classes ---
 
