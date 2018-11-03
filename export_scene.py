@@ -458,7 +458,7 @@ def ExportUserdata(a,m,obj,modelNode):
     a["{:d}".format(m)].set("name", "Variables")
     m += 1
 
-    tags = None
+    tags = []
 
     for ud in obj.user_data:
         if ud.key.lower() != "tag":
@@ -468,14 +468,14 @@ def ExportUserdata(a,m,obj,modelNode):
             a["{:d}".format(m)].set("value", ud.value)
             m += 1
         else:
-            tags = ud.value
+            tags.extend(ud.value.split(","))
 
     if tags:
         tagsID = m
         a["{:d}".format(tagsID)] = ET.SubElement(a[modelNode], "attribute")
         a["{:d}".format(tagsID)].set("name", "Tags")
         m += 1
-        for tag in tags.split(","):
+        for tag in tags:
             a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(tagsID)], "string")
             a["{:d}".format(m)].set("value", tag.strip())
             m += 1                    
