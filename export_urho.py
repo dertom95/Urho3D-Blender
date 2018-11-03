@@ -524,8 +524,7 @@ def UrhoWriteModel(model, filename):
         log.error("No model data to export in {:s}".format(filename))
         return
 
-    obj = bpy.data.objects[model.name]
-    if obj.draw_type=="WIRE": ## this object is marked to act as an empty (no mesh export)
+    if model.isEmpty: ## this object is marked to act as an empty (no mesh export)
         return 
 
     fw = BinaryFileWriter()

@@ -353,101 +353,132 @@ def CreateNodeTreeXML(xmlroot,nodetreeID,nodeID):
     return nodeID
 
 
+
+## Where was the scene to generate the node again, since all was already done in scene-handling?
+
 # Generate individual prefabs XML
-def IndividualPrefabXml(uScene, uSceneModel, sOptions):
+# def IndividualPrefabXml(uScene, uSceneModel, sOptions):
 
 
 
-    # Set first node ID
-    nodeID = 0x1000000
+#     # Set first node ID
+#     nodeID = 0x1000000
 
-    # Get model file relative path
-    modelFile = uScene.FindFile(PathType.MODELS, uSceneModel.name)
+#     # Get model file relative path
+#     modelFile = uScene.FindFile(PathType.MODELS, uSceneModel.name)
 
-    # Gather materials
-    materials = ""
-    for uSceneMaterial in uSceneModel.materialsList:
-        file = uScene.FindFile(PathType.MATERIALS, uSceneMaterial.name)
-        materials += ";" + file
+#     # Gather materials
+#     materials = ""
+#     for uSceneMaterial in uSceneModel.materialsList:
+#         file = uScene.FindFile(PathType.MATERIALS, uSceneMaterial.name)
+#         materials += ";" + file
 
-    # Generate xml prefab content
-    rootNodeElem = ET.Element('node')
-    rootNodeElem.set("id", "{:d}".format(nodeID))
-    modelNameElem = ET.SubElement(rootNodeElem, "attribute")
-    modelNameElem.set("name", "Name")
-    modelNameElem.set("value", uSceneModel.name)
+#     # Generate xml prefab content
+#     rootNodeElem = ET.Element('node')
+#     rootNodeElem.set("id", "{:d}".format(nodeID))
+#     modelNameElem = ET.SubElement(rootNodeElem, "attribute")
+#     modelNameElem.set("name", "Name")
+#     modelNameElem.set("value", uSceneModel.name)
 
-    obj = bpy.data.objects[uSceneModel.name]
+#     obj = bpy.data.objects[uSceneModel.name]
 
-    if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and obj.nodetreeId!=-1:
-        # bypass nodeID and receive the new value
-        nodeID = CreateNodeTreeXML(rootNodeElem,obj.nodetreeId,nodeID)
-    else:
-        # the default-behaviour
-        typeElem = ET.SubElement(rootNodeElem, "component")
-        typeElem.set("type", uSceneModel.type)
-        typeElem.set("id", "{:d}".format(nodeID))
+#     # the default-behaviour
+#     typeElem = ET.SubElement(rootNodeElem, "component")
+#     typeElem.set("type", uSceneModel.type)
+#     typeElem.set("id", "{:d}".format(nodeID))
 
-        modelElem = ET.SubElement(typeElem, "attribute")
-        modelElem.set("name", "Model")
-        modelElem.set("value", "Model;" + modelFile)
+#     modelElem = ET.SubElement(typeElem, "attribute")
+#     modelElem.set("name", "Model")
+#     modelElem.set("value", "Model;" + modelFile)
 
-        materialElem = ET.SubElement(typeElem, "attribute")
-        materialElem.set("name", "Material")
-        materialElem.set("value", "Material" + materials)
+#     materialElem = ET.SubElement(typeElem, "attribute")
+#     materialElem.set("name", "Material")
+#     materialElem.set("value", "Material" + materials)
 
-        if not sOptions.noPhysics:
-            #Use model's bounding box to compute CollisionShape's size and offset
-            physicsSettings = [sOptions.shape] #tData.physicsSettings = [sOptions.shape, obj.game.physics_type, obj.game.mass, obj.game.radius, obj.game.velocity_min, obj.game.velocity_max, obj.game.collision_group, obj.game.collision_mask, obj.game.use_ghost] **************************************
-            shapeType = physicsSettings[0]
-            bbox = uSceneModel.boundingBox
-            #Size
-            x = bbox.max[0] - bbox.min[0]
-            y = bbox.max[1] - bbox.min[1]
-            z = bbox.max[2] - bbox.min[2]
-            shapeSize = Vector((x, y, z))
-            #Offset
-            offsetX = bbox.max[0] - x / 2
-            offsetY = bbox.max[1] - y / 2
-            offsetZ = bbox.max[2] - z / 2
-            shapeOffset = Vector((offsetX, offsetY, offsetZ))
+#     if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and obj.nodetreeId!=-1:
+#         # bypass nodeID and receive the new value
+#         nodeID = CreateNodeTreeXML(rootNodeElem,obj.nodetreeId,nodeID)
+#     else:
+#         if not sOptions.noPhysics:
+#             #Use model's bounding box to compute CollisionShape's size and offset
+#             physicsSettings = [sOptions.shape] #tData.physicsSettings = [sOptions.shape, obj.game.physics_type, obj.game.mass, obj.game.radius, obj.game.velocity_min, obj.game.velocity_max, obj.game.collision_group, obj.game.collision_mask, obj.game.use_ghost] **************************************
+#             shapeType = physicsSettings[0]
+#             bbox = uSceneModel.boundingBox
+#             #Size
+#             x = bbox.max[0] - bbox.min[0]
+#             y = bbox.max[1] - bbox.min[1]
+#             z = bbox.max[2] - bbox.min[2]
+#             shapeSize = Vector((x, y, z))
+#             #Offset
+#             offsetX = bbox.max[0] - x / 2
+#             offsetY = bbox.max[1] - y / 2
+#             offsetZ = bbox.max[2] - z / 2
+#             shapeOffset = Vector((offsetX, offsetY, offsetZ))
 
-            bodyElem = ET.SubElement(rootNodeElem, "component")
-            bodyElem.set("type", "RigidBody")
-            bodyElem.set("id", "{:d}".format(nodeID+1))
+#             bodyElem = ET.SubElement(rootNodeElem, "component")
+#             bodyElem.set("type", "RigidBody")
+#             bodyElem.set("id", "{:d}".format(nodeID+1))
 
-            collisionLayerElem = ET.SubElement(bodyElem, "attribute")
-            collisionLayerElem.set("name", "Collision Layer")
-            collisionLayerElem.set("value", "2")
+#             collisionLayerElem = ET.SubElement(bodyElem, "attribute")
+#             collisionLayerElem.set("name", "Collision Layer")
+#             collisionLayerElem.set("value", "2")
 
-            gravityElem = ET.SubElement(bodyElem, "attribute")
-            gravityElem.set("name", "Use Gravity")
-            gravityElem.set("value", "false")
+#             gravityElem = ET.SubElement(bodyElem, "attribute")
+#             gravityElem.set("name", "Use Gravity")
+#             gravityElem.set("value", "false")
 
-            shapeElem = ET.SubElement(rootNodeElem, "component")
-            shapeElem.set("type", "CollisionShape")
-            shapeElem.set("id", "{:d}".format(nodeID+2))
+#             shapeElem = ET.SubElement(rootNodeElem, "component")
+#             shapeElem.set("type", "CollisionShape")
+#             shapeElem.set("id", "{:d}".format(nodeID+2))
 
-            shapeTypeElem = ET.SubElement(shapeElem, "attribute")
-            shapeTypeElem.set("name", "Shape Type")
-            shapeTypeElem.set("value", shapeType)
+#             shapeTypeElem = ET.SubElement(shapeElem, "attribute")
+#             shapeTypeElem.set("name", "Shape Type")
+#             shapeTypeElem.set("value", shapeType)
 
-            if shapeType == "TriangleMesh":
-                physicsModelElem = ET.SubElement(shapeElem, "attribute")
-                physicsModelElem.set("name", "Model")
-                physicsModelElem.set("value", "Model;" + modelFile)
+#             if shapeType == "TriangleMesh":
+#                 physicsModelElem = ET.SubElement(shapeElem, "attribute")
+#                 physicsModelElem.set("name", "Model")
+#                 physicsModelElem.set("value", "Model;" + modelFile)
 
-            else:
-                shapeSizeElem = ET.SubElement(shapeElem, "attribute")
-                shapeSizeElem.set("name", "Size")
-                shapeSizeElem.set("value", Vector3ToString(shapeSize))
+#             else:
+#                 shapeSizeElem = ET.SubElement(shapeElem, "attribute")
+#                 shapeSizeElem.set("name", "Size")
+#                 shapeSizeElem.set("value", Vector3ToString(shapeSize))
 
-                shapeOffsetElem = ET.SubElement(shapeElem, "attribute")
-                shapeOffsetElem.set("name", "Offset Position")
-                shapeOffsetElem.set("value", Vector3ToString(shapeOffset))
+#                 shapeOffsetElem = ET.SubElement(shapeElem, "attribute")
+#                 shapeOffsetElem.set("name", "Offset Position")
+#                 shapeOffsetElem.set("value", Vector3ToString(shapeOffset))
 
-    return rootNodeElem
+#     return rootNodeElem
 
+def ExportUserdata(a,m,obj,modelNode):
+    attribID = m
+    a["{:d}".format(m)] = ET.SubElement(a[modelNode], "attribute")
+    a["{:d}".format(m)].set("name", "Variables")
+    m += 1
+
+    tags = None
+
+    for ud in obj.user_data:
+        if ud.key.lower() != "tag":
+            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "Variant")
+            a["{:d}".format(m)].set("hash", str(SDBMHash(ud.key)))
+            a["{:d}".format(m)].set("type", "String")
+            a["{:d}".format(m)].set("value", ud.value)
+            m += 1
+        else:
+            tags = ud.value
+
+    if tags:
+        tagsID = m
+        a["{:d}".format(tagsID)] = ET.SubElement(a[modelNode], "attribute")
+        a["{:d}".format(tagsID)].set("name", "Tags")
+        m += 1
+        for tag in tags.split(","):
+            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(tagsID)], "string")
+            a["{:d}".format(m)].set("value", tag.strip())
+            m += 1                    
+    return m
 
 # Export scene and nodes
 def UrhoExportScene(context, uScene, sOptions, fOptions):
@@ -548,9 +579,14 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     for uSceneModel in uScene.modelsList:
 
         modelNode = uSceneModel.name
-        obj = bpy.data.objects[modelNode]
-        
-        isEmpty = (obj.draw_type=="WIRE" or obj.type=="EMPTY")
+
+        isEmpty = False
+        obj = None
+        try:
+            obj = bpy.data.objects[modelNode]
+            isEmpty = (obj.draw_type=="WIRE" or obj.type=="EMPTY")
+        except:
+            pass
 
         modelFile = None
         materials = None
@@ -598,34 +634,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(m)].set("value", Vector3ToString(uSceneModel.scale))
             m += 1
         
-        if sOptions.exportUserdata and len(obj.user_data)>0:
-            attribID = m
-            a["{:d}".format(m)] = ET.SubElement(a[modelNode], "attribute")
-            a["{:d}".format(m)].set("name", "Variables")
-            m += 1
-
-            tags = None
-
-            for ud in obj.user_data:
-                if ud.key.lower() != "tag":
-                    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "Variant")
-                    a["{:d}".format(m)].set("hash", str(SDBMHash(ud.key)))
-                    a["{:d}".format(m)].set("type", "String")
-                    a["{:d}".format(m)].set("value", ud.value)
-                    m += 1
-                else:
-                    tags = ud.value
-
-            if tags:
-                tagsID = m
-                a["{:d}".format(tagsID)] = ET.SubElement(a[modelNode], "attribute")
-                a["{:d}".format(tagsID)].set("name", "Tags")
-                m += 1
-                for tag in tags.split(","):
-                    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(tagsID)], "string")
-                    a["{:d}".format(m)].set("value", tag.strip())
-                    m += 1                    
-
+        if sOptions.exportUserdata and obj and len(obj.user_data)>0:
+            m = ExportUserdata(a,m,obj,modelNode)
 
 
 
@@ -728,7 +738,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             filepath = GetFilepath(PathType.OBJECTS, uSceneModel.name, fOptions)
             if CheckFilepath(filepath[0], fOptions):
                 log.info( "Creating prefab {:s}".format(filepath[1]) )
-                WriteXmlFile(xml, filepath[0], fOptions)
+                WriteXmlFile(a[modelNode], filepath[0], fOptions)
 
         # Merging objects equates to an individual export. And collective equates to individual, so we can skip collective
         if sOptions.mergeObjects and sOptions.doScenePrefab: 

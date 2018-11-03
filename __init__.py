@@ -606,6 +606,8 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
                    ('ONLY_SELECTED', "Only selected", "only the selected objects in visible layers")),
             default='ONLY_SELECTED')
 
+
+
     orientation = EnumProperty(
             name = "Front view",
             description = "Front view of the model",
@@ -1660,15 +1662,24 @@ def ExecuteUrhoExport(context):
         uScene.Load(uExportData, tData.blenderObjectName, sOptions)
 
         for uModel in uExportData.models:
-            obj = bpy.data.objects[uModel.name]
-            uModel.meshName=obj.data.name
-            uModel.isEmpty=obj.draw_type=="WIRE" or obj.type=="EMPTY"
+            #TODO: Rethink again how to use the meshnames instead of the nodenames to prevent same meshes be copied as different files (using the node-name as filename)
+            obj = None
+            try:
+                obj = bpy.data.objects[uModel.name]
+                uModel.meshName=obj.data.name
+                uModel.isEmpty=obj.draw_type=="WIRE" or obj.type=="EMPTY"
+            except:
+                uModel.meshName=uModel.name
+                uModel.isEmpty=False
+            #
+            ########
+
             # check if the draw_type is on wire=>skip
             # check if we already exported this mesh. if yes, skip it
             filepath = GetFilepath(PathType.MODELS, uModel.meshName, fOptions)
             uScene.AddFile(PathType.MODELS, uModel.name, filepath[1])
 
-            if obj.draw_type!="WIRE" and not uModel.meshName in processedMeshes:
+            if obj==None or (obj.draw_type!="WIRE" and not uModel.meshName in processedMeshes):
                 # use the name of the mesh to make mesh sharing possible (no need to write one shared mesh multiple times)
                 if uModel.geometries:
                     if CheckFilepath(filepath[0], fOptions):
