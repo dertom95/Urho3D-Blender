@@ -661,10 +661,17 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             m += 1
             compoID += 1
 
-            if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and obj.nodetreeId!=-1:
-                # bypass nodeID and receive the new value
-                compoID = CreateNodeTreeXML(a[modelNode],obj.nodetreeId,compoID)
-            else:
+            finishedNodeTree = False
+            try:
+                if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and obj.nodetreeId!=-1:
+                    # bypass nodeID and receive the new value
+                    compoID = CreateNodeTreeXML(a[modelNode],obj.nodetreeId,compoID)
+                    finishedNodeTree = True
+            except:
+                log.critical("Couldn't export nodetree. skipping nodetree and going on with default behaviour")
+                pass
+
+            if not finishedNodeTree:
                 # the default-behaviour
                 if sOptions.individualPhysics:
                     #Use model's bounding box to compute CollisionShape's size and offset
