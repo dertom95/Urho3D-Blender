@@ -668,7 +668,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     ignoreHidden = BoolProperty(
             name = "Ignore hidden objects",
             description = "Ignore hidden objects",
-            default = False)            
+            default = False)   
+
+    exportOnSave = BoolProperty(
+            name = "Export Data on Save",
+            description = "Export Data after Saving the blend",
+            default = False)                            
 
     merge = BoolProperty(
             name = "Merge objects",
@@ -1146,7 +1151,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         row.label("Modelname:")
         row.prop(settings, "meshnameDerivedBy", expand=True)
 
-
+        box.prop(settings, "exportOnSave")
         box.prop(settings, "fileOverwrite")
         row = box.row()
         row.prop(settings, "useSubDirs")
@@ -1376,6 +1381,13 @@ def PostLoad(dummy):
     settings.updatingProperties = False
     settings.reset_paths(bpy.context, False)
 
+@persistent
+def PostSave(dummy):
+    if settings.exportOnSave:
+        print("AUTO EXPORT on SAVE")
+        bpy.ops.urho.export()
+    
+
 
 #--------------------
 # Register Unregister
@@ -1412,6 +1424,9 @@ def register():
     
     if not PostLoad in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(PostLoad)
+
+    if not PostSave in bpy.app.handlers.save_post:
+        bpy.app.handlers.save_post.append(PostSave)
 
     print("installed addons: %s" % bpy.context.user_preferences.addons.keys())
 
@@ -1453,6 +1468,8 @@ def unregister():
     
     if PostLoad in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(PostLoad)
+    if PostSave in bpy.app.handlers.save_post:
+        bpy.app.handlers.save_post.remove(PostSave)
 
 
 #--------------------
