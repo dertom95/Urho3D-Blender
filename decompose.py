@@ -337,6 +337,7 @@ class TOptions:
         self.mergeNotMaterials = False
         self.useLods = False
         self.onlySelected = False
+        self.ignoreHidden = True
         self.orientation = Quaternion((1.0, 0.0, 0.0, 0.0))
         self.scale = 1.0
         self.globalOrigin = True
@@ -2350,7 +2351,7 @@ def Scan(context, tDataList, errorsMem, tOptions):
             continue
         
         # Only not hidden
-        if obj.hide:
+        if obj.hide and tOptions.ignoreHidden:
             continue
     
         if tOptions.useLods:

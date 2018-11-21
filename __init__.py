@@ -665,6 +665,11 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             description = "If a vertex element (UV, color, weights) is missing add it with a zero value",
             default = False)
 
+    ignoreHidden = BoolProperty(
+            name = "Ignore hidden objects",
+            description = "Ignore hidden objects",
+            default = False)            
+
     merge = BoolProperty(
             name = "Merge objects",
             description = ("Merge all the objects in a single file, one common geometry for each material. "
@@ -1185,6 +1190,8 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.separator()
             row.prop(settings, "modifiersRes", expand=True)
 
+        box.prop(settings,"ignoreHidden")
+
         row = box.row()
         row.prop(settings, "selectErrors")
         row.prop(settings, "errorsEnum")
@@ -1555,6 +1562,7 @@ def ExecuteUrhoExport(context):
     tOptions.doForceElements = settings.forceElements
     tOptions.useLods = settings.lods
     tOptions.onlySelected = (settings.source == 'ONLY_SELECTED')
+    tOptions.ignoreHidden = settings.ignoreHidden
     tOptions.scale = settings.scale
     tOptions.globalOrigin = (settings.origin == 'GLOBAL')
     tOptions.applyModifiers = settings.modifiers
