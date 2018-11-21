@@ -44,6 +44,7 @@ class SOptions:
         self.exportUserdata = True
         self.globalOrigin = False
         self.orientation = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.wiredAsEmpty = False
 
 
 class UrhoSceneMaterial:
@@ -587,7 +588,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         obj = None
         try:
             obj = bpy.data.objects[modelNode]
-            isEmpty = (obj.draw_type=="WIRE" or obj.type=="EMPTY")
+            isEmpty = (sOptions.wiredAsEmpty and obj.draw_type=="WIRE") or obj.type=="EMPTY"
         except:
             pass
 

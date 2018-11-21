@@ -673,7 +673,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     ignoreHidden = BoolProperty(
             name = "Ignore hidden objects",
             description = "Ignore hidden objects",
-            default = False)   
+            default = False)  
+
+    wiredAsEmpty = BoolProperty(
+            name = "Export wired MeshesNodes as empties",
+            description = "MeshesNodes that are set to wired in ObjectPanel are exported as empties",
+            default = False)                
 
     exportOnSave = BoolProperty(
             name = "Export Data on Save",
@@ -1207,18 +1212,21 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.separator()
             row.prop(settings, "modifiersRes", expand=True)
 
+        box.prop(settings, "merge")
+        if settings.merge:
+            row = box.row()
+            row.separator()
+            row.prop(settings, "mergeNotMaterials")
+
         box.prop(settings,"ignoreHidden")
+        box.prop(settings,"wiredAsEmpty")
 
         row = box.row()
         row.prop(settings, "selectErrors")
         row.prop(settings, "errorsEnum")
         
         box.prop(settings, "forceElements")
-        box.prop(settings, "merge")
-        if settings.merge:
-            row = box.row()
-            row.separator()
-            row.prop(settings, "mergeNotMaterials")
+
         box.prop(settings, "geometrySplit")
         box.prop(settings, "optimizeIndices")
         box.prop(settings, "lods")
@@ -1666,7 +1674,7 @@ def ExecuteUrhoExport(context):
     sOptions.doScenePrefab = settings.scenePrefab
     sOptions.noPhysics = (settings.physics == 'DISABLE')
     sOptions.individualPhysics = (settings.physics == 'INDIVIDUAL')
-
+    sOptions.wiredAsEmpty = settings.wiredAsEmpty
     sOptions.globalPhysics = (settings.physics == 'GLOBAL')
     sOptions.trasfObjects = settings.trasfObjects
     sOptions.exportUserdata = settings.export_userdata
@@ -1737,7 +1745,7 @@ def ExecuteUrhoExport(context):
             obj = None
             try:
                 obj = bpy.data.objects[uModel.name]
-                uModel.isEmpty=obj.draw_type=="WIRE" or obj.type=="EMPTY"
+                uModel.isEmpty=(sOptions.wiredAsEmpty and obj.draw_type=="WIRE") or obj.type=="EMPTY"
                 if uModel.isEmpty:
                     uModel.meshName=obj.name
                 else:
@@ -1759,7 +1767,7 @@ def ExecuteUrhoExport(context):
 
             print("%s: hasLOD:%s\n" % (uModel.meshName, str(tData.hasLODs)))
             # make sure that meshes with LOD gets written also there is a mesh with this name (that was created by a node that is referencing the root-mesh)
-            if obj==None or (obj.draw_type!="WIRE" and (not uModel.meshName in processedMeshes or tData.hasLODs)):
+            if obj==None or (not uModel.isEmpty and (not uModel.meshName in processedMeshes or tData.hasLODs)):
                 # use the name of the mesh to make mesh sharing possible (no need to write one shared mesh multiple times)
                 if uModel.geometries:
                     if CheckFilepath(filepath[0], fOptions):
