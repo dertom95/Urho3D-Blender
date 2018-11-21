@@ -2347,7 +2347,7 @@ def Scan(context, tDataList, errorsMem, tOptions):
     meshes = []
     for obj in objs:
         # Only meshes
-        if obj.type != 'MESH':
+        if obj.type != 'MESH' and obj.type != 'EMPTY' :
             continue
         
         # Only not hidden
@@ -2456,6 +2456,9 @@ def Scan(context, tDataList, errorsMem, tOptions):
             tDataList.append(tData)
             tOptions.lodUpdatedGeometryIndices.clear() # request new LOD
             tOptions.lodDistance = 0.0
+            if obj.type == "EMPTY":
+                print("F95: FOUND EMPTY")
+                continue
         
         # First we need to populate the skeleton, then animations and then geometries
         armatureObj = None

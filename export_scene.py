@@ -109,7 +109,7 @@ class UrhoSceneModel:
 
             # Get parent object
             parentObject = object.parent
-            if parentObject and parentObject.type == 'MESH':
+            if parentObject :
                 self.parentObjectName = parentObject.name
 
         if len(uModel.bones) > 0 or len(uModel.morphs) > 0:
@@ -608,6 +608,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         
 
         # Parenting: make sure parented objects are child of this in xml as well
+        print ( ("PARENT:%s type:%s") % (str(uSceneModel.parentObjectName),str(uSceneModel.type )))
         if uSceneModel.type == "StaticModel" and uSceneModel.parentObjectName and (uSceneModel.parentObjectName in a):
             for usm in uScene.modelsList:
                 if usm.name == uSceneModel.parentObjectName:

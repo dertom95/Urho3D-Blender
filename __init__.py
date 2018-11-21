@@ -1731,8 +1731,9 @@ def ExecuteUrhoExport(context):
         if DEBUG: ttt = time.time() #!TIME
 
         uScene.Load(uExportData, tData.blenderObjectName, sOptions)
-
+        print("")
         for uModel in uExportData.models:
+            print("1")
             obj = None
             try:
                 obj = bpy.data.objects[uModel.name]
