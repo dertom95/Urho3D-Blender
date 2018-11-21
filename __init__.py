@@ -942,7 +942,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     trasfObjects = BoolProperty(
             name = "Transform objects",
             description = "Save objects position/rotation/scale, works only with 'Front View = Back'",
-            default = False)
+            default = True)
 
     export_userdata = BoolProperty(
             name = "Export Object Userdata",
