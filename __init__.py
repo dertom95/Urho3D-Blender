@@ -532,6 +532,11 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             description = "Show only warnings and errors in the log",
             default = False)
 
+    showLog = BoolProperty(
+            name = "Show Log after export",
+            description = "Show log after export",
+            default = True)            
+
     showDirs = BoolProperty(
             name = "Show dirs",
             description = "Show the dirs list",
@@ -1052,7 +1057,7 @@ class UrhoExportOperator(bpy.types.Operator):
     bl_label = "Export"
   
     def execute(self, context):
-        ExecuteAddon(context)
+        ExecuteAddon(context, not bpy.context.scene.urho_exportsettings.showLog )
         return {'FINISHED'}
  
     def invoke(self, context, event):
@@ -1137,6 +1142,13 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         row.operator("urho.report", text="", icon='TEXT')
         if settings.minimize:
             return
+
+        
+        row = layout.row()
+        row.separator()
+        row.separator()
+        row.prop(settings,"showLog")    
+
 
         row = layout.row()
         row.label("Output:")
@@ -1383,6 +1395,7 @@ def PostLoad(dummy):
 
 @persistent
 def PostSave(dummy):
+    settings = bpy.context.scene.urho_exportsettings
     if settings.exportOnSave:
         print("AUTO EXPORT on SAVE")
         bpy.ops.urho.export()
