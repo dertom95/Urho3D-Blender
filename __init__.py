@@ -683,7 +683,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     exportOnSave = BoolProperty(
             name = "Export Data on Save",
             description = "Export Data after Saving the blend",
-            default = False)                            
+            default = False)    
+
+    exportGroupsAsObject = BoolProperty(
+            name = "Export Groups as PrefabObject",
+            description = "Export Groups as PrefabObject and write meta data into the group-instance-empties",
+            default = False)                                        
 
     merge = BoolProperty(
             name = "Merge objects",
@@ -1219,6 +1224,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.prop(settings, "mergeNotMaterials")
 
         box.prop(settings,"ignoreHidden")
+        box.prop(settings, "exportGroupsAsObject")
         box.prop(settings,"wiredAsEmpty")
 
         row = box.row()
@@ -1675,6 +1681,7 @@ def ExecuteUrhoExport(context):
     sOptions.noPhysics = (settings.physics == 'DISABLE')
     sOptions.individualPhysics = (settings.physics == 'INDIVIDUAL')
     sOptions.wiredAsEmpty = settings.wiredAsEmpty
+    sOptions.exportGroupsAsObject = settings.exportGroupsAsObject
     sOptions.globalPhysics = (settings.physics == 'GLOBAL')
     sOptions.trasfObjects = settings.trasfObjects
     sOptions.exportUserdata = settings.export_userdata

@@ -45,6 +45,7 @@ class SOptions:
         self.globalOrigin = False
         self.orientation = Quaternion((1.0, 0.0, 0.0, 0.0))
         self.wiredAsEmpty = False
+        self.exportGroupsAsObject = True
 
 
 class UrhoSceneMaterial:
@@ -482,6 +483,22 @@ def ExportUserdata(a,m,obj,modelNode):
             m += 1                    
     return m
 
+# look up userdata in the specific object with the given key. return None if not present
+def GetUserData(obj,key):
+    for kv in obj.user_data:
+        if kv.key==key:
+            return kv
+    return None
+
+# find tag with value 
+def HasTag(obj,tagName):
+    for kv in obj.user_data:
+        if kv.key=="tag" and kv.value==tagName:
+            return True
+    return False
+
+
+
 # Export scene and nodes
 def UrhoExportScene(context, uScene, sOptions, fOptions):
     blenderScene = bpy.data.scenes[uScene.blenderSceneName]
@@ -579,9 +596,32 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
     # save the parent objects
     parentObjects = []
-    # Export each decomposed object
-    for uSceneModel in uScene.modelsList:
 
+    # what object in what groups
+    groupObjMapping = {}
+    groups=[]
+    # Export each decomposed object
+    def ObjInGroup(obj):
+        return obj.name in groupObjMapping
+    def GetGroupName(grpName):
+        return "group_"+grpName    
+
+    if (sOptions.exportGroupsAsObject):
+        ## create a mapping to determine in which groups the corressponding object is contained
+        for group in bpy.data.groups:
+            ## ignore internal groups (that might be created,...there are more to be fished out here)
+            if group.name=="RigidBodyConstraints" or group.name=="RigidBodyWorld":
+                continue
+            for grpObj in group.objects:
+                print(("obj:%s grp:%s") %(grpObj.name,group.name) )
+
+                if grpObj.name in groupObjMapping:
+                    log.critical("Object:{:s} is in multiple groups! Only one group supported! Using grp:%s".format(grpObj.name, groupObjMapping[grpObj.name]) )
+                else:
+                    groupObjMapping[grpObj.name]=group
+
+        
+    for uSceneModel in uScene.modelsList:
         modelNode = uSceneModel.name
         log.info ("Process %s" % modelNode)
         isEmpty = False
@@ -603,6 +643,23 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             for uSceneMaterial in uSceneModel.materialsList:
                 file = uScene.FindFile(PathType.MATERIALS, uSceneMaterial.name)
                 materials += ";" + file
+        elif sOptions.exportGroupsAsObject:
+            if obj.dupli_type == 'GROUP':
+                grp = obj.dupli_group
+                # check if we already have a group__ element in which we store the filename of the group
+                ud = GetUserData(obj,"group__")
+                if not ud:
+                    ud = obj.user_data.add()
+                    ud.key="group__"
+                if not HasTag(obj,"groupInstance"):
+                    tag = obj.user_data.add()
+                    tag.key="tag"
+                    tag.value="groupInstance"
+                
+                ud.value = GetGroupName(grp.name)
+                
+
+        
 
         # Generate XML Content
         k += 1
@@ -616,8 +673,20 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     a[modelNode] = ET.SubElement(a[usm.name], "node")
                     break
         else:
-            a[modelNode] = ET.SubElement(root, "node")
-            parentObjects.append({'xml':a[modelNode],'uSceneModel':uSceneModel})
+            if not ObjInGroup(obj):
+                a[modelNode] = ET.SubElement(root, "node")
+                parentObjects.append({'xml':a[modelNode],'uSceneModel':uSceneModel})
+            else:
+                print("FOUND GROUP OBJ:%s",obj.name)
+                group = groupObjMapping[obj.name]
+                groupName = group.name
+                # get or create node for the group
+                if groupName not in a:
+                    a[groupName] = ET.Element('node')
+                    groups.append({'xml':a[groupName],'obj':obj,'group':group })
+                
+                # create root for the object
+                a[modelNode] = ET.SubElement(a[groupName],'node') 
 
         a[modelNode].set("id", "{:d}".format(k))
 
@@ -760,12 +829,19 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 WriteXmlFile(sceneRoot, filepath[0], fOptions)
 
     # Write individual prefabs
-    if sOptions.doIndividualPrefab and sOptions.individualPrefab_onlyRootObject:
-        for model in parentObjects:
-            filepath = GetFilepath(PathType.OBJECTS, model["uSceneModel"].name, fOptions)
-            if CheckFilepath(filepath[0], fOptions):
-                log.info( "!!Creating prefab {:s}".format(filepath[1]) )
-                WriteXmlFile(model["xml"], filepath[0], fOptions)
+    if sOptions.doIndividualPrefab:
+        if sOptions.individualPrefab_onlyRootObject:
+            for model in parentObjects:
+                filepath = GetFilepath(PathType.OBJECTS, model["uSceneModel"].name, fOptions)
+                if CheckFilepath(filepath[0], fOptions):
+                    log.info( "!!Creating prefab {:s}".format(filepath[1]) )
+                    WriteXmlFile(model["xml"], filepath[0], fOptions)
+        if (sOptions.exportGroupsAsObject):
+            for grp in groups:
+                filepath = GetFilepath(PathType.OBJECTS, GetGroupName(grp["group"].name), fOptions)
+                if CheckFilepath(filepath[0], fOptions):
+                    log.info( "!!Creating group-prefab {:s}".format(filepath[1]) )
+                    WriteXmlFile(grp["xml"], filepath[0], fOptions)
 
     # Write collective and scene prefab files
     if not sOptions.mergeObjects:
