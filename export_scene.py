@@ -105,7 +105,6 @@ class UrhoSceneModel:
             rot = objMatrix.to_quaternion()
             scale = objMatrix.to_scale()
 
-            # Convert pos/rot/scale
             self.position = Vector((pos.x, pos.z, pos.y))
             self.rotation = Quaternion((rot.w, -rot.x, -rot.z, -rot.y))
             self.scale = Vector((scale.x, scale.z, scale.y))
@@ -701,6 +700,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 if groupName not in a:
                     a[groupName] = ET.Element('node')
                     groups.append({'xml':a[groupName],'obj':obj,'group':group })
+                    # apply group offset
+                    offset = group.dupli_offset
+                    modelPos = uSceneModel.position
+                    ## CAUTION/TODO: this only works for default front-view (I guess)
+                    print("POSITION %s : offset %s" % ( modelPos,offset ))
+                    newPos = Vector( (modelPos.x - offset.y, modelPos.y - offset.z, modelPos.z - offset.x) )
+                    uSceneModel.position = newPos
+
+
                 
                 # create root for the object
                 a[modelNode] = ET.SubElement(a[groupName],'node') 
