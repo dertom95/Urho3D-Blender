@@ -1507,6 +1507,9 @@ def PostSave(dummy):
 
 # Called when the addon is enabled. Here we register out UI classes so they can be 
 # used by Python scripts.
+
+addon_keymaps = []
+
 def register():
     if DEBUG: print("Urho export register")
     
@@ -1540,6 +1543,15 @@ def register():
 
     if not PostSave in bpy.app.handlers.save_post:
         bpy.app.handlers.save_post.append(PostSave)
+
+    # handle the shortcuts
+    wm = bpy.context.window_manager
+    
+    #km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
+    km = wm.keyconfigs.addon.keymaps.new('Window', space_type='EMPTY', region_type='WINDOW', modal=False)
+
+    kmi = km.keymap_items.new("urho.start_runtime", 'SPACE', 'PRESS', ctrl=True, shift=True)
+    addon_keymaps.append(km)
 
     print("installed addons: %s" % bpy.context.user_preferences.addons.keys())
 
@@ -1585,6 +1597,12 @@ def unregister():
     if PostSave in bpy.app.handlers.save_post:
         bpy.app.handlers.save_post.remove(PostSave)
 
+    #unregister keyboard shortcuts
+    wm = bpy.context.window_manager
+    for km in addon_keymaps:
+        wm.keyconfigs.addon.keymaps.remove(km)
+    # clear the list
+    addon_keymaps.clear()
 
 #--------------------
 # Blender UI utility
