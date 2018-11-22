@@ -441,7 +441,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         self.useSubDirs = True
         self.fileOverwrite = False
 
-        self.source = 'ONLY_SELECTED'
+        self.source = 'ALL'
         self.scale = 1.0
         self.modifiers = False
         self.modifiersRes = 'PREVIEW'
@@ -609,7 +609,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             description = "Objects to be exported",
             items=(('ALL', "All", "all the objects in the scene"),
                    ('ONLY_SELECTED', "Only selected", "only the selected objects in visible layers")),
-            default='ONLY_SELECTED')
+            default='ALL')
 
 
 

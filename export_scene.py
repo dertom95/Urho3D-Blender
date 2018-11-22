@@ -690,14 +690,16 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     break
         else:
             if not ObjInGroup(obj):
+                print("not in group:"+obj.name)
                 a[modelNode] = ET.SubElement(root, "node")
                 parentObjects.append({'xml':a[modelNode],'uSceneModel':uSceneModel})
             else:
                 print("FOUND GROUP OBJ:%s",obj.name)
                 group = groupObjMapping[obj.name]
-                groupName = group.name
+                groupName = "grp_"+group.name
+                
                 # get or create node for the group
-                if groupName not in a:
+                if  groupName not in a:
                     a[groupName] = ET.Element('node')
                     groups.append({'xml':a[groupName],'obj':obj,'group':group })
                     # apply group offset
