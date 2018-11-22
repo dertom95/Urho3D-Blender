@@ -1162,7 +1162,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
         row = layout.row()
         row.label("Output:")
-        row.operator("urho.exportresetpaths", text="", icon='LIBRARY_DATA_DIRECT')
+
 
         box = layout.box()
 
@@ -1183,6 +1183,8 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             subrow.prop(settings, "addDir", text="", icon='TRIA_DOWN_BAR')
             subrow.prop(settings, "removeDir", text="", icon='TRIA_UP_BAR')
             subrow.prop(settings, "addSceneDir", text="", icon='GROUP')
+            subrow.operator("urho.exportresetpaths", text="", icon='LIBRARY_DATA_DIRECT')
+            
         row.prop(settings, "showDirs", text="", icon=showDirsIcon, toggle=False)
         if settings.showDirs:
             dbox = box.box()
