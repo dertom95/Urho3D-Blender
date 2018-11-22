@@ -54,6 +54,7 @@ import time
 import sys
 import shutil
 import logging
+import subprocess
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
@@ -560,6 +561,29 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = False,
             update = update_subfolders)
 
+    # --- RUNTIME SETTINGS ---
+    useRuntime = BoolProperty(
+            name = "Use Urho3d runtime",
+            description = "Start an external urho3d runtime. e.g. your game",
+            default = False)
+
+    runtimeBlocking = BoolProperty(
+            name = "Block Blender while running",
+            description = "Block Blender while running",
+            default = True)            
+
+    runtimeFile = bpy.props.StringProperty(
+                    name="Runtime",
+                    description="Path of the urho3d runtime",
+                    maxlen = 512,
+                    default = "",
+                    subtype='FILE_PATH')
+    runtimeWorkingDir = bpy.props.StringProperty(
+                    name="Runtime WorkingDir",
+                    description="WorkingDir",
+                    maxlen = 512,
+                    default = "",
+                    subtype='FILE_PATH')
     # --- Output settings ---
     
     outputPath = StringProperty(
@@ -1087,6 +1111,51 @@ class UrhoExportCommandOperator(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
+# Start runtime
+class UrhoExportStartRuntime(bpy.types.Operator):
+    ''' Start runtime '''
+    bl_idname = "urho.start_runtime"
+    bl_label = "Start Runtime"
+    
+
+    @classmethod
+    def poll(self, context):
+        return True
+
+    def execute(self, context):
+        scene = context.scene
+        settings = scene.urho_exportsettings
+
+        execpath = bpy.path.abspath(settings.runtimeFile)
+        if execpath[0:2] in { "./", ".\\" }:
+            pwd = os.path.dirname(bpy.app.binary_path)
+            execpath = pwd + os.sep + execpath
+
+        workingdir = bpy.path.abspath(settings.runtimeWorkingDir)
+        print("EXEC-DIR: %s" % execpath)
+        print("WORKING-DIR: %s" % workingdir)
+
+        # launch game
+        try:
+            subp = subprocess.Popen(execpath, cwd=workingdir, shell=False)
+            if settings.runtimeBlocking:
+                subp.communicate() #like wait() but without the risk of deadlock with verbose output
+            returnv = subp.returncode
+
+            if returnv != 0:
+                self.report({'ERROR'},"runtime exited anormally.")
+                return {'CANCELLED'}
+
+            self.report({'INFO'},"runtime exited normally.")
+        except OSError as er:
+            self.report({'ERROR'}, "Could not launch: " + execpath + ". In directory:" + workingdir+ ". Error: " + str(er))
+            return {'CANCELLED'}
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
 
 # The export panel, here we draw the panel using properties we have created earlier
 class UrhoExportObjectPanel(bpy.types.Panel):
@@ -1159,6 +1228,20 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         row.separator()
         row.prop(settings,"showLog")    
 
+        row = layout.row()
+        row.prop(settings,"useRuntime")
+        if (settings.useRuntime):
+            box = layout.box()
+            row = box.row()
+            row.prop(settings,"runtimeWorkingDir")
+            row = box.row()
+            row.prop(settings,"runtimeFile")
+            row = box.row()
+            row.prop(settings,"runtimeBlocking")
+            row = box.row()
+            row.operator("urho.start_runtime",icon="GAME")
+
+
 
         row = layout.row()
         row.label("Output:")
@@ -1184,7 +1267,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             subrow.prop(settings, "removeDir", text="", icon='TRIA_UP_BAR')
             subrow.prop(settings, "addSceneDir", text="", icon='GROUP')
             subrow.operator("urho.exportresetpaths", text="", icon='LIBRARY_DATA_DIRECT')
-            
+
         row.prop(settings, "showDirs", text="", icon=showDirsIcon, toggle=False)
         if settings.showDirs:
             dbox = box.box()
@@ -1437,6 +1520,7 @@ def register():
     bpy.utils.register_class(UrhoExportResetPathsOperator)
     bpy.utils.register_class(UrhoExportRenderPanel)
     bpy.utils.register_class(UrhoExportObjectPanel)
+    bpy.utils.register_class(UrhoExportStartRuntime)
     
     bpy.utils.register_class(UrhoReportDialog)
     bpy.utils.register_class(KeyValue)
@@ -1476,7 +1560,8 @@ def unregister():
     bpy.utils.unregister_class(UrhoExportOperator)
     bpy.utils.unregister_class(UrhoExportCommandOperator)
     bpy.utils.unregister_class(UrhoExportResetOperator)
-    bpy.utils.unregister_class(UrhoExportResetPathsOperator)    
+    bpy.utils.unregister_class(UrhoExportResetPathsOperator)  
+    bpy.utils.unregister_class(UrhoExportStartRuntime)  
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)
     except:
