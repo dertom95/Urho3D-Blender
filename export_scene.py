@@ -455,6 +455,24 @@ def CreateNodeTreeXML(xmlroot,nodetreeID,nodeID):
 
 #     return rootNodeElem
 
+
+
+def AddGroupInstanceComponent(a,m,groupFilename,modelNode):
+
+    attribID = m
+    a["{:d}".format(m)] = ET.SubElement(a[modelNode], "component")
+    a["{:d}".format(m)].set("type", "GroupInstance")
+    a["{:d}".format(m)].set("id", str(m))
+    
+    m += 1
+
+    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "attribute")
+    a["{:d}".format(m)].set("name", "groupFilename")
+    a["{:d}".format(m)].set("value", groupFilename)
+    
+    return m
+
+## add userdata-attributes 
 def ExportUserdata(a,m,obj,modelNode):
     attribID = m
     a["{:d}".format(m)] = ET.SubElement(a[modelNode], "attribute")
@@ -644,20 +662,20 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             for uSceneMaterial in uSceneModel.materialsList:
                 file = uScene.FindFile(PathType.MATERIALS, uSceneMaterial.name)
                 materials += ";" + file
-        elif sOptions.exportGroupsAsObject:
-            if obj.dupli_type == 'GROUP':
-                grp = obj.dupli_group
-                # check if we already have a group__ element in which we store the filename of the group
-                ud = GetUserData(obj,"group__")
-                if not ud:
-                    ud = obj.user_data.add()
-                    ud.key="group__"
-                ud.value = sOptions.objectsPath+"/"+GetGroupName(grp.name)+".xml"
+        # elif sOptions.exportGroupsAsObject:
+        #     if obj.dupli_type == 'GROUP':
+        #         grp = obj.dupli_group
+        #         # check if we already have a group__ element in which we store the filename of the group
+        #         ud = GetUserData(obj,"group__")
+        #         if not ud:
+        #             ud = obj.user_data.add()
+        #             ud.key="group__"
+        #         ud.value = sOptions.objectsPath+"/"+GetGroupName(grp.name)+".xml"
                 
-                if not HasTag(obj,"groupInstance__"):
-                    tag = obj.user_data.add()
-                    tag.key="tag"
-                    tag.value="groupInstance__"
+        #         if not HasTag(obj,"groupInstance__"):
+        #             tag = obj.user_data.add()
+        #             tag.key="tag"
+        #             tag.value="groupInstance__"
                 
 
         # Generate XML Content
@@ -710,7 +728,11 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         
         if sOptions.exportUserdata and obj and len(obj.user_data)>0:
             m = ExportUserdata(a,m,obj,modelNode)
-
+        
+        if sOptions.exportGroupsAsObject and obj.dupli_type == 'GROUP':
+            grp = obj.dupli_group
+            grpFilename = sOptions.objectsPath+"/"+GetGroupName(grp.name)+".xml"
+            m = AddGroupInstanceComponent(a,m,grpFilename,modelNode)
 
 
         if not isEmpty:
