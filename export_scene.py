@@ -46,6 +46,7 @@ class SOptions:
         self.orientation = Quaternion((1.0, 0.0, 0.0, 0.0))
         self.wiredAsEmpty = False
         self.exportGroupsAsObject = True
+        self.objectsPath = "Objects"
 
 
 class UrhoSceneMaterial:
@@ -464,7 +465,7 @@ def ExportUserdata(a,m,obj,modelNode):
 
     for ud in obj.user_data:
         if ud.key.lower() != "tag":
-            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "Variant")
+            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "variant")
             a["{:d}".format(m)].set("hash", str(SDBMHash(ud.key)))
             a["{:d}".format(m)].set("type", "String")
             a["{:d}".format(m)].set("value", ud.value)
@@ -651,15 +652,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 if not ud:
                     ud = obj.user_data.add()
                     ud.key="group__"
-                if not HasTag(obj,"groupInstance"):
+                ud.value = sOptions.objectsPath+"/"+GetGroupName(grp.name)+".xml"
+                
+                if not HasTag(obj,"groupInstance__"):
                     tag = obj.user_data.add()
                     tag.key="tag"
-                    tag.value="groupInstance"
+                    tag.value="groupInstance__"
                 
-                ud.value = GetGroupName(grp.name)
-                
-
-        
 
         # Generate XML Content
         k += 1

@@ -1687,6 +1687,7 @@ def ExecuteUrhoExport(context):
     sOptions.exportUserdata = settings.export_userdata
     sOptions.globalOrigin = tOptions.globalOrigin
     sOptions.orientation = tOptions.orientation
+    sOptions.objectsPath = settings.objectsPath
 
     fOptions.useSubDirs = settings.useSubDirs
     fOptions.fileOverwrite = settings.fileOverwrite
