@@ -84,7 +84,6 @@ class UrhoSceneModel:
         self.rotation = Quaternion((1.0, 0.0, 0.0, 0.0))
         # Model scale
         self.scale = Vector((1.0, 1.0, 1.0))
-
     def Load(self, uExportData, uModel, objectName, sOptions):
         self.name = uModel.name
 
@@ -92,8 +91,13 @@ class UrhoSceneModel:
         if objectName:
             object = bpy.data.objects[objectName]
 
+            transObject = object
+            if object.parent and object.parent.type=="ARMATURE":
+                print("FOUND PARENT Armature!")
+                transObject = object.parent
+
             # Get the local matrix (relative to parent)
-            objMatrix = object.matrix_local
+            objMatrix = transObject.matrix_local
             # Reorient (normally only root objects need to be re-oriented but 
             # here we need to undo the previous rotation done by DecomposeMesh)
             if sOptions.orientation:
@@ -110,7 +114,7 @@ class UrhoSceneModel:
             self.scale = Vector((scale.x, scale.z, scale.y))
 
             # Get parent object
-            parentObject = object.parent
+            parentObject = transObject.parent
             if parentObject :
                 self.parentObjectName = parentObject.name
 
@@ -683,7 +687,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
         # Parenting: make sure parented objects are child of this in xml as well
         print ( ("PARENT:%s type:%s") % (str(uSceneModel.parentObjectName),str(uSceneModel.type )))
-        if uSceneModel.type == "StaticModel" and uSceneModel.parentObjectName and (uSceneModel.parentObjectName in a):
+        if not isEmpty and uSceneModel.parentObjectName and (uSceneModel.parentObjectName in a):
             for usm in uScene.modelsList:
                 if usm.name == uSceneModel.parentObjectName:
                     a[modelNode] = ET.SubElement(a[usm.name], "node")
