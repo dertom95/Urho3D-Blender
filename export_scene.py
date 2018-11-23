@@ -554,14 +554,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         a["{:d}".format(m+1)].set("type", "DebugRenderer")
         a["{:d}".format(m+1)].set("id", "2")
 
-        a["{:d}".format(m+2)] = ET.SubElement(sceneRoot, "component")
-        a["{:d}".format(m+2)].set("type", "Light")
-        a["{:d}".format(m+2)].set("id", "3")
-
-        a["{:d}".format(m+3)] = ET.SubElement(a["{:d}".format(m+2)], "attribute")
-        a["{:d}".format(m+3)].set("name", "Light Type")
-        a["{:d}".format(m+3)].set("value", "Directional")
-        m += 4
+        m += 2
 
         if not sOptions.noPhysics:
             a["{:d}".format(m)] = ET.SubElement(sceneRoot, "component")
@@ -579,6 +572,21 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     a["{:d}".format(m)] = ET.SubElement(root, "attribute")
     a["{:d}".format(m)].set("name", "Name")
     a["{:d}".format(m)].set("value", uScene.blenderSceneName)
+
+    a["lightnode"] = ET.SubElement(root, "node")
+
+    a["{:d}".format(m+2)] = ET.SubElement(a["lightnode"], "component")
+    a["{:d}".format(m+2)].set("type", "Light")
+    a["{:d}".format(m+2)].set("id", "3")
+
+    a["{:d}".format(m+3)] = ET.SubElement(a["{:d}".format(m+2)], "attribute")
+    a["{:d}".format(m+3)].set("name", "Light Type")
+    a["{:d}".format(m+3)].set("value", "Directional")
+
+    a["{:d}".format(m+4)] = ET.SubElement(a["lightnode"], "attribute")
+    a["{:d}".format(m+4)].set("name", "Rotation")
+    a["{:d}".format(m+4)].set("value", "0.884784 0.399593 0.239756 -0")
+
 
     # Create physics stuff for the root node
     if sOptions.globalPhysics:
