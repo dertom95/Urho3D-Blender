@@ -286,3 +286,9 @@ def SDBMHash(key):
     for i in range(len(key)):
         hash = ord(key[i]) + (hash << 6) + (hash << 16) - hash
     return (hash & 0xFFFFFFFF)
+
+def IsJsonNodeAddonAvailable():
+    #jsonNodetreeAvailable = False
+    #log = logging.getLogger("ExportLogger")
+    jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.user_preferences.addons.keys()
+    return jsonNodetreeAvailable

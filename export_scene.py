@@ -519,6 +519,24 @@ def HasTag(obj,tagName):
             return True
     return False
 
+def ProcessNodetreeMaterial(obj):
+    if obj.materialNodetreeName=="":
+        print("No materialnodetree on obj:"+obj.name)
+        return None
+
+    materialNT = bpy.data.node_groups[obj.materialNodetreeName]
+
+    if materialNT.id_data.bl_idname!="urho3dmaterials":
+        print("Using invalid material-nodetree:"+obj.materialNodetreeName+" on "+obj.name)
+        return None
+
+    for node in materialNT.nodes:
+        if node.bl_idname=="urho3dmaterials__materialNode":
+            return node.prop_Material
+    
+    print("Using invalid material-nodetree:"+obj.materialNodetreeName+" on "+obj.name)
+
+    return None
 
 
 # Export scene and nodes
@@ -670,9 +688,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
             # Gather materials
             materials = ""
-            for uSceneMaterial in uSceneModel.materialsList:
-                file = uScene.FindFile(PathType.MATERIALS, uSceneMaterial.name)
-                materials += ";" + file
+            if jsonNodetreeAvailable and obj.materialNodetreeName!="":
+                materialNT = ProcessNodetreeMaterial(obj)
+                if materialNT: # could we get an urho3d-materialfile corresponding to the material-tree?
+                    materials = ";"+materialNT
+            
+            if materials == "": # not processed via materialnodes,yet? use the default way
+                for uSceneMaterial in uSceneModel.materialsList:
+                    file = uScene.FindFile(PathType.MATERIALS, uSceneMaterial.name)
+                    materials += ";" + file
         # elif sOptions.exportGroupsAsObject:
         #     if obj.dupli_type == 'GROUP':
         #         grp = obj.dupli_group

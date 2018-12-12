@@ -46,7 +46,7 @@ from .decompose import TOptions, Scan
 from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, UrhoWriteAnimation, \
                          UrhoWriteTriggers, UrhoExport
 from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterial, UrhoWriteMaterialsList
-from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem
+from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable
 if DEBUG: from .testing import PrintUrhoData, PrintAll
 
 import os
@@ -55,6 +55,9 @@ import sys
 import shutil
 import logging
 import subprocess
+
+if IsJsonNodeAddonAvailable():
+    import JSONNodetreeUtils    
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
@@ -1478,6 +1481,28 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.prop(settings, "shape")
             row.label("", icon='GROUP')
 
+class UrhoExportNodetreePanel(bpy.types.Panel):
+    bl_space_type = 'NODE_EDITOR'
+    bl_region_type = 'UI'
+    bl_label = "Urho3d-Nodetree"
+#    bl_options = {'HIDE_HEADER'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        if bpy.context.active_object:
+            layout = self.layout
+            box = layout.box()
+            row = box.label("Object-Nodetrees")
+
+            row = box.row()
+            row.prop_search(bpy.context.active_object,"materialNodetreeName",bpy.data,"node_groups","Material")
+            row = box.row()
+            row.prop_search(bpy.context.active_object,"nodetreeName",bpy.data,"node_groups","Component")
+
+
 
 #--------------------
 # Handlers
@@ -1511,6 +1536,35 @@ def PostSave(dummy):
 addon_keymaps = []
 
 def register():
+        # property hooks:
+    def updateMaterialTreeName(self,ctx):
+        if self.materialTreeId!=-1:
+            ctx.space_data.node_tree = JSONNodetreeUtils.getNodetreeById(self.materialTreeId)
+        else:
+            ctx.space_data.node_tree = None
+
+    def getMaterialTreeName(self):
+        # print("get")
+        if self.materialTreeId == -1:
+            #print("No nodetree(%s)" % self.name)
+            return ""
+        
+        nodetree = JSONNodetreeUtils.getNodetreeById(self.materialTreeId)
+        if nodetree:
+            return nodetree.name
+        else:
+            return ""
+
+    def setMaterialTreeName(self,value):
+        if value == "":
+            #print("RESETID")
+            self.materialTreeId = -1
+        else:
+            #print("set %s=%s" % (self.name, str(value) ))
+            nodetree = bpy.data.node_groups[value]
+            self.materialTreeId = JSONNodetreeUtils.getID(nodetree)
+            #print("assigned ID %s" % getID(nodetree))
+            
     if DEBUG: print("Urho export register")
     
     #bpy.utils.register_module(__name__)
@@ -1536,6 +1590,11 @@ def register():
     bpy.types.Scene.urho_exportsettings = bpy.props.PointerProperty(type=UrhoExportSettings)
     bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
     bpy.types.Object.list_index = IntProperty(name = "Index for key value list",default = 0)
+    if IsJsonNodeAddonAvailable():
+        bpy.types.Object.materialTreeId = bpy.props.IntProperty(default=-1)
+        bpy.types.Object.materialNodetreeName=bpy.props.StringProperty(get=getMaterialTreeName,set=setMaterialTreeName,update=updateMaterialTreeName)
+        bpy.utils.register_class(UrhoExportNodetreePanel)
+
     #bpy.context.user_preferences.filepaths.use_relative_paths = False
     
     if not PostLoad in bpy.app.handlers.load_post:
@@ -1560,6 +1619,8 @@ def register():
 # delete only objects created with register(), do not delete global objects as they will not be
 # created re-enabling the addon.
 # __init__.py is re-executed pressing F8 or randomly(?) enabling the addon.
+
+
 
 # Called when the addon is disabled. Here we remove our UI classes.
 def unregister():
@@ -1592,6 +1653,12 @@ def unregister():
     del bpy.types.Scene.urho_exportsettings
     del bpy.types.Object.user_data
     
+    if IsJsonNodeAddonAvailable():
+        bpy.utils.unregister_class(UrhoExportNodetreePanel)
+        del bpy.types.Object.materialNodetreeName
+        del bpy.types.Object.materialTreeId
+
+
     if PostLoad in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(PostLoad)
     if PostSave in bpy.app.handlers.save_post:
