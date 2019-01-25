@@ -728,7 +728,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             if not ObjInGroup(obj):
                 print("not in group:"+obj.name)
                 a[modelNode] = ET.SubElement(root, "node")
-                parentObjects.append({'xml':a[modelNode],'uSceneModel':uSceneModel})
+                if not uSceneModel.parentObjectName:
+                    parentObjects.append({'xml':a[modelNode],'uSceneModel':uSceneModel})
             else:
                 print("FOUND GROUP OBJ:%s",obj.name)
                 group = groupObjMapping[obj.name]

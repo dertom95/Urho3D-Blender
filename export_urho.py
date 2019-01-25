@@ -466,6 +466,8 @@ class UrhoMaterial:
         self.psdefines = ""
         # Shader VS defines
         self.vsdefines = ""
+        # Is the techniquename acquired via blender-node?
+        self.nodesTechnique = False
 
     def getTextures(self):
         return  (
