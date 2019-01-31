@@ -587,6 +587,13 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
                     maxlen = 512,
                     default = "",
                     subtype='FILE_PATH')
+
+    runtimeFlags = bpy.props.StringProperty(
+                    name="runtime flags",
+                    description="Runtime Flags that get passed to the 'runtimeflags' argument and can be processed in your runtime",
+                    maxlen = 512,
+                    default = "")                    
+
     # --- Output settings ---
     
     outputPath = StringProperty(
@@ -1135,12 +1142,23 @@ class UrhoExportStartRuntime(bpy.types.Operator):
             execpath = pwd + os.sep + execpath
 
         workingdir = bpy.path.abspath(settings.runtimeWorkingDir)
+
+        processParams = []
+        processParams.append(execpath)
+        if workingdir != "":
+            processParams.append("--workingdir")
+            processParams.append(workingdir)
+
+        processParams.append("--scenename")
+        processParams.append(bpy.context.scene.name+".xml")
+        
+##        parameters = " --workdir "+workingdir
         print("EXEC-DIR: %s" % execpath)
         print("WORKING-DIR: %s" % workingdir)
 
         # launch game
         try:
-            subp = subprocess.Popen(execpath, cwd=workingdir, shell=False)
+            subp = subprocess.Popen(processParams,  shell=False)
             if settings.runtimeBlocking:
                 subp.communicate() #like wait() but without the risk of deadlock with verbose output
             returnv = subp.returncode
@@ -1236,9 +1254,11 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         if (settings.useRuntime):
             box = layout.box()
             row = box.row()
-            row.prop(settings,"runtimeWorkingDir")
-            row = box.row()
             row.prop(settings,"runtimeFile")
+            row = box.row()
+            row.prop(settings,"runtimeWorkingDir",text="additional resource-dir")
+            row = box.row()
+            row.prop(settings,"runtimeFlags")            
             row = box.row()
             row.prop(settings,"runtimeBlocking")
             row = box.row()
@@ -1594,6 +1614,8 @@ def register():
         bpy.types.Object.materialTreeId = bpy.props.IntProperty(default=-1)
         bpy.types.Object.materialNodetreeName=bpy.props.StringProperty(get=getMaterialTreeName,set=setMaterialTreeName,update=updateMaterialTreeName)
         bpy.utils.register_class(UrhoExportNodetreePanel)
+
+    
 
     #bpy.context.user_preferences.filepaths.use_relative_paths = False
     
