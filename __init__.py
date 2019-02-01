@@ -592,7 +592,14 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
                     name="runtime flags",
                     description="Runtime Flags that get passed to the 'runtimeflags' argument and can be processed in your runtime",
                     maxlen = 512,
-                    default = "")                    
+                    default = "")
+
+    runtimeExportComponents = bpy.props.StringProperty(
+                    name="component export file",
+                    description="Override component export-file (default: ./urho3d_components.json)",
+                    maxlen = 512,
+                    subtype = "FILE_PATH")   
+
 
     # --- Output settings ---
     
@@ -1149,13 +1156,18 @@ class UrhoExportStartRuntime(bpy.types.Operator):
             processParams.append("--workingdir")
             processParams.append(workingdir)
 
+        exportComponentPath = settings.runtimeExportComponents
+        if exportComponentPath != "":
+            processParams.append("--componentexport")
+            processParams.append(exportComponentPath)
+
         processParams.append("--scenename")
         processParams.append(bpy.context.scene.name+".xml")
         
 ##        parameters = " --workdir "+workingdir
         print("EXEC-DIR: %s" % execpath)
         print("WORKING-DIR: %s" % workingdir)
-
+        print("PARAMS:%s" % processParams)
         # launch game
         try:
             subp = subprocess.Popen(processParams,  shell=False)
@@ -1259,6 +1271,8 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.prop(settings,"runtimeWorkingDir",text="additional resource-dir")
             row = box.row()
             row.prop(settings,"runtimeFlags")            
+            row = box.row()
+            row.prop(settings,"runtimeExportComponents")  
             row = box.row()
             row.prop(settings,"runtimeBlocking")
             row = box.row()
