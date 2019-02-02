@@ -350,10 +350,13 @@ def CreateNodeTreeXML(xmlroot,nodetreeID,nodeID):
             modelElem = ET.SubElement(bodyElem, "attribute")
             modelElem.set("name", prop["name"])
             value = prop["value"]
-            if prop["type"].startswith("vector"):
+            print ("Name:%s TYPE:%s StartVal:%s" % (prop["name"],prop["type"],prop["value"]) )
+            if prop["type"].startswith("vector") or prop["type"].startswith("color"):
+                print("VECTOR!")
                 value = value.replace("(","")
                 value = value.replace(")","")
                 value = value.replace(","," ")
+                print("V-Result:%s" % value)
 
             modelElem.set("value", value)
 
@@ -605,19 +608,19 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     a["{:d}".format(m)].set("name", "Name")
     a["{:d}".format(m)].set("value", uScene.blenderSceneName)
 
-    a["lightnode"] = ET.SubElement(root, "node")
+  #  a["lightnode"] = ET.SubElement(root, "node")
 
-    a["{:d}".format(m+2)] = ET.SubElement(a["lightnode"], "component")
-    a["{:d}".format(m+2)].set("type", "Light")
-    a["{:d}".format(m+2)].set("id", "3")
+  #  a["{:d}".format(m+2)] = ET.SubElement(a["lightnode"], "component")
+   # a["{:d}".format(m+2)].set("type", "Light")
+    #a["{:d}".format(m+2)].set("id", "3")
 
-    a["{:d}".format(m+3)] = ET.SubElement(a["{:d}".format(m+2)], "attribute")
-    a["{:d}".format(m+3)].set("name", "Light Type")
-    a["{:d}".format(m+3)].set("value", "Directional")
+#    a["{:d}".format(m+3)] = ET.SubElement(a["{:d}".format(m+2)], "attribute")
+#    a["{:d}".format(m+3)].set("name", "Light Type")
+#    a["{:d}".format(m+3)].set("value", "Directional")
 
-    a["{:d}".format(m+4)] = ET.SubElement(a["lightnode"], "attribute")
-    a["{:d}".format(m+4)].set("name", "Rotation")
-    a["{:d}".format(m+4)].set("value", "0.884784 0.399593 0.239756 -0")
+#    a["{:d}".format(m+4)] = ET.SubElement(a["lightnode"], "attribute")
+#    a["{:d}".format(m+4)].set("name", "Rotation")
+#    a["{:d}".format(m+4)].set("value", "0.884784 0.399593 0.239756 -0")
 
 
     # Create physics stuff for the root node
@@ -741,9 +744,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         else:
             if not ObjInGroup(obj):
                 print("not in group:"+obj.name)
-                a[modelNode] = ET.SubElement(root, "node")
                 if not uSceneModel.parentObjectName:
+                    a[modelNode] = ET.SubElement(root, "node")
                     parentObjects.append({'xml':a[modelNode],'uSceneModel':uSceneModel})
+                else:
+                    ## TODO: Check how to unify the whole parenting process. not sure about this "in a"-part from above
+                    for usm in uScene.modelsList:
+                        if usm.name == uSceneModel.parentObjectName:
+                            a[modelNode] = ET.SubElement(a[usm.name], "node")
+                            break                    
             else:
                 print("FOUND GROUP OBJ:%s",obj.name)
                 group = groupObjMapping[obj.name]
