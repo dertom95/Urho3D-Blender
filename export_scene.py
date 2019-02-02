@@ -918,12 +918,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 if CheckFilepath(filepath[0], fOptions):
                     log.info( "!!Creating prefab {:s}".format(filepath[1]) )
                     WriteXmlFile(model["xml"], filepath[0], fOptions)
-        if (sOptions.exportGroupsAsObject):
-            for grp in groups:
-                filepath = GetFilepath(PathType.OBJECTS, GetGroupName(grp["group"].name), fOptions)
-                if CheckFilepath(filepath[0], fOptions):
-                    log.info( "!!Creating group-prefab {:s}".format(filepath[1]) )
-                    WriteXmlFile(grp["xml"], filepath[0], fOptions)
+
+    if (sOptions.exportGroupsAsObject):
+        for grp in groups:
+            filepath = GetFilepath(PathType.OBJECTS, GetGroupName(grp["group"].name), fOptions)
+            if CheckFilepath(filepath[0], fOptions):
+                log.info( "!!Creating group-prefab {:s}".format(filepath[1]) )
+                WriteXmlFile(grp["xml"], filepath[0], fOptions)
 
     # Write collective and scene prefab files
     if not sOptions.mergeObjects:
