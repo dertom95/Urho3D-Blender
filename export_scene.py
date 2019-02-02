@@ -564,21 +564,35 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         sceneRoot = ET.Element('scene')
         sceneRoot.set("id", "1")
 
-        a["{:d}".format(m)] = ET.SubElement(sceneRoot, "component")
-        a["{:d}".format(m)].set("type", "Octree")
-        a["{:d}".format(m)].set("id", "1")
+        foundSceneNodeTree = False
+        try:
+            print("SCENETREE CHECK: %s %s %s" % ( jsonNodetreeAvailable, hasattr(blenderScene,"sceneTreeId"), blenderScene.sceneTreeId) )
+            if jsonNodetreeAvailable and hasattr(blenderScene,"sceneTreeId") and blenderScene.sceneTreeId!=-1:
+                # bypass nodeID and receive the new value
+                print("FOUND SCENE")
+                compoID = CreateNodeTreeXML(sceneRoot,blenderScene.sceneTreeId,compoID)
+                foundSceneNodeTree = True
+        except Exception as e:
+            log.error("Cannot export scene nodetree {:s} " % e)
+            log.critical("Couldn't export scene-nodetree. skipping nodetree and going on with default behaviour")
+            pass
 
-        a["{:d}".format(m+1)] = ET.SubElement(sceneRoot, "component")
-        a["{:d}".format(m+1)].set("type", "DebugRenderer")
-        a["{:d}".format(m+1)].set("id", "2")
-
-        m += 2
-
-        if not sOptions.noPhysics:
+        if not foundSceneNodeTree:
             a["{:d}".format(m)] = ET.SubElement(sceneRoot, "component")
-            a["{:d}".format(m)].set("type", "PhysicsWorld")
-            a["{:d}".format(m)].set("id", "4")
-            m += 1
+            a["{:d}".format(m)].set("type", "Octree")
+            a["{:d}".format(m)].set("id", "1")
+
+            a["{:d}".format(m+1)] = ET.SubElement(sceneRoot, "component")
+            a["{:d}".format(m+1)].set("type", "DebugRenderer")
+            a["{:d}".format(m+1)].set("id", "2")
+
+            m += 2
+
+            if not sOptions.noPhysics:
+                a["{:d}".format(m)] = ET.SubElement(sceneRoot, "component")
+                a["{:d}".format(m)].set("type", "PhysicsWorld")
+                a["{:d}".format(m)].set("id", "4")
+                m += 1
 
         # Create Root node
         root = ET.SubElement(sceneRoot, "node")

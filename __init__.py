@@ -1227,6 +1227,28 @@ class UrhoExportObjectPanel(bpy.types.Panel):
         #row.prop(object,"exportNoMesh",text="NO mesh-export for object")
 
 # The export panel, here we draw the panel using properties we have created earlier
+class UrhoExportScenePanel(bpy.types.Panel):
+    
+    bl_idname = "urho.exportscenepanel"
+    bl_label = "Urho export"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    #bl_options = {'DEFAULT_CLOSED'}
+    
+    # Draw the export panel
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+
+        box = layout.box()
+        row = box.label("Userdata")
+        row = box.row()
+        row.prop_search(bpy.context.scene,"sceneNodetreeName",bpy.data,"node_groups","Component")
+        
+
+
+# The export panel, here we draw the panel using properties we have created earlier
 class UrhoExportRenderPanel(bpy.types.Panel):
     
     bl_idname = "urho.exportrenderpanel"
@@ -1529,12 +1551,17 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
         if bpy.context.active_object:
             layout = self.layout
             box = layout.box()
-            row = box.label("Object-Nodetrees")
+            row = box.label("Nodetrees:")
 
-            row = box.row()
+            innerBox = box.box()
+            row = innerBox.row()
+            row.prop_search(bpy.context.scene,"sceneNodetreeName",bpy.data,"node_groups","Scene")
+
+            innerBox = box.box()
+            row = innerBox.row()
+            row.prop_search(bpy.context.active_object,"nodetreeName",bpy.data,"node_groups","Object")
+            row = innerBox.row()
             row.prop_search(bpy.context.active_object,"materialNodetreeName",bpy.data,"node_groups","Material")
-            row = box.row()
-            row.prop_search(bpy.context.active_object,"nodetreeName",bpy.data,"node_groups","Component")
 
 
 
@@ -1598,6 +1625,38 @@ def register():
             nodetree = bpy.data.node_groups[value]
             self.materialTreeId = JSONNodetreeUtils.getID(nodetree)
             #print("assigned ID %s" % getID(nodetree))
+
+
+    ## SCENE-Node-Tree
+
+        # property hooks:
+    def updateSceneTreeName(self,ctx):
+        if self.sceneTreeId!=-1:
+            ctx.space_data.node_tree = JSONNodetreeUtils.getNodetreeById(self.sceneTreeId)
+        else:
+            ctx.space_data.node_tree = None
+
+    def getSceneTreeName(self):
+        # print("get")
+        if self.sceneTreeId == -1:
+            #print("No nodetree(%s)" % self.name)
+            return ""
+        
+        nodetree = JSONNodetreeUtils.getNodetreeById(self.sceneTreeId)
+        if nodetree:
+            return nodetree.name
+        else:
+            return ""
+
+    def setSceneTreeName(self,value):
+        if value == "":
+            #print("RESETID")
+            self.sceneTreeId = -1
+        else:
+            #print("set %s=%s" % (self.name, str(value) ))
+            nodetree = bpy.data.node_groups[value]
+            self.sceneTreeId = JSONNodetreeUtils.getID(nodetree)
+            #print("assigned ID %s" % getID(nodetree))            
             
     if DEBUG: print("Urho export register")
     
@@ -1622,12 +1681,18 @@ def register():
     bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE)
 
     bpy.types.Scene.urho_exportsettings = bpy.props.PointerProperty(type=UrhoExportSettings)
+    bpy.types.Scene.sceneTreeId = bpy.props.IntProperty(default=-1)
+    bpy.types.Scene.sceneNodetreeName = bpy.props.StringProperty(get=getSceneTreeName,set=setSceneTreeName,update=updateSceneTreeName)
+
     bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
     bpy.types.Object.list_index = IntProperty(name = "Index for key value list",default = 0)
+    
     if IsJsonNodeAddonAvailable():
         bpy.types.Object.materialTreeId = bpy.props.IntProperty(default=-1)
         bpy.types.Object.materialNodetreeName=bpy.props.StringProperty(get=getMaterialTreeName,set=setMaterialTreeName,update=updateMaterialTreeName)
         bpy.utils.register_class(UrhoExportNodetreePanel)
+        bpy.utils.register_class(UrhoExportScenePanel)
+
 
     
 
@@ -1686,13 +1751,17 @@ def unregister():
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL)
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE)
     
+    
     del bpy.types.Scene.urho_exportsettings
     del bpy.types.Object.user_data
     
     if IsJsonNodeAddonAvailable():
         bpy.utils.unregister_class(UrhoExportNodetreePanel)
+        bpy.utils.unregister_class(UrhoExportScenePanel)
         del bpy.types.Object.materialNodetreeName
         del bpy.types.Object.materialTreeId
+        del bpy.types.Scene.sceneNodetreeName
+        del bpy.types.Object.sceneTreeId
 
 
     if PostLoad in bpy.app.handlers.load_post:
