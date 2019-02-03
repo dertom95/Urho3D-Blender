@@ -911,9 +911,17 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
                     compoID += 2
         else:
-            if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and obj.nodetreeId!=-1:
-                # bypass nodeID and receive the new value
-                compoID = CreateNodeTreeXML(a[modelNode],obj.nodetreeId,compoID)
+            if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and len(obj.nodetrees)>0:
+                handledNodetreeIDS = []
+                
+                for nodetreeSlot in obj.nodetrees:
+                    handleId = nodetreeSlot.nodetreeId
+                    if (handleId not in handledNodetreeIDS):
+                        compoID = CreateNodeTreeXML(a[modelNode],nodetreeSlot.nodetreeId,compoID)
+                        handledNodetreeIDS.append(handleId)
+                    else:
+                        # we already added this nodetree! nothing more to do
+                        pass
 
         # Write individual prefabs
         if sOptions.doIndividualPrefab and not sOptions.individualPrefab_onlyRootObject:
