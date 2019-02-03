@@ -825,9 +825,19 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
             finishedNodeTree = False
             try:
-                if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and obj.nodetreeId!=-1:
-                    # bypass nodeID and receive the new value
-                    compoID = CreateNodeTreeXML(a[modelNode],obj.nodetreeId,compoID)
+                if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and len(obj.nodetrees)>0:
+                    # keep track of already exported nodetrees to prevent one nodetree added multiple times
+                    # TODO: prevent inconsistend data in the first place
+                    handledNodetreeIDS = []
+                    
+                    for nodetreeSlot in obj.nodetrees:
+                        handleId = nodetreeSlot.nodetreeId
+                        if (handleId not in handledNodetreeIDS):
+                            compoID = CreateNodeTreeXML(a[modelNode],nodetreeSlot.nodetreeId,compoID)
+                            handledNodetreeIDS.append(handleId)
+                        else:
+                            # we already added this nodetree! nothing more to do
+                            pass
                     finishedNodeTree = True
             except:
                 log.critical("Couldn't export nodetree. skipping nodetree and going on with default behaviour")

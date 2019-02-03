@@ -214,11 +214,14 @@ class UrhoAddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "reportWidth")
         row.prop(self, "maxMessagesCount")
 
+##############################################
+##              USER-DATA-LIST
+##############################################
 class KeyValue(bpy.types.PropertyGroup):
     key = bpy.props.StringProperty(name="key")
     value = bpy.props.StringProperty(name="value")
 
-class UL_URHO_LIST_KEYVALUE(bpy.types.UIList):
+class UL_URHO_LIST_USERDATA(bpy.types.UIList):
     """KeyValue UIList."""
 
     def draw_item(self, context, layout, data, item, icon, active_data,active_propname, index):
@@ -239,7 +242,7 @@ class UL_URHO_LIST_KEYVALUE(bpy.types.UIList):
             layout.label("", icon = custom_icon)
 
 
-class UL_URHO_LIST_ITEM(bpy.types.Operator):
+class UL_URHO_LIST_ITEM_USERDATA(bpy.types.Operator):
     """Add a new item to the list."""
 
     bl_idname = "urho_keyvalue.new_item"
@@ -251,7 +254,7 @@ class UL_URHO_LIST_ITEM(bpy.types.Operator):
         return{'FINISHED'}
 
 
-class UL_URHO_LIST_ITEM_DEL(bpy.types.Operator):
+class UL_URHO_LIST_ITEM_DEL_USERDATA(bpy.types.Operator):
     """Delete the selected item from the list."""
 
     bl_idname = "urho_keyvalue.delete_item"
@@ -263,15 +266,15 @@ class UL_URHO_LIST_ITEM_DEL(bpy.types.Operator):
 
     def execute(self, context):
         kv_list = context.active_object.user_data
-        index = context.active_object.list_index
+        index = context.active_object.list_index_userdata
 
         kv_list.remove(index)
-        context.active_object.list_index = min(max(0, index - 1), len(kv_list) - 1)
+        context.active_object.list_index_userdata = min(max(0, index - 1), len(kv_list) - 1)
 
         return{'FINISHED'}
 
 
-class UL_URHO_LIST_ITEM_MOVE(bpy.types.Operator):
+class UL_URHO_LIST_ITEM_MOVE_USERDATA(bpy.types.Operator):
     """Move an item in the list."""
 
     bl_idname = "urho_keyvalue.move_item"
@@ -287,15 +290,15 @@ class UL_URHO_LIST_ITEM_MOVE(bpy.types.Operator):
     def move_index(self):
         """ Move  """
 
-        index = bpy.context.active_object.list_index
+        index = bpy.context.active_object.list_index_userdata
         list_length = len(bpy.context.active_object.user_data) - 1  # (index starts at 0)
         new_index = index + (-1 if self.direction == 'UP' else 1)
 
-        bpy.context.active_object.list_index = max(0, min(new_index, list_length))
+        bpy.context.active_object.list_index_userdata = max(0, min(new_index, list_length))
 
     def execute(self, context):
         kv_list = context.active_object.user_data
-        index = context.active_object.list_index
+        index = context.active_object.list_index_userdata
 
         neighbor = index + (-1 if self.direction == 'UP' else 1)
         kv_list.move(neighbor, index)
@@ -303,6 +306,105 @@ class UL_URHO_LIST_ITEM_MOVE(bpy.types.Operator):
 
         return{'FINISHED'}
 
+##############################################
+##              LIST - NODETREES
+##############################################
+##TODO: Try to unify the list handling (userdata,nodetree) 
+
+class NodetreeInfo(bpy.types.PropertyGroup):
+    import addon_jsonnodetree
+    nodetreeId = bpy.props.IntProperty(name="nodetreeId",default=-1)
+    nodetreeName = bpy.props.StringProperty(name="nodetreeName",get=addon_jsonnodetree.getNodetreeName,set=addon_jsonnodetree.setNodetreeName,update=addon_jsonnodetree.updateNodetreeName)
+
+class UL_URHO_LIST_NODETREE(bpy.types.UIList):
+    """KeyValue UIList."""
+
+    def draw_item(self, context, layout, data, item, icon, active_data,active_propname, index):
+
+        # We could write some code to decide which icon to use here...
+        #if item.key.lower()=="tag":
+        #    custom_icon = 'INLINK'
+        #else:
+        #    custom_icon = 'TEXT'
+        
+        custom_icon = 'TEXT'
+        # Make sure your code supports all 3 layout types
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.label(item.nodetreeName, icon = custom_icon)
+
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label("", icon = custom_icon)
+
+
+class UL_URHO_LIST_ITEM_NODETREE(bpy.types.Operator):
+    """Add a new item to the list."""
+
+    bl_idname = "urho_nodetrees.new_item"
+    bl_label = "Add a new item"
+
+    def execute(self, context):
+        context.active_object.nodetrees.add()
+
+        return{'FINISHED'}
+
+
+class UL_URHO_LIST_ITEM_DEL_NODETREE(bpy.types.Operator):
+    """Delete the selected item from the list."""
+
+    bl_idname = "urho_nodetrees.delete_item"
+    bl_label = "Deletes an item"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object.nodetrees
+
+    def execute(self, context):
+        currentlist = context.active_object.nodetrees
+        index = context.active_object.list_index_nodetrees
+
+        currentlist.remove(index)
+        context.active_object.list_index_nodetrees = min(max(0, index - 1), len(currentlist) - 1)
+
+        return{'FINISHED'}
+
+
+class UL_URHO_LIST_ITEM_MOVE_NODETREE(bpy.types.Operator):
+    """Move an item in the list."""
+
+    bl_idname = "urho_nodetrees.move_item"
+    bl_label = "Move an item in the list"
+
+    direction = bpy.props.EnumProperty(items=(('UP', 'Up', ""),
+                                              ('DOWN', 'Down', ""),))
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object.nodetrees
+
+    def move_index(self):
+        """ Move  """
+
+        index = bpy.context.active_object.list_index_nodetrees
+        list_length = len(bpy.context.active_object.nodetrees) - 1  # (index starts at 0)
+        new_index = index + (-1 if self.direction == 'UP' else 1)
+
+        bpy.context.active_object.list_index_nodetrees = max(0, min(new_index, list_length))
+
+    def execute(self, context):
+        currentlist = context.active_object.nodetrees
+        index = context.active_object.list_index_nodetrees
+
+        neighbor = index + (-1 if self.direction == 'UP' else 1)
+        currentlist.move(neighbor, index)
+        self.move_index()
+
+        return{'FINISHED'}
+
+
+##################################################
+##
+##################################################
 
 # Here we define all the UI objects to be added in the export panel
 class UrhoExportSettings(bpy.types.PropertyGroup):
@@ -1207,16 +1309,16 @@ class UrhoExportObjectPanel(bpy.types.Panel):
 
         box = layout.box()
         row = box.label("Userdata")
-        if obj.list_index >= 0 and obj.user_data:
-            item = obj.user_data[obj.list_index]
+        if obj.list_index_userdata >= 0 and obj.user_data:
+            item = obj.user_data[obj.list_index_userdata]
 
             row = box.row()
             row.prop(item, "key")
             row.prop(item, "value")
 
         row = box.row()
-        row.template_list("UL_URHO_LIST_KEYVALUE", "The_List", obj,
-                          "user_data", obj, "list_index")
+        row.template_list("UL_URHO_LIST_USERDATA", "The_List", obj,
+                          "user_data", obj, "list_index_userdata")
 
         row = box.row()
         row.operator('urho_keyvalue.new_item', text='NEW')
@@ -1549,6 +1651,8 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
 
     def draw(self, context):
         if bpy.context.active_object:
+            obj = bpy.context.active_object
+
             layout = self.layout
             box = layout.box()
             row = box.label("Nodetrees:")
@@ -1557,9 +1661,32 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             row = innerBox.row()
             row.prop_search(bpy.context.scene,"sceneNodetreeName",bpy.data,"node_groups","Scene")
 
-            innerBox = box.box()
-            row = innerBox.row()
-            row.prop_search(bpy.context.active_object,"nodetreeName",bpy.data,"node_groups","Object")
+            ## object's nodetree-managment
+            box = box.box()
+            row = box.label("Object Nodetrees")
+
+            row = layout.row()
+            row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object's first nodetree")
+
+            if obj.list_index_nodetrees >= 0 and obj.nodetrees:
+                item = obj.nodetrees[obj.list_index_nodetrees]
+
+                row = box.row()
+                row.prop_search(item,"nodetreeName",bpy.data,"node_groups","")
+
+            row = box.row()
+            row.template_list("UL_URHO_LIST_NODETREE", "The_List", obj,
+                            "nodetrees", obj, "list_index_nodetrees")
+
+            row = box.row()
+            row.operator('urho_nodetrees.new_item', text='NEW')
+            row.operator('urho_nodetrees.delete_item', text='REMOVE')
+            row.operator('urho_nodetrees.move_item', text='UP').direction = 'UP'
+            row.operator('urho_nodetrees.move_item', text='DOWN').direction = 'DOWN'
+            ####
+
+
+            
             row = innerBox.row()
             row.prop_search(bpy.context.active_object,"materialNodetreeName",bpy.data,"node_groups","Material")
 
@@ -1675,23 +1802,56 @@ def register():
     bpy.utils.register_class(UrhoReportDialog)
     bpy.utils.register_class(KeyValue)
     
-    bpy.utils.register_class(UL_URHO_LIST_KEYVALUE)
-    bpy.utils.register_class(UL_URHO_LIST_ITEM)
-    bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL)
-    bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE)
+    bpy.utils.register_class(UL_URHO_LIST_USERDATA)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_USERDATA)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_USERDATA)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_USERDATA)
 
     bpy.types.Scene.urho_exportsettings = bpy.props.PointerProperty(type=UrhoExportSettings)
     bpy.types.Scene.sceneTreeId = bpy.props.IntProperty(default=-1)
     bpy.types.Scene.sceneNodetreeName = bpy.props.StringProperty(get=getSceneTreeName,set=setSceneTreeName,update=updateSceneTreeName)
 
     bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
-    bpy.types.Object.list_index = IntProperty(name = "Index for key value list",default = 0)
+    bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
     
     if IsJsonNodeAddonAvailable():
         bpy.types.Object.materialTreeId = bpy.props.IntProperty(default=-1)
         bpy.types.Object.materialNodetreeName=bpy.props.StringProperty(get=getMaterialTreeName,set=setMaterialTreeName,update=updateMaterialTreeName)
         bpy.utils.register_class(UrhoExportNodetreePanel)
         bpy.utils.register_class(UrhoExportScenePanel)
+
+        bpy.utils.register_class(UL_URHO_LIST_NODETREE)
+        bpy.utils.register_class(UL_URHO_LIST_ITEM_NODETREE)
+        bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_NODETREE)
+        bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_NODETREE)
+        bpy.utils.register_class(NodetreeInfo)
+        bpy.types.Object.nodetrees = bpy.props.CollectionProperty(type=NodetreeInfo)
+        bpy.types.Object.list_index_nodetrees = IntProperty(name = "Index for nodetree list",default = 0)
+
+        try:
+            #print("Try to remove the default-nodetree-selector")
+            import addon_jsonnodetree
+            
+            def customAutoSelection(current_obj):
+                print("CUSTOM CHECK")
+                # check if we have at least one nodetree for this object
+                if bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree and len(current_obj.nodetrees)>0:
+                    try:
+                        autoNodetree = bpy.data.node_groups[current_obj.nodetrees[0].nodetreeName]
+                        return autoNodetree
+                    except:
+                        pass
+                # default behaviour
+                return None
+
+
+            JSONNodetreeUtils.overrideAutoNodetree = customAutoSelection
+            
+            #addon_jsonnodetree.unregisterSelectorPanel()
+            #bpy.utils.unregister_class(addon_jsonnodetree.NODE_PT_json_nodetree_select)
+            print("ok!")
+        except:
+            print("did not work")
 
 
     
@@ -1746,16 +1906,21 @@ def unregister():
         pass
 
     bpy.utils.unregister_class(UrhoReportDialog)
-    bpy.utils.unregister_class(UL_URHO_LIST_KEYVALUE)
-    bpy.utils.unregister_class(UL_URHO_LIST_ITEM)
-    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL)
-    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE)
+    bpy.utils.unregister_class(UL_URHO_LIST_USERDATA)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_USERDATA)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_USERDATA)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE_USERDATA)
     
     
     del bpy.types.Scene.urho_exportsettings
     del bpy.types.Object.user_data
     
     if IsJsonNodeAddonAvailable():
+        bpy.utils.unregister_class(UL_URHO_LIST_NODETREE)
+        bpy.utils.unregister_class(UL_URHO_LIST_ITEM_NODETREE)
+        bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_NODETREE)
+        bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE_NODETREE)
+
         bpy.utils.unregister_class(UrhoExportNodetreePanel)
         bpy.utils.unregister_class(UrhoExportScenePanel)
         del bpy.types.Object.materialNodetreeName
