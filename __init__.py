@@ -218,8 +218,8 @@ class UrhoAddonPreferences(bpy.types.AddonPreferences):
 ##              USER-DATA-LIST
 ##############################################
 class KeyValue(bpy.types.PropertyGroup):
-    key = bpy.props.StringProperty(name="key")
-    value = bpy.props.StringProperty(name="value")
+    key = bpy.props.StringProperty(name="key",default="key")
+    value = bpy.props.StringProperty(name="value",default="value")
 
 class UL_URHO_LIST_USERDATA(bpy.types.UIList):
     """KeyValue UIList."""
@@ -234,12 +234,33 @@ class UL_URHO_LIST_USERDATA(bpy.types.UIList):
 
         # Make sure your code supports all 3 layout types
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.label(item.key, icon = custom_icon)
-            layout.label(item.value)
+#            layout.label(item.key, icon = custom_icon)
+ #           layout.label(item.value)
+            layout.prop(item,"key",  icon=custom_icon,text="")
+            layout.prop(item,"value",text="")
 
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
             layout.label("", icon = custom_icon)
+
+
+BUTTON_MAPPING={}
+
+
+class UL_URHO_LIST_CREATE_GENERIC(bpy.types.Operator):
+    """Add a new item to the list."""
+
+    bl_idname = "urho_button.generic"
+    bl_label = "Add a new item"
+
+    typeName = bpy.props.StringProperty()
+    objectName = bpy.props.StringProperty(default="")
+
+    def execute(self, context):
+        global BUTTON_MAPPING
+        BUTTON_MAPPING[self.typeName](self,context)
+        return{'FINISHED'}
+
 
 
 class UL_URHO_LIST_ITEM_USERDATA(bpy.types.Operator):
@@ -320,18 +341,19 @@ class UL_URHO_LIST_NODETREE(bpy.types.UIList):
     """KeyValue UIList."""
 
     def draw_item(self, context, layout, data, item, icon, active_data,active_propname, index):
-
-        # We could write some code to decide which icon to use here...
-        #if item.key.lower()=="tag":
-        #    custom_icon = 'INLINK'
-        #else:
-        #    custom_icon = 'TEXT'
-        
-        custom_icon = 'TEXT'
+        custom_icon = 'NODETREE'
         # Make sure your code supports all 3 layout types
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.label(item.nodetreeName, icon = custom_icon)
+            c = layout.column()
+            row = c.row()
+            split = row.split(percentage=0.05)
+            c = split.column()
+            c.label("")
 
+            split = split.split()
+            c= split.column()
+            #layout.label(item.nodetreeName, icon = custom_icon)
+            c.prop_search(item,"nodetreeName",bpy.data,"node_groups","")
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
             layout.label("", icon = custom_icon)
@@ -402,9 +424,201 @@ class UL_URHO_LIST_ITEM_MOVE_NODETREE(bpy.types.Operator):
         return{'FINISHED'}
 
 
+##############################################
+##              LIST - LODS
+##############################################
+##TODO: Try to unify the list handling (userdata,nodetree,lods) 
+
+def nextLodSetIDX():
+    newIDX = bpy.data.worlds[0].lodset_counter + 1
+    bpy.data.worlds[0].lodset_counter = newIDX
+    return newIDX
+
+# button-logic used within the generic-button
+def OpCreateLodSet(self,context):
+    lodset = bpy.data.worlds[0].lodsets.add()
+    lodset.lodset_id = nextLodSetIDX()
+    lodset.name="new-lodset "+str(lodset.lodset_id)
+
+BUTTON_MAPPING["create_lodset"]=OpCreateLodSet
+
+## make sure to keep the lodsetID to set selected object
+def getLodSetWithID(id):
+    for lodset in bpy.data.worlds[0].lodsets:
+        if lodset.lodset_id == id: # good that I'm so consistent with my name *#%&
+            return lodset
+    return None
+
+def getLodSetName(self):
+    # print("get")
+    if self.lodsetID == -1:
+        return ""
+
+    lodset = getLodSetWithID(self.lodsetID)
+
+    if lodset:
+        return lodset.name
+    else:
+        return ""
+
+def setLodSetName(self,value):
+    if value == "":
+        #print("RESETID")
+        self.lodsetID = -1
+    else:
+        #print("set %s=%s" % (self.name, str(value) ))
+        for lodset in bpy.data.worlds[0].lodsets:
+            if lodset.name == value:
+                self.lodsetID = lodset.lodset_id
+                return
+
+        self.lodsetID = -1
+        #print("assigned ID %s" % getID(nodetree))            
+            
+def updateLodSetName(self,ctx):
+    pass
+## make sure the actual name of the lodset is unique
+def lodsetNameExists(name):
+    for lodset in bpy.data.worlds[0].lodsets:
+        if lodset.name == name:
+            return True
+    return False
+
+def getLodSetDataName(self):
+    return self.name
+
+def setLodSetDataName(self,value):
+    while lodsetNameExists(value):
+        value = value + "_"
+    self.lodset_name = value
+
+
+class LODData(bpy.types.PropertyGroup):
+    meshName = bpy.props.StringProperty(name="meshName")
+    distance = bpy.props.FloatProperty(name="distance")
+
+class LODSet(bpy.types.PropertyGroup):
+    lodset_id = bpy.props.IntProperty()
+    name = bpy.props.StringProperty(default="lodset")
+    lodset_name = bpy.props.StringProperty(default="lodset",get=getLodSetDataName,set=setLodSetDataName)
+    lods = bpy.props.CollectionProperty(type=LODData)
+    lods_idx = bpy.props.IntProperty()
+
+class UL_LODSet(bpy.types.UIList):
+    """LODSet List"""
+
+    def draw_item(self, context, layout, data, item, icon, active_data,active_propname, index):
+        
+        custom_icon = 'MESH'
+        # Make sure your code supports all 3 layout types
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.label(item,"lodset_Name")
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label(item,"lodset_Name")
+
+
+class UL_URHO_LIST_LOD(bpy.types.UIList):
+    """LOD UIList."""
+
+    def draw_item(self, context, layout, data, item, icon, active_data,active_propname, index):
+
+        # We could write some code to decide which icon to use here...
+        #if item.key.lower()=="tag":
+        #    custom_icon = 'INLINK'
+        #else:
+        #    custom_icon = 'TEXT'
+        
+        custom_icon = 'MESH'
+        # Make sure your code supports all 3 layout types
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.prop_search(item,"meshName",bpy.data,"meshes","Mesh")
+            layout.prop(item,"distance")
+            layout.operator("urho.selectmesh",icon="RESTRICT_SELECT_OFF",text="").meshname=item.meshName
+
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label("", icon = custom_icon)
+
+
+class UL_URHO_LIST_ITEM_LOD(bpy.types.Operator):
+    """Add a new item to the list."""
+
+    bl_idname = "urho_lod.new_item"
+    bl_label = "Add a new item"
+
+    def execute(self, context):
+        lodset = getLodSetWithID(context.active_object.lodsetID)
+        
+        if lodset:
+            lodset.lods.add()
+        else:
+            pass
+
+        return{'FINISHED'}
+
+
+class UL_URHO_LIST_ITEM_DEL_LOD(bpy.types.Operator):
+    """Delete the selected item from the list."""
+
+    bl_idname = "urho_lod.delete_item"
+    bl_label = "Deletes an item"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object.lodsetID
+
+    def execute(self, context):
+        lodset = getLodSetWithID(context.active_object.lodsetID)
+        currentlist = lodset.lods
+        index = lodset.lods_idx
+
+        currentlist.remove(index)
+        lodset.lods_idx = min(max(0, index - 1), len(currentlist) - 1)
+
+        return{'FINISHED'}
+
+
+class UL_URHO_LIST_ITEM_MOVE_LOD(bpy.types.Operator):
+    """Move an item in the list."""
+
+    bl_idname = "urho_lod.move_item"
+    bl_label = "Move an item in the list"
+
+    direction = bpy.props.EnumProperty(items=(('UP', 'Up', ""),
+                                              ('DOWN', 'Down', ""),))
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object.lodsetID
+
+    def move_index(self):
+        """ Move  """
+
+        lodset = getLodSetWithID(bpy.context.active_object.lodsetID)
+        index = lodset.lods_idx
+        currentlist = lodset.lods
+        list_length = len(currentlist) - 1  # (index starts at 0)
+        new_index = index + (-1 if self.direction == 'UP' else 1)
+
+        lodset.lods_idx = max(0, min(new_index, list_length))
+
+    def execute(self, context):
+        lodset = getLodSetWithID(bpy.context.active_object.lodsetID)
+        currentlist = lodset.lods
+        index = lodset.lods_idx
+
+        neighbor = index + (-1 if self.direction == 'UP' else 1)
+        currentlist.move(neighbor, index)
+        self.move_index()
+
+        return{'FINISHED'}
+
+
 ##################################################
 ##
 ##################################################
+
 
 # Here we define all the UI objects to be added in the export panel
 class UrhoExportSettings(bpy.types.PropertyGroup):
@@ -1230,6 +1444,22 @@ class UrhoExportCommandOperator(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
+class UrhoExportSelectLodMesh(bpy.types.Operator):
+    """ select mesh """
+
+    bl_idname = "urho.selectmesh"
+    bl_label = "Select mesh"
+  
+    meshname = bpy.props.StringProperty(default="")
+
+    def execute(self, context):
+        if self.meshname and self.meshname!="":
+            context.object.data=bpy.data.meshes[self.meshname]
+        return {'FINISHED'}
+ 
+    def invoke(self, context, event):
+        return self.execute(context)    
+
 # Start runtime
 class UrhoExportStartRuntime(bpy.types.Operator):
     ''' Start runtime '''
@@ -1309,13 +1539,6 @@ class UrhoExportObjectPanel(bpy.types.Panel):
 
         box = layout.box()
         row = box.label("Userdata")
-        if obj.list_index_userdata >= 0 and obj.user_data:
-            item = obj.user_data[obj.list_index_userdata]
-
-            row = box.row()
-            row.prop(item, "key")
-            row.prop(item, "value")
-
         row = box.row()
         row.template_list("UL_URHO_LIST_USERDATA", "The_List", obj,
                           "user_data", obj, "list_index_userdata")
@@ -1328,6 +1551,50 @@ class UrhoExportObjectPanel(bpy.types.Panel):
 
         #row.prop(object,"exportNoMesh",text="NO mesh-export for object")
 
+
+
+
+# The export panel, here we draw the panel using properties we have created earlier
+class UrhoExportMeshPanel(bpy.types.Panel):
+    
+    bl_idname = "urho.exportmeshpanel"
+    bl_label = "Urho export"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "data"
+    #bl_options = {'DEFAULT_CLOSED'}
+    
+    # Draw the export panel
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+        mesh = obj.data
+
+
+        box = layout.box()
+        row = box.row()
+
+
+        row.prop_search(obj,"lodsetName",bpy.data.worlds[0],"lodsets")
+        row = box.row()
+        row.operator("urho_button.generic",text="add").typeName="create_lodset"
+        
+        
+        
+        lodset = getLodSetWithID(obj.lodsetID)
+
+        row = box.row()
+        row = box.label("Lods")
+        row = box.row()
+        row.template_list("UL_URHO_LIST_LOD", "The_List", lodset,
+                          "lods", lodset, "lods_idx")
+
+        row = box.row()
+        row.operator('urho_lod.new_item', text='NEW')
+        row.operator('urho_lod.delete_item', text='REMOVE')
+        row.operator('urho_lod.move_item', text='UP').direction = 'UP'
+        row.operator('urho_lod.move_item', text='DOWN').direction = 'DOWN'
+        
 # The export panel, here we draw the panel using properties we have created earlier
 class UrhoExportScenePanel(bpy.types.Panel):
     
@@ -1347,7 +1614,6 @@ class UrhoExportScenePanel(bpy.types.Panel):
         row = box.label("Userdata")
         row = box.row()
         row.prop_search(bpy.context.scene,"sceneNodetreeName",bpy.data,"node_groups","Component")
-        
 
 
 # The export panel, here we draw the panel using properties we have created earlier
@@ -1668,12 +1934,6 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             row = layout.row()
             row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object's first nodetree")
 
-            if obj.list_index_nodetrees >= 0 and obj.nodetrees:
-                item = obj.nodetrees[obj.list_index_nodetrees]
-
-                row = box.row()
-                row.prop_search(item,"nodetreeName",bpy.data,"node_groups","")
-
             row = box.row()
             row.template_list("UL_URHO_LIST_NODETREE", "The_List", obj,
                             "nodetrees", obj, "list_index_nodetrees")
@@ -1785,13 +2045,17 @@ def register():
             self.sceneTreeId = JSONNodetreeUtils.getID(nodetree)
             #print("assigned ID %s" % getID(nodetree))            
             
+
     if DEBUG: print("Urho export register")
     
     #bpy.utils.register_module(__name__)
-        
+    
+
+
     bpy.utils.register_class(UrhoAddonPreferences)
     bpy.utils.register_class(UrhoExportSettings)
     bpy.utils.register_class(UrhoExportOperator)
+    bpy.utils.register_class(UrhoExportSelectLodMesh)
     bpy.utils.register_class(UrhoExportCommandOperator)
     bpy.utils.register_class(UrhoExportResetOperator)
     bpy.utils.register_class(UrhoExportResetPathsOperator)
@@ -1806,6 +2070,8 @@ def register():
     bpy.utils.register_class(UL_URHO_LIST_ITEM_USERDATA)
     bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_USERDATA)
     bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_USERDATA)
+    
+    bpy.utils.register_class(UL_URHO_LIST_CREATE_GENERIC)
 
     bpy.types.Scene.urho_exportsettings = bpy.props.PointerProperty(type=UrhoExportSettings)
     bpy.types.Scene.sceneTreeId = bpy.props.IntProperty(default=-1)
@@ -1814,6 +2080,22 @@ def register():
     bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
     bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
     
+    # lod
+    bpy.utils.register_class(LODData)
+    bpy.utils.register_class(LODSet)
+
+    bpy.types.Object.lodsetID = bpy.props.IntProperty()
+    bpy.types.Object.lodsetName = bpy.props.StringProperty(get=getLodSetName,set=setLodSetName,update=updateLodSetName)
+    bpy.types.World.lodsets=bpy.props.CollectionProperty(type=LODSet)
+    bpy.types.World.lodset_counter=bpy.props.IntProperty()
+
+    
+    bpy.utils.register_class(UL_URHO_LIST_LOD)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_LOD)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_LOD)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_LOD)    
+    bpy.utils.register_class(UrhoExportMeshPanel)
+
     if IsJsonNodeAddonAvailable():
         bpy.types.Object.materialTreeId = bpy.props.IntProperty(default=-1)
         bpy.types.Object.materialNodetreeName=bpy.props.StringProperty(get=getMaterialTreeName,set=setMaterialTreeName,update=updateMaterialTreeName)
@@ -1888,9 +2170,10 @@ def unregister():
     if DEBUG: print("Urho export unregister")
     
     #bpy.utils.unregister_module(__name__)
-    
+
     bpy.utils.unregister_class(UrhoAddonPreferences)
     bpy.utils.unregister_class(UrhoExportSettings)
+    bpy.utils.unregister_class(UrhoExportSelectLodMesh)
     bpy.utils.unregister_class(UrhoExportOperator)
     bpy.utils.unregister_class(UrhoExportCommandOperator)
     bpy.utils.unregister_class(UrhoExportResetOperator)
@@ -1905,12 +2188,22 @@ def unregister():
     except:
         pass
 
+    bpy.utils.unregister_class(UL_URHO_LIST_CREATE_GENERIC)
     bpy.utils.unregister_class(UrhoReportDialog)
     bpy.utils.unregister_class(UL_URHO_LIST_USERDATA)
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_USERDATA)
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_USERDATA)
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE_USERDATA)
     
+
+    bpy.utils.unregister_class(LODData)
+    bpy.utils.unregister_class(LODSet)
+    bpy.utils.unregister_class(UL_URHO_LIST_LOD)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_LOD)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_LOD)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE_LOD)
+    bpy.utils.unregister_class(UrhoExportMeshPanel)
+
     
     del bpy.types.Scene.urho_exportsettings
     del bpy.types.Object.user_data
@@ -1926,7 +2219,7 @@ def unregister():
         del bpy.types.Object.materialNodetreeName
         del bpy.types.Object.materialTreeId
         del bpy.types.Scene.sceneNodetreeName
-        del bpy.types.Object.sceneTreeId
+        del bpy.types.Scene.sceneTreeId
 
 
     if PostLoad in bpy.app.handlers.load_post:
