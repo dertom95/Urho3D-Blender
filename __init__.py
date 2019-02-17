@@ -214,6 +214,7 @@ class UrhoAddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "reportWidth")
         row.prop(self, "maxMessagesCount")
 
+
 ##############################################
 ##              USER-DATA-LIST
 ##############################################
@@ -429,6 +430,49 @@ class UL_URHO_LIST_ITEM_MOVE_NODETREE(bpy.types.Operator):
 ##############################################
 ##TODO: Try to unify the list handling (userdata,nodetree,lods) 
 
+def getMeshWithID(id):
+    if id==-1:
+        return None
+    for mesh in bpy.data.meshes:
+        if mesh.ID == id:
+            return mesh
+    return None
+
+def getMeshName(self):
+    # print("get")
+    if self.meshID == -1:
+        return ""
+
+    mesh = getMeshWithID(self.meshID)
+
+    if mesh:
+        return mesh.name
+    else:
+        return ""
+
+def setMeshName(self,value):
+    if value == "":
+        #print("RESETID")
+        self.meshID = -1
+    else:
+        #print("set %s=%s" % (self.name, str(value) ))
+        for mesh in bpy.data.meshes:
+            if mesh.name == value:
+                if mesh.ID == -1:
+                    newmesh_idx = bpy.data.worlds[0].meshid_counter + 1
+                    mesh.ID = newmesh_idx
+                    bpy.data.worlds[0].meshid_counter = newmesh_idx
+
+                self.meshID = mesh.ID
+                return
+
+        self.meshID = -1
+        #print("assigned ID %s" % getID(nodetree))            
+            
+def updateMeshName(self,ctx):
+    pass            
+
+
 def nextLodSetIDX():
     newIDX = bpy.data.worlds[0].lodset_counter + 1
     bpy.data.worlds[0].lodset_counter = newIDX
@@ -494,7 +538,8 @@ def setLodSetDataName(self,value):
 
 
 class LODData(bpy.types.PropertyGroup):
-    meshName = bpy.props.StringProperty(name="meshName")
+    meshName = bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)
+    meshID = bpy.props.IntProperty()
     distance = bpy.props.FloatProperty(name="distance")
 
 class LODSet(bpy.types.PropertyGroup):
@@ -2080,6 +2125,9 @@ def register():
     bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
     bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
     
+    bpy.types.Mesh.ID = bpy.props.IntProperty(default=-1)
+    #bpy.types.Mesh.IDNAME=bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)
+
     # lod
     bpy.utils.register_class(LODData)
     bpy.utils.register_class(LODSet)
@@ -2088,6 +2136,7 @@ def register():
     bpy.types.Object.lodsetName = bpy.props.StringProperty(get=getLodSetName,set=setLodSetName,update=updateLodSetName)
     bpy.types.World.lodsets=bpy.props.CollectionProperty(type=LODSet)
     bpy.types.World.lodset_counter=bpy.props.IntProperty()
+    bpy.types.World.meshid_counter=bpy.props.IntProperty()
 
     
     bpy.utils.register_class(UL_URHO_LIST_LOD)
