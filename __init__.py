@@ -472,6 +472,48 @@ def setMeshName(self,value):
 def updateMeshName(self,ctx):
     pass            
 
+## armature-id-handling
+def getArmatureWithID(id):
+    if id==-1:
+        return None
+    for arma in bpy.data.armatures:
+        if arma.ID == id:
+            return arma
+    return None
+
+def getArmatureName(self):
+    # print("get")
+    if self.armatureID == -1:
+        return ""
+
+    arma = getArmatureWithID(self.armatureID)
+
+    if arma:
+        return arma.name
+    else:
+        return ""
+
+def setArmatureName(self,value):
+    if value == "":
+        #print("RESETID")
+        self.armatureID = -1
+    else:
+        #print("set %s=%s" % (self.name, str(value) ))
+        for arma in bpy.data.armatures:
+            if arma.name == value:
+                if arma.ID == -1:
+                    newarma_idx = bpy.data.worlds[0].armaid_counter + 1
+                    arma.ID = newarma_idx
+                    bpy.data.worlds[0].armaid_counter = newarma_idx
+
+                self.armatureID = arma.ID
+                return
+
+        self.armatureID = -1
+        #print("assigned ID %s" % getID(nodetree))            
+            
+def updateArmatureName(self,ctx):
+    pass      
 
 def nextLodSetIDX():
     newIDX = bpy.data.worlds[0].lodset_counter + 1
@@ -536,11 +578,12 @@ def setLodSetDataName(self,value):
         value = value + "_"
     self.lodset_name = value
 
-
+## -- DATA OBJECTS --
 class LODData(bpy.types.PropertyGroup):
     meshName = bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)
     meshID = bpy.props.IntProperty()
     distance = bpy.props.FloatProperty(name="distance")
+    decimate = bpy.props.FloatProperty(name="decimateFactor",default=1.0)
 
 class LODSet(bpy.types.PropertyGroup):
     lodset_id = bpy.props.IntProperty()
@@ -548,7 +591,11 @@ class LODSet(bpy.types.PropertyGroup):
     lodset_name = bpy.props.StringProperty(default="lodset",get=getLodSetDataName,set=setLodSetDataName)
     lods = bpy.props.CollectionProperty(type=LODData)
     lods_idx = bpy.props.IntProperty()
+    armatureID = bpy.props.IntProperty(default=-1)
+    armatureName = bpy.props.StringProperty(get=getArmatureName,set=setArmatureName,update=updateArmatureName)
 
+
+## -- VISUALS --
 class UL_LODSet(bpy.types.UIList):
     """LODSet List"""
 
@@ -579,6 +626,7 @@ class UL_URHO_LIST_LOD(bpy.types.UIList):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             layout.prop_search(item,"meshName",bpy.data,"meshes","Mesh")
             layout.prop(item,"distance")
+            layout.prop(item,"decimate",text="")
             layout.operator("urho.selectmesh",icon="RESTRICT_SELECT_OFF",text="").meshname=item.meshName
 
         elif self.layout_type in {'GRID'}:
@@ -1635,6 +1683,8 @@ class UrhoExportMeshPanel(bpy.types.Panel):
                           "lods", lodset, "lods_idx")
 
         row = box.row()
+        row.prop_search(lodset,"armatureName",bpy.data,"armatures")
+        row = box.row()
         row.operator('urho_lod.new_item', text='NEW')
         row.operator('urho_lod.delete_item', text='REMOVE')
         row.operator('urho_lod.move_item', text='UP').direction = 'UP'
@@ -2125,6 +2175,7 @@ def register():
     bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
     bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
     
+    bpy.types.Armature.ID = bpy.props.IntProperty(default=-1)
     bpy.types.Mesh.ID = bpy.props.IntProperty(default=-1)
     #bpy.types.Mesh.IDNAME=bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)
 
@@ -2137,6 +2188,7 @@ def register():
     bpy.types.World.lodsets=bpy.props.CollectionProperty(type=LODSet)
     bpy.types.World.lodset_counter=bpy.props.IntProperty()
     bpy.types.World.meshid_counter=bpy.props.IntProperty()
+    bpy.types.World.armaid_counter=bpy.props.IntProperty()
 
     
     bpy.utils.register_class(UL_URHO_LIST_LOD)
