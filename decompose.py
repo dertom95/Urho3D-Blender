@@ -2349,7 +2349,8 @@ def Scan(context, tDataList, errorsMem, tOptions):
         # Only meshes
         if obj.type != 'MESH' and obj.type != 'EMPTY' :
             continue
-        
+
+      
         # Only not hidden
         if obj.hide and tOptions.ignoreHidden:
             continue
@@ -2492,9 +2493,13 @@ def Scan(context, tDataList, errorsMem, tOptions):
             DecomposeActions(scene, obj, tData, tOptions)
 
         # Decompose geometries
-        if tOptions.doGeometries:
+        if tOptions.doGeometries :
             savedValue = SetRestPosePosition(context, armatureObj)
-            DecomposeMesh(scene, obj, tData, tOptions, errorsMem)
+            if obj.lodsetID>0:
+                print("skip because of lodset")
+                continue    
+            else:
+                DecomposeMesh(scene, obj, tData, tOptions, errorsMem)
             RestorePosePosition(armatureObj, savedValue)
 
 #-----------------------------------------------------------------------------

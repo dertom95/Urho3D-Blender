@@ -46,7 +46,7 @@ from .decompose import TOptions, Scan
 from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, UrhoWriteAnimation, \
                          UrhoWriteTriggers, UrhoExport
 from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterial, UrhoWriteMaterialsList
-from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable
+from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable,getLodSetWithID,getObjectWithID
 if DEBUG: from .testing import PrintUrhoData, PrintAll
 
 import os
@@ -55,6 +55,9 @@ import sys
 import shutil
 import logging
 import subprocess
+
+# object-array to keep track of temporary objects created just for the export-process(like for the lodsets)
+tempObjects = []
 
 if IsJsonNodeAddonAvailable():
     import JSONNodetreeUtils    
@@ -430,96 +433,11 @@ class UL_URHO_LIST_ITEM_MOVE_NODETREE(bpy.types.Operator):
 ##############################################
 ##TODO: Try to unify the list handling (userdata,nodetree,lods) 
 
-def getMeshWithID(id):
-    if id==-1:
-        return None
-    for mesh in bpy.data.meshes:
-        if mesh.ID == id:
-            return mesh
-    return None
-
-def getMeshName(self):
-    # print("get")
-    if self.meshID == -1:
-        return ""
-
-    mesh = getMeshWithID(self.meshID)
-
-    if mesh:
-        return mesh.name
-    else:
-        return ""
-
-def setMeshName(self,value):
-    if value == "":
-        #print("RESETID")
-        self.meshID = -1
-    else:
-        #print("set %s=%s" % (self.name, str(value) ))
-        for mesh in bpy.data.meshes:
-            if mesh.name == value:
-                if mesh.ID == -1:
-                    newmesh_idx = bpy.data.worlds[0].meshid_counter + 1
-                    mesh.ID = newmesh_idx
-                    bpy.data.worlds[0].meshid_counter = newmesh_idx
-
-                self.meshID = mesh.ID
-                return
-
-        self.meshID = -1
-        #print("assigned ID %s" % getID(nodetree))            
-            
-def updateMeshName(self,ctx):
-    pass            
-
-## armature-id-handling
-def getArmatureWithID(id):
-    if id==-1:
-        return None
-    for arma in bpy.data.armatures:
-        if arma.ID == id:
-            return arma
-    return None
-
-def getArmatureName(self):
-    # print("get")
-    if self.armatureID == -1:
-        return ""
-
-    arma = getArmatureWithID(self.armatureID)
-
-    if arma:
-        return arma.name
-    else:
-        return ""
-
-def setArmatureName(self,value):
-    if value == "":
-        #print("RESETID")
-        self.armatureID = -1
-    else:
-        #print("set %s=%s" % (self.name, str(value) ))
-        for arma in bpy.data.armatures:
-            if arma.name == value:
-                if arma.ID == -1:
-                    newarma_idx = bpy.data.worlds[0].armaid_counter + 1
-                    arma.ID = newarma_idx
-                    bpy.data.worlds[0].armaid_counter = newarma_idx
-
-                self.armatureID = arma.ID
-                return
-
-        self.armatureID = -1
-        #print("assigned ID %s" % getID(nodetree))            
-            
-def updateArmatureName(self,ctx):
-    pass      
-
 def nextLodSetIDX():
-    newIDX = bpy.data.worlds[0].lodset_counter + 1
-    bpy.data.worlds[0].lodset_counter = newIDX
-    return newIDX
-
+    new_idx = bpy.data.worlds[0].lodset_counter + 1
+    bpy.data.worlds[0].lodset_counter = new_idx
+    return new_idx
+    
 # button-logic used within the generic-button
 def OpCreateLodSet(self,context):
     lodset = bpy.data.worlds[0].lodsets.add()
@@ -529,11 +447,7 @@ def OpCreateLodSet(self,context):
 BUTTON_MAPPING["create_lodset"]=OpCreateLodSet
 
 ## make sure to keep the lodsetID to set selected object
-def getLodSetWithID(id):
-    for lodset in bpy.data.worlds[0].lodsets:
-        if lodset.lodset_id == id: # good that I'm so consistent with my name *#%&
-            return lodset
-    return None
+
 
 def getLodSetName(self):
     # print("get")
@@ -580,10 +494,15 @@ def setLodSetDataName(self,value):
 
 ## -- DATA OBJECTS --
 class LODData(bpy.types.PropertyGroup):
-    meshName = bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)
-    meshID = bpy.props.IntProperty()
-    distance = bpy.props.FloatProperty(name="distance")
-    decimate = bpy.props.FloatProperty(name="decimateFactor",default=1.0)
+    #meshName = bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)
+    #meshID = bpy.props.IntProperty()
+    meshObj = bpy.props.PointerProperty(type=bpy.types.Mesh)
+    distance = bpy.props.IntProperty(name="distance")
+    decimate = bpy.props.FloatProperty(name="decimateFactor",default=1.0,precision=3,max=1.0,min=0.0)
+
+
+def armature_object_poll(self,object):
+    return object.type=="ARMATURE"
 
 class LODSet(bpy.types.PropertyGroup):
     lodset_id = bpy.props.IntProperty()
@@ -591,9 +510,8 @@ class LODSet(bpy.types.PropertyGroup):
     lodset_name = bpy.props.StringProperty(default="lodset",get=getLodSetDataName,set=setLodSetDataName)
     lods = bpy.props.CollectionProperty(type=LODData)
     lods_idx = bpy.props.IntProperty()
-    armatureID = bpy.props.IntProperty(default=-1)
-    armatureName = bpy.props.StringProperty(get=getArmatureName,set=setArmatureName,update=updateArmatureName)
-
+    armatureObj =  bpy.props.PointerProperty(type=bpy.types.Object,poll=armature_object_poll)
+        
 
 ## -- VISUALS --
 class UL_LODSet(bpy.types.UIList):
@@ -624,10 +542,13 @@ class UL_URHO_LIST_LOD(bpy.types.UIList):
         custom_icon = 'MESH'
         # Make sure your code supports all 3 layout types
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.prop_search(item,"meshName",bpy.data,"meshes","Mesh")
+            #layout.prop_search(item,"meshName",bpy.data,"meshes","Mesh")
+            layout.prop(item,"meshObj")
             layout.prop(item,"distance")
+            ## todo: make this smaller
             layout.prop(item,"decimate",text="")
-            layout.operator("urho.selectmesh",icon="RESTRICT_SELECT_OFF",text="").meshname=item.meshName
+            if item.meshObj:
+                layout.operator("urho.selectmesh",icon="RESTRICT_SELECT_OFF",text="").meshname=item.meshObj.name
 
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
@@ -1683,7 +1604,7 @@ class UrhoExportMeshPanel(bpy.types.Panel):
                           "lods", lodset, "lods_idx")
 
         row = box.row()
-        row.prop_search(lodset,"armatureName",bpy.data,"armatures")
+        row.prop(lodset,"armatureObj")
         row = box.row()
         row.operator('urho_lod.new_item', text='NEW')
         row.operator('urho_lod.delete_item', text='REMOVE')
@@ -2175,7 +2096,6 @@ def register():
     bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
     bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
     
-    bpy.types.Armature.ID = bpy.props.IntProperty(default=-1)
     bpy.types.Mesh.ID = bpy.props.IntProperty(default=-1)
     #bpy.types.Mesh.IDNAME=bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)
 
@@ -2183,12 +2103,13 @@ def register():
     bpy.utils.register_class(LODData)
     bpy.utils.register_class(LODSet)
 
+    bpy.types.Object.ID = bpy.props.IntProperty(default=-1)
     bpy.types.Object.lodsetID = bpy.props.IntProperty()
     bpy.types.Object.lodsetName = bpy.props.StringProperty(get=getLodSetName,set=setLodSetName,update=updateLodSetName)
     bpy.types.World.lodsets=bpy.props.CollectionProperty(type=LODSet)
     bpy.types.World.lodset_counter=bpy.props.IntProperty()
     bpy.types.World.meshid_counter=bpy.props.IntProperty()
-    bpy.types.World.armaid_counter=bpy.props.IntProperty()
+    bpy.types.World.objid_counter=bpy.props.IntProperty()
 
     
     bpy.utils.register_class(UL_URHO_LIST_LOD)
@@ -2552,6 +2473,35 @@ def ExecuteUrhoExport(context):
     if tOptions.mergeObjects and not tOptions.globalOrigin:
         log.warning("To merge objects you should use Origin = Global")
 
+    # create dummy objects to each lodset
+    print("LODSETS:\n");
+    for lodset in bpy.data.worlds[0].lodsets:
+        firstLOD = True
+        for lod in lodset.lods:
+            if not lod.meshObj:
+                print("NO MESH for %s lod-distance:%s" % (lodset.name,lod.distance) );
+                continue
+            new_objname = "%s_LOD%s" % (lodset.name,str(lod.distance).zfill(3))
+            lodmesh = lod.meshObj
+            new_obj = bpy.data.objects.new(name=new_objname,object_data=lodmesh)
+            # check if this lodset has an armature set
+            if lodset.armatureObj and firstLOD:
+                # create an armature-modifier for the lod-export to export this arma as well
+                arma_mod = new_obj.modifiers.new(name="__lod_armature", type="ARMATURE")
+                
+                # set the arma
+                arma_mod.object=lodset.armatureObj
+            
+            # add decimate-modifier if the decimate was < 1.0
+            if lod.decimate < 1.0:
+                decimate = new_obj.modifiers.new(name="__decimate",type="DECIMATE")
+                decimate.ratio = lod.decimate
+
+            firstLOD = False
+            tempObjects.append(new_obj)
+            bpy.context.scene.objects.link(new_obj)
+            print ("LODSET:%s" % lodset.name)
+
     # Decompose
     if DEBUG: ttt = time.time() #!TIME
     Scan(context, tDataList, settings.errorsMem, tOptions)
@@ -2588,17 +2538,27 @@ def ExecuteUrhoExport(context):
             print("1")
             obj = None
             try:
+                print("2")
                 obj = bpy.data.objects[uModel.name]
                 uModel.isEmpty=(sOptions.wiredAsEmpty and obj.draw_type=="WIRE") or obj.type=="EMPTY"
                 if uModel.isEmpty:
+                    print("2")
                     uModel.meshName=obj.name
                 else:
-                    if tOptions.meshNameDerivedBy == 'Object':
+                    print("3")
+                    if obj.lodsetID!=-1:
+                        print("4")
+                        lodset = getLodSetWithID(obj.lodsetID)
+                        uModel.meshName=lodset.name
+                    elif tOptions.meshNameDerivedBy == 'Object':
+                        print("5")
                         uModel.meshName=uModel.name
                     else:
+                        print("6")
                         uModel.meshName=obj.data.name
                 
             except:
+                print("7")
                 uModel.meshName=uModel.name
                 uModel.isEmpty=False
             #
@@ -2710,11 +2670,19 @@ def ExecuteAddon(context, silent=False):
     print("----------------------Urho export start----------------------")    
     ExecuteUrhoExport(context)
     log.setLevel(logging.DEBUG)
+
+    print ("TRY TO REMOVE TEMPOBJECTS:")
+    for tempObj in tempObjects:
+        #print("REMOVE tempobject:%s" % tempObj.name)
+        bpy.data.objects.remove(tempObj, do_unlink=True)
+    tempObjects.clear()
+
+
     log.info("Export ended in {:.4f} sec".format(time.time() - startTime) )
     
     if not silent:
         bpy.ops.urho.report('INVOKE_DEFAULT')
 
-    
+            
 if __name__ == "__main__":
 	register()

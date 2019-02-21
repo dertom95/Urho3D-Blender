@@ -292,3 +292,18 @@ def IsJsonNodeAddonAvailable():
     #log = logging.getLogger("ExportLogger")
     jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.user_preferences.addons.keys()
     return jsonNodetreeAvailable
+
+def getLodSetWithID(id):
+    for lodset in bpy.data.worlds[0].lodsets:
+        if lodset.lodset_id == id: # good that I'm so consistent with my name *#%&
+            return lodset
+    print("COULD NOT FIND LODSET WITH ID:%s"%id)
+    return None
+
+def getObjectWithID(id):
+    if id==-1:
+        return None
+    for obj in bpy.data.objects:
+        if obj.ID == id:
+            return obj
+    return None

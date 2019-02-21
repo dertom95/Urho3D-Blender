@@ -5,7 +5,7 @@
 
 from .utils import PathType, GetFilepath, CheckFilepath, \
                    FloatToString, Vector3ToString, Vector4ToString, \
-                   WriteXmlFile, SDBMHash
+                   WriteXmlFile, SDBMHash, getLodSetWithID, getObjectWithID
 
 from xml.etree import ElementTree as ET
 from mathutils import Vector, Quaternion, Matrix
@@ -88,8 +88,8 @@ class UrhoSceneModel:
         self.name = uModel.name
 
         self.blenderObjectName = objectName
+        object = bpy.data.objects[objectName]
         if objectName:
-            object = bpy.data.objects[objectName]
 
             transObject = object
             if object.parent and object.parent.type=="ARMATURE":
@@ -120,6 +120,13 @@ class UrhoSceneModel:
 
         if len(uModel.bones) > 0 or len(uModel.morphs) > 0:
             self.type = "AnimatedModel"
+        elif object.lodsetID>0:
+            # this object has an lodset as mesh
+            lodset = getLodSetWithID(object.lodsetID)
+            if lodset.armatureObj:
+                self.type = "AnimatedModel"
+            else:
+                self.type = "StaticModel"
         else:
             self.type = "StaticModel"
 
@@ -696,6 +703,10 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             isEmpty = (sOptions.wiredAsEmpty and obj.draw_type=="WIRE") or obj.type=="EMPTY"
         except:
             pass
+
+        if not obj:
+            print("Skipping non-object:%s" % modelNode)
+            continue
 
         modelFile = None
         materials = None
