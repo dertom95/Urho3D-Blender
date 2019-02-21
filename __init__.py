@@ -2482,7 +2482,30 @@ def ExecuteUrhoExport(context):
                 continue
             new_objname = "%s_LOD%s" % (lodset.name,str(lod.distance).zfill(3))
             lodmesh = lod.meshObj
-            new_obj = bpy.data.objects.new(name=new_objname,object_data=lodmesh)
+            #new_obj = bpy.data.objects.new(name=new_objname,object_data=lodmesh)
+            new_obj = None
+            if lodset.armatureObj and lodset.armatureObj.name!="":
+                ## todo: make sure this is mesh and make sure to really duplicate everything...!? (sense?)
+                armaObj = lodset.armatureObj
+                firstChild = armaObj.children[0]
+                
+                new_obj = firstChild.copy()
+                new_obj.name = new_objname 
+                new_obj.data = lodmesh
+                new_obj.animation_data_clear()
+                new_obj.parent = None
+                new_obj.location = armaObj.location
+                # TODO: Check if you this assuption is true. (Quaternion or else Euler)
+                if armaObj.rotation_mode=="QUATERNION":
+                    new_obj.rotation_quaternion = armaObj.rotation_quaternion
+                else:
+                    new_obj.rotation_euler = armaObj.rotation_euler
+                new_obj.scale = armaObj.scale                
+
+                #scn.objects.link(new_obj)
+            if not new_obj:
+                new_obj = bpy.data.objects.new(name=new_objname,object_data=lodmesh)
+
             ## mark this object to be temporary lodset object (used to assure applyModifier)
             new_obj.lodsetID=-2
             # check if this lodset has an armature set
@@ -2674,8 +2697,9 @@ def ExecuteAddon(context, silent=False):
 
     print ("TRY TO REMOVE TEMPOBJECTS:")
     for tempObj in tempObjects:
-        #print("REMOVE tempobject:%s" % tempObj.name)
+        print("REMOVE tempobject:%s" % tempObj.name)
         bpy.data.objects.remove(tempObj, do_unlink=True)
+        pass
     tempObjects.clear()
 
 

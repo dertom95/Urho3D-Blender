@@ -48,7 +48,7 @@ import logging
 import re
 
 log = logging.getLogger("ExportLogger")
-
+decomposedActions = None
 #------------------
 # Geometry classes
 #------------------
@@ -1305,7 +1305,15 @@ def DecomposeActions(scene, armatureObj, tData, tOptions):
             log.warning('Object {:s} has no animation to export'.format(armatureObj.name))
         return
     
+    global decomposedActions;
+
     for object in animationObjects:
+        if (object in decomposedActions):
+            print("SKIPPING ACTION:%s"%object.name)
+            continue
+
+        decomposedActions.append(object)
+
         tAnimation = commonAnimation or TAnimation(object.name)
     
         # Objects to save old values
@@ -2173,7 +2181,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             #Set the shape key to 100%
             block.value = 1
             #Make a tempory copy of the mesh at this shape.
-            shapeMesh = meshObj.to_mesh(scene, tOptions.applyModifiers, tOptions.applySettings)
+            shapeMesh = meshObj.to_mesh(scene, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, tOptions.applySettings)
             #Reset the shape key to 0%
             block.value = 0
 
@@ -2331,7 +2339,9 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
 
 # Scan and decompose objects
 def Scan(context, tDataList, errorsMem, tOptions):
-    
+    global decomposedActions
+    decomposedActions  = []
+
     scene = context.scene
     
     # Get all objects in the scene or only the selected in visible layers
