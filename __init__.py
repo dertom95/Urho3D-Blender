@@ -1593,23 +1593,22 @@ class UrhoExportMeshPanel(bpy.types.Panel):
         row = box.row()
         row.operator("urho_button.generic",text="add").typeName="create_lodset"
         
-        
-        
         lodset = getLodSetWithID(obj.lodsetID)
 
-        row = box.row()
-        row = box.label("Lods")
-        row = box.row()
-        row.template_list("UL_URHO_LIST_LOD", "The_List", lodset,
-                          "lods", lodset, "lods_idx")
+        if lodset:
+            row = box.row()
+            row = box.label("Lods")
+            row = box.row()
+            row.template_list("UL_URHO_LIST_LOD", "The_List", lodset,
+                            "lods", lodset, "lods_idx")
 
-        row = box.row()
-        row.prop(lodset,"armatureObj")
-        row = box.row()
-        row.operator('urho_lod.new_item', text='NEW')
-        row.operator('urho_lod.delete_item', text='REMOVE')
-        row.operator('urho_lod.move_item', text='UP').direction = 'UP'
-        row.operator('urho_lod.move_item', text='DOWN').direction = 'DOWN'
+            row = box.row()
+            row.prop(lodset,"armatureObj")
+            row = box.row()
+            row.operator('urho_lod.new_item', text='NEW')
+            row.operator('urho_lod.delete_item', text='REMOVE')
+            row.operator('urho_lod.move_item', text='UP').direction = 'UP'
+            row.operator('urho_lod.move_item', text='DOWN').direction = 'DOWN'
         
 # The export panel, here we draw the panel using properties we have created earlier
 class UrhoExportScenePanel(bpy.types.Panel):
@@ -2139,7 +2138,7 @@ def register():
             def customAutoSelection(current_obj):
                 print("CUSTOM CHECK")
                 # check if we have at least one nodetree for this object
-                if bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree and len(current_obj.nodetrees)>0:
+                if current_obj and bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree and len(current_obj.nodetrees)>0:
                     try:
                         autoNodetree = bpy.data.node_groups[current_obj.nodetrees[0].nodetreeName]
                         return autoNodetree
@@ -2484,6 +2483,8 @@ def ExecuteUrhoExport(context):
             new_objname = "%s_LOD%s" % (lodset.name,str(lod.distance).zfill(3))
             lodmesh = lod.meshObj
             new_obj = bpy.data.objects.new(name=new_objname,object_data=lodmesh)
+            ## mark this object to be temporary lodset object (used to assure applyModifier)
+            new_obj.lodsetID=-2
             # check if this lodset has an armature set
             if lodset.armatureObj and firstLOD:
                 # create an armature-modifier for the lod-export to export this arma as well

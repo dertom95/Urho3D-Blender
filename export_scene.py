@@ -123,7 +123,7 @@ class UrhoSceneModel:
         elif object.lodsetID>0:
             # this object has an lodset as mesh
             lodset = getLodSetWithID(object.lodsetID)
-            if lodset.armatureObj:
+            if lodset.armatureObj :
                 self.type = "AnimatedModel"
             else:
                 self.type = "StaticModel"
@@ -718,7 +718,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             materials = ""
             if jsonNodetreeAvailable and obj.materialNodetreeName!="":
                 materialNT = ProcessNodetreeMaterial(obj)
-                if materialNT: # could we get an urho3d-materialfile corresponding to the material-tree?
+                if materialNT and materialNT!="": # could we get an urho3d-materialfile corresponding to the material-tree?
                     materials = ";"+materialNT
             
             if materials == "": # not processed via materialnodes,yet? use the default way

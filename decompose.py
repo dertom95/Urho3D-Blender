@@ -1708,7 +1708,7 @@ def DecomposeActions(scene, armatureObj, tData, tOptions):
 # Decompose geometries and morphs
 #---------------------------------
 
-def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem):
+def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMaterial):
 
     verticesList = tData.verticesList
     geometriesList = tData.geometriesList
@@ -1718,6 +1718,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem):
     bonesMap = tData.bonesMap
     meshIndex = errorsMem.SecondIndex(meshObj.name)
     
+
     verticesMap = {}
     
     #Save existing shape key values, and set them to zero
@@ -1734,10 +1735,9 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem):
         block.value = 0
     # Create a Mesh datablock with modifiers applied
     # (note: do not apply if not needed, it loses precision)
-    mesh = meshObj.to_mesh(scene, tOptions.applyModifiers, tOptions.applySettings)
-    
+    mesh = meshObj.to_mesh(scene, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, tOptions.applySettings)
     log.info("Decomposing mesh: {:s} ({:d} vertices)".format(meshObj.name, len(mesh.vertices)) )
-    
+
     # Compute local space unit length split normals vectors
     mesh.calc_normals_split()
     mesh.calc_tessface()
@@ -2111,215 +2111,215 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem):
                 triangleList.append(triangle)
         # end loop vertices
     # end loop faces
-
-    if notBonesGroups:
-        log.info("These groups are not used for bone deforms: {:s}".format( ", ".join(notBonesGroups) ))
-    if missingGroups:
-        log.warning("These group indices are missing: {:s}".format( ", ".join(missingGroups) ))
-    if overrideBones:
-        log.warning("These parent bones will override the deforms: {:s}".format( ", ".join(overrideBones) ))
-    if missingBones:
-        log.warning("These parent bones are missing in the armature: {:s}".format( ", ".join(missingBones) ))
-    if tOptions.doGeometryWei:
-        if hasWeight[0] == 0:
-            log.warning("Object {:s} is not affected by any bone".format(meshObj.name))
-        elif hasWeight[0] != hasWeight[1]:
-            print("Object {:s} is only {:.1f}% skinned".format(meshObj.name, 100.0 * hasWeight[0] / hasWeight[1]))
-    
-    # Generate tangents for the last LOD of every geometry with new vertices
-    if tOptions.doGeometryTan:
-        lodLevels = []
-        for geometryIndex in updatedGeometryIndices:
-            geometry = geometriesList[geometryIndex]
-            # Only the last LOD was modified (even if it wasn't a new LOD)
-            lodLevel = geometry.lodLevels[-1]
-            log.info("Generating tangents on {:d} indices for {:s} Geometry{:d}"
-                    .format(len(lodLevel.indexSet), meshObj.name, geometryIndex) )
-            lodLevels.append(lodLevel)
-        GenerateTangents(lodLevels, verticesList, errorsMem)
-            
-    # Optimize vertex index buffer for the last LOD of every geometry with new vertices
-    if tOptions.doOptimizeIndices:
-        for geometryIndex in updatedGeometryIndices:
-            geometry = geometriesList[geometryIndex]
-            # Only the last LOD was modified (even if it wasn't a new LOD)
-            lodLevel = geometry.lodLevels[-1]
-            log.info("Optimizing {:d} indices for {:s} Geometry{:d}"
-                    .format(len(lodLevel.indexSet), meshObj.name, geometryIndex) )
-            OptimizeIndices(lodLevel)
-    
-    # Check if we need and can work on shape keys (morphs)
-    shapeKeys = meshObj.data.shape_keys
-    keyBlocks = []
-    if tOptions.doMorphs:
-        if not shapeKeys or len(shapeKeys.key_blocks) < 1:
-            log.warning("Object {:s} has no shape keys".format(meshObj.name))
-        else:
-            keyBlocks = shapeKeys.key_blocks
-
-    # Decompose shape keys (morphs)
-    for j, block in enumerate(keyBlocks):
-        # Skip 'Basis' shape key
-        if j == 0:
-            continue
-        # Skip muted shape keys
-        if block.mute:
-            continue
+    if not onlyProcessMaterial:
+        if notBonesGroups:
+            log.info("These groups are not used for bone deforms: {:s}".format( ", ".join(notBonesGroups) ))
+        if missingGroups:
+            log.warning("These group indices are missing: {:s}".format( ", ".join(missingGroups) ))
+        if overrideBones:
+            log.warning("These parent bones will override the deforms: {:s}".format( ", ".join(overrideBones) ))
+        if missingBones:
+            log.warning("These parent bones are missing in the armature: {:s}".format( ", ".join(missingBones) ))
+        if tOptions.doGeometryWei:
+            if hasWeight[0] == 0:
+                log.warning("Object {:s} is not affected by any bone".format(meshObj.name))
+            elif hasWeight[0] != hasWeight[1]:
+                print("Object {:s} is only {:.1f}% skinned".format(meshObj.name, 100.0 * hasWeight[0] / hasWeight[1]))
         
-        tMorph = TMorph(block.name)
+        # Generate tangents for the last LOD of every geometry with new vertices
+        if tOptions.doGeometryTan:
+            lodLevels = []
+            for geometryIndex in updatedGeometryIndices:
+                geometry = geometriesList[geometryIndex]
+                # Only the last LOD was modified (even if it wasn't a new LOD)
+                lodLevel = geometry.lodLevels[-1]
+                log.info("Generating tangents on {:d} indices for {:s} Geometry{:d}"
+                        .format(len(lodLevel.indexSet), meshObj.name, geometryIndex) )
+                lodLevels.append(lodLevel)
+            GenerateTangents(lodLevels, verticesList, errorsMem)
+                
+        # Optimize vertex index buffer for the last LOD of every geometry with new vertices
+        if tOptions.doOptimizeIndices:
+            for geometryIndex in updatedGeometryIndices:
+                geometry = geometriesList[geometryIndex]
+                # Only the last LOD was modified (even if it wasn't a new LOD)
+                lodLevel = geometry.lodLevels[-1]
+                log.info("Optimizing {:d} indices for {:s} Geometry{:d}"
+                        .format(len(lodLevel.indexSet), meshObj.name, geometryIndex) )
+                OptimizeIndices(lodLevel)
         
-        log.info("Decomposing shape: {:s} ({:d} vertices)".format(block.name, len(block.data)) )
-
-        #Set the shape key to 100%
-        block.value = 1
-        #Make a tempory copy of the mesh at this shape.
-        shapeMesh = meshObj.to_mesh(scene, tOptions.applyModifiers, tOptions.applySettings)
-        #Reset the shape key to 0%
-        block.value = 0
-
-        #Check if vertex counts match. If there is a mismatch, it's likely due to vertices fused together in the shape key.
-        if len(shapeMesh.vertices) != len(mesh.vertices):
-            #Try a fallback of converting shape key data directly to vertex data. If there is a vertex count mismatch, it's due to a modifier changing the vertex count (e.g. mirror).
-            if len(shapeMesh.vertices) != len(block.data):
-                # Delete the temporary copy
-                bpy.data.meshes.remove(shapeMesh)
-                #TODO: Handling this requires a method for mapping original vertex points to their final points, which handles cases where the vertex count changes.
-                log.error("Vertex count mismatch on shape {:s}.".format(block.name))
-                continue
+        # Check if we need and can work on shape keys (morphs)
+        shapeKeys = meshObj.data.shape_keys
+        keyBlocks = []
+        if tOptions.doMorphs:
+            if not shapeKeys or len(shapeKeys.key_blocks) < 1:
+                log.warning("Object {:s} has no shape keys".format(meshObj.name))
             else:
-                # Delete the temporary copy
-                bpy.data.meshes.remove(shapeMesh)
-                # Make a new temporary copy of the base mesh
-                shapeMesh = mesh.copy()
-                # Apply the shape
-                for i, data in enumerate(block.data):
-                    shapeMesh.vertices[i].co = data.co
+                keyBlocks = shapeKeys.key_blocks
 
-        # Recalculate normals
-        shapeMesh.update(calc_edges = True, calc_tessface = True)
-
-        # Compute local space unit length split normals vectors
-        shapeMesh.calc_normals_split()
-        shapeMesh.calc_tessface()
-        
-        # TODO: if set use 'vertex group' of the shape to filter affected vertices
-        # TODO: can we use mesh tessfaces and not shapeMesh tessfaces ?
-        
-        for face in shapeMesh.tessfaces:
-            if face.hide:
+        # Decompose shape keys (morphs)
+        for j, block in enumerate(keyBlocks):
+            # Skip 'Basis' shape key
+            if j == 0:
                 continue
-
-            # TODO: add only affected triangles not faces, use morphed as a mask
-            morphed = False
-
-            # In this list we store vertex index and morphed vertex of each face, we'll add them
-            # to the morph only if at least one vertex on the face is affected by the moprh
-            tempList = []
+            # Skip muted shape keys
+            if block.mute:
+                continue
             
-            # For each Blender vertex index in the face
-            for i, vertexIndex in enumerate(face.vertices):
+            tMorph = TMorph(block.name)
+            
+            log.info("Decomposing shape: {:s} ({:d} vertices)".format(block.name, len(block.data)) )
 
-                # Get the Blender morphed vertex
-                vertex = shapeMesh.vertices[vertexIndex]
-                
-                position = posMatrix * vertex.co
-                
-                if mesh.use_auto_smooth:
-                    # if using Data->Normals->Auto Smooth, use split normal vector
-                    normal = Vector(face.split_normals[i])
-                elif face.use_smooth:
-                    # if face is smooth, use vertex normal
-                    normal = vertex.normal
+            #Set the shape key to 100%
+            block.value = 1
+            #Make a tempory copy of the mesh at this shape.
+            shapeMesh = meshObj.to_mesh(scene, tOptions.applyModifiers, tOptions.applySettings)
+            #Reset the shape key to 0%
+            block.value = 0
+
+            #Check if vertex counts match. If there is a mismatch, it's likely due to vertices fused together in the shape key.
+            if len(shapeMesh.vertices) != len(mesh.vertices):
+                #Try a fallback of converting shape key data directly to vertex data. If there is a vertex count mismatch, it's due to a modifier changing the vertex count (e.g. mirror).
+                if len(shapeMesh.vertices) != len(block.data):
+                    # Delete the temporary copy
+                    bpy.data.meshes.remove(shapeMesh)
+                    #TODO: Handling this requires a method for mapping original vertex points to their final points, which handles cases where the vertex count changes.
+                    log.error("Vertex count mismatch on shape {:s}.".format(block.name))
+                    continue
                 else:
-                    # use face normal
-                    normal = face.normal
-                normal = normalMatrix * normal
+                    # Delete the temporary copy
+                    bpy.data.meshes.remove(shapeMesh)
+                    # Make a new temporary copy of the base mesh
+                    shapeMesh = mesh.copy()
+                    # Apply the shape
+                    for i, data in enumerate(block.data):
+                        shapeMesh.vertices[i].co = data.co
 
-                # Try to find the TVertex index corresponding to this Blender vertex index
-                try:
-                    tVertexIndex = faceVertexMap[(face.index, vertexIndex)]
-                except KeyError:
-                    log.error("Cannot find vertex {:d} of face {:d} of shape {:s}."
-                              .format(vertexIndex, face.index, block.name) )
+            # Recalculate normals
+            shapeMesh.update(calc_edges = True, calc_tessface = True)
+
+            # Compute local space unit length split normals vectors
+            shapeMesh.calc_normals_split()
+            shapeMesh.calc_tessface()
+            
+            # TODO: if set use 'vertex group' of the shape to filter affected vertices
+            # TODO: can we use mesh tessfaces and not shapeMesh tessfaces ?
+            
+            for face in shapeMesh.tessfaces:
+                if face.hide:
                     continue
 
-                # Get the original not morphed TVertex
-                tVertex = verticesList[tVertexIndex]
-                   
-                # Create a new morphed vertex
-                # (note: this vertex stores absolute values, not relative to original values)
-                tMorphVertex = TVertex()
+                # TODO: add only affected triangles not faces, use morphed as a mask
+                morphed = False
 
-                # Set Blender index
-                tMorphVertex.blenderIndex = (meshIndex, vertexIndex)
-
-                # Set Vertex position
-                tMorphVertex.pos = Vector((position.x, position.z, position.y))
-
-                # Set Vertex normal
-                if tOptions.doMorphNor:
-                    tMorphVertex.normal = Vector((normal.x, normal.z, normal.y))
+                # In this list we store vertex index and morphed vertex of each face, we'll add them
+                # to the morph only if at least one vertex on the face is affected by the moprh
+                tempList = []
                 
-                # If we have UV, copy them to the TVertex, we only need them to calculate tangents
-                if tOptions.doMorphUV:
-                    if tVertex.uv:
-                        tMorphVertex.uv = tVertex.uv
-                    elif tOptions.doForceElements:
-                        tVertex.uv = Vector(0.0, 0.0)
-                
-                # Save vertex index and morphed vertex, to be added later if at least one
-                # vertex in the face was morphed
-                tempList.append((tVertexIndex, tMorphVertex))
-                
-                # Check if the morph has effect
-                if tMorphVertex.isMorphed(tVertex):
-                    morphed = True
-            
-            # If at least one vertex in the face was morphed
-            if morphed:
-                # Add vertices to the morph
-                for i, (tVertexIndex, tMorphVertex) in enumerate(tempList):
-                    try:
-                        # Check if already present
-                        oldTMorphVertex = tMorph.vertexMap[tVertexIndex]
-                        if tMorphVertex != oldTMorphVertex:
-                            log.error('Different vertex {:d} of face {:d} of shape {:s}.'
-                                .format(vertexIndex, face.index, block.name) )
-                            continue
-                    except KeyError:
-                        # Add a new morph vertex
-                        tMorph.vertexMap[tVertexIndex] = tMorphVertex
-                        
-                    # Save how many unique vertex this LOD is using (for tangents calculation)
-                    tMorph.indexSet.add(tVertexIndex)
+                # For each Blender vertex index in the face
+                for i, vertexIndex in enumerate(face.vertices):
 
-                    # Create triangles (for tangents calculation)
-                    if i == 2:
-                        triangle = (tempList[0][0], tempList[2][0], tempList[1][0])
-                        tMorph.triangleList.append(triangle)
-
-                    if i == 3:
-                        triangle = (tempList[0][0], tempList[3][0], tempList[2][0])
-                        tMorph.triangleList.append(triangle)
+                    # Get the Blender morphed vertex
+                    vertex = shapeMesh.vertices[vertexIndex]
                     
-        if tOptions.doMorphTan:
-            log.info("Generating morph tangents {:s}".format(block.name) )
-            GenerateTangents((tMorph,), tMorph.vertexMap, None)
+                    position = posMatrix * vertex.co
+                    
+                    if mesh.use_auto_smooth:
+                        # if using Data->Normals->Auto Smooth, use split normal vector
+                        normal = Vector(face.split_normals[i])
+                    elif face.use_smooth:
+                        # if face is smooth, use vertex normal
+                        normal = vertex.normal
+                    else:
+                        # use face normal
+                        normal = face.normal
+                    normal = normalMatrix * normal
 
-        # If valid add the morph to the model list
-        if tMorph.vertexMap:
-            morphsList.append(tMorph)
-        else:
-            log.warning('Empty shape {:s}.'.format(block.name))
+                    # Try to find the TVertex index corresponding to this Blender vertex index
+                    try:
+                        tVertexIndex = faceVertexMap[(face.index, vertexIndex)]
+                    except KeyError:
+                        log.error("Cannot find vertex {:d} of face {:d} of shape {:s}."
+                                .format(vertexIndex, face.index, block.name) )
+                        continue
 
-        # Delete the temporary copy 
-        bpy.data.meshes.remove(shapeMesh)
+                    # Get the original not morphed TVertex
+                    tVertex = verticesList[tVertexIndex]
+                    
+                    # Create a new morphed vertex
+                    # (note: this vertex stores absolute values, not relative to original values)
+                    tMorphVertex = TVertex()
 
-    #Restore shape keys
-    for j, block in enumerate(keyBlocks):
-        if j == 0:
-            continue
-        block.value = shapeKeysOldValues[j]
+                    # Set Blender index
+                    tMorphVertex.blenderIndex = (meshIndex, vertexIndex)
+
+                    # Set Vertex position
+                    tMorphVertex.pos = Vector((position.x, position.z, position.y))
+
+                    # Set Vertex normal
+                    if tOptions.doMorphNor:
+                        tMorphVertex.normal = Vector((normal.x, normal.z, normal.y))
+                    
+                    # If we have UV, copy them to the TVertex, we only need them to calculate tangents
+                    if tOptions.doMorphUV:
+                        if tVertex.uv:
+                            tMorphVertex.uv = tVertex.uv
+                        elif tOptions.doForceElements:
+                            tVertex.uv = Vector(0.0, 0.0)
+                    
+                    # Save vertex index and morphed vertex, to be added later if at least one
+                    # vertex in the face was morphed
+                    tempList.append((tVertexIndex, tMorphVertex))
+                    
+                    # Check if the morph has effect
+                    if tMorphVertex.isMorphed(tVertex):
+                        morphed = True
+                
+                # If at least one vertex in the face was morphed
+                if morphed:
+                    # Add vertices to the morph
+                    for i, (tVertexIndex, tMorphVertex) in enumerate(tempList):
+                        try:
+                            # Check if already present
+                            oldTMorphVertex = tMorph.vertexMap[tVertexIndex]
+                            if tMorphVertex != oldTMorphVertex:
+                                log.error('Different vertex {:d} of face {:d} of shape {:s}.'
+                                    .format(vertexIndex, face.index, block.name) )
+                                continue
+                        except KeyError:
+                            # Add a new morph vertex
+                            tMorph.vertexMap[tVertexIndex] = tMorphVertex
+                            
+                        # Save how many unique vertex this LOD is using (for tangents calculation)
+                        tMorph.indexSet.add(tVertexIndex)
+
+                        # Create triangles (for tangents calculation)
+                        if i == 2:
+                            triangle = (tempList[0][0], tempList[2][0], tempList[1][0])
+                            tMorph.triangleList.append(triangle)
+
+                        if i == 3:
+                            triangle = (tempList[0][0], tempList[3][0], tempList[2][0])
+                            tMorph.triangleList.append(triangle)
+                        
+            if tOptions.doMorphTan:
+                log.info("Generating morph tangents {:s}".format(block.name) )
+                GenerateTangents((tMorph,), tMorph.vertexMap, None)
+
+            # If valid add the morph to the model list
+            if tMorph.vertexMap:
+                morphsList.append(tMorph)
+            else:
+                log.warning('Empty shape {:s}.'.format(block.name))
+
+            # Delete the temporary copy 
+            bpy.data.meshes.remove(shapeMesh)
+
+        #Restore shape keys
+        for j, block in enumerate(keyBlocks):
+            if j == 0:
+                continue
+            block.value = shapeKeysOldValues[j]
 
     bpy.data.meshes.remove(mesh)    
 
@@ -2495,11 +2495,7 @@ def Scan(context, tDataList, errorsMem, tOptions):
         # Decompose geometries
         if tOptions.doGeometries :
             savedValue = SetRestPosePosition(context, armatureObj)
-            if obj.lodsetID>0:
-                print("skip because of lodset")
-                continue    
-            else:
-                DecomposeMesh(scene, obj, tData, tOptions, errorsMem)
+            DecomposeMesh(scene, obj, tData, tOptions, errorsMem,obj.lodsetID>0)
             RestorePosePosition(armatureObj, savedValue)
 
 #-----------------------------------------------------------------------------
