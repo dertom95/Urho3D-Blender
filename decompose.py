@@ -2238,9 +2238,11 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             #Make a tempory copy of the mesh at this shape.
             dgraph = bpy.context.depsgraph
             #TODO2.8: not sure about calc_undeformed. formerly there was 'PREVIEW' or 'RENDER'
-            shapeMesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
+            #shapeMesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
+            shapeMesh = meshObj.to_mesh(dgraph, True, calc_undeformed=False)
             #Reset the shape key to 0%
             block.value = 0
+
 
             #Check if vertex counts match. If there is a mismatch, it's likely due to vertices fused together in the shape key.
             if len(shapeMesh.vertices) != len(mesh.vertices):
@@ -2269,7 +2271,10 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             
             # TODO: if set use 'vertex group' of the shape to filter affected vertices
             # TODO: can we use mesh tessfaces and not shapeMesh tessfaces ?
-            
+            #print("BEGIN MORPH: orig mesh: %s shape mesh:%s"%( meshObj.data.name,shapeMesh.name ))
+
+            #blender2.8: the whole procedure looks a bit strange. why iterate over the faces? wouldn't be iterating over
+            #            the base- and shape-vertices with equality check would be enough?
             for face in shapeMesh.loop_triangles:
                 #blender2.8: some replacement?
                 #if face.hide:
@@ -2340,6 +2345,11 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                     # Check if the morph has effect
                     if tMorphVertex.isMorphed(tVertex):
                         morphed = True
+                        print("###############MORPHED: %s => %s" %(tMorphVertex.pos,tVertex.pos))
+                    else:
+                        origCO = meshObj.data.vertices[vertexIndex].co
+                        morphCO = shapeMesh.vertices[vertexIndex].co
+                        print("NOT MORPHED: %s => %s  | %s => %s" %(tMorphVertex.pos,tVertex.pos,morphCO,origCO))
                 
                 # If at least one vertex in the face was morphed
                 if morphed:
@@ -2349,7 +2359,9 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                             # Check if already present
                             oldTMorphVertex = tMorph.vertexMap[tVertexIndex]
                             if tMorphVertex != oldTMorphVertex:
-                                log.error('Different vertex {:d} of face {:d} of shape {:s}.'
+                                # log.error('Different vertex {:d} of face {:d} of shape {:s}.'
+                                #     .format(vertexIndex, face.index, block.name) )
+                                print('Different vertex {:d} of face {:d} of shape {:s}.'
                                     .format(vertexIndex, face.index, block.name) )
                                 continue
                         except KeyError:
