@@ -33,6 +33,13 @@
 # Python binary writing:
 #  http://docs.python.org/2/library/struct.html
 
+
+# blender 2.8:
+# https://docs.blender.org/api/blender2.8/
+# https://wiki.blender.org/wiki/Reference/Release_Notes/2.80/Python_API/Mesh_API
+# https://docs.blender.org/api/blender2.8/bpy.types.html
+
+
 DEBUG = 0
 
 import bpy
@@ -799,9 +806,9 @@ def SetRestPosePosition(context, armatureObj):
     # Force the armature in the rest position (warning: https://developer.blender.org/T24674)
     # This should reset bones matrices ok, but for sure it is not resetting the mesh tessfaces
     # positions
-    savedPosePositionAndVisibility = [armatureObj.data.pose_position, armatureObj.hide]
+    savedPosePositionAndVisibility = [armatureObj.data.pose_position, armatureObj.hide_viewport]
     armatureObj.data.pose_position = 'REST'
-    armatureObj.hide = False
+    armatureObj.hide_viewport = False
     
     # This should help to recalculate all the mesh vertices, it is needed by decomposeMesh
     # and maybe it helps decomposeArmature (but no problem was seen there)
@@ -821,7 +828,7 @@ def RestorePosePosition(armatureObj, savedValue):
     if not armatureObj:
         return
     armatureObj.data.pose_position = savedValue[0]
-    armatureObj.hide = savedValue[1]
+    armatureObj.hide_viewport = savedValue[1]
 
 # -- Rigify -- 
 # In a Rigify system there are ORG bones and DEF bones. The DEF bones causes the mesh deformation
@@ -1743,12 +1750,14 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         block.value = 0
     # Create a Mesh datablock with modifiers applied
     # (note: do not apply if not needed, it loses precision)
-    mesh = meshObj.to_mesh(scene, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, tOptions.applySettings)
+    dgraph = bpy.context.depsgraph
+    # TODO2.8: not 100% sure about calc_undeformed- formerly you specified PREVIEW or RENDER
+    mesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
     log.info("Decomposing mesh: {:s} ({:d} vertices)".format(meshObj.name, len(mesh.vertices)) )
 
     # Compute local space unit length split normals vectors
     mesh.calc_normals_split()
-    mesh.calc_tessface()
+    mesh.calc_loop_triangles()
 
     # If we use the object local origin (orange dot) we don't need transformations
     posMatrix = Matrix.Identity(4)
@@ -1761,12 +1770,12 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
 
     # Apply custom rotation
     if tOptions.orientation:
-        posMatrix = tOptions.orientation.to_matrix().to_4x4() * posMatrix
-        normalMatrix = tOptions.orientation.to_matrix().to_4x4() * normalMatrix
+        posMatrix = tOptions.orientation.to_matrix().to_4x4() @ posMatrix
+        normalMatrix = tOptions.orientation.to_matrix().to_4x4() @ normalMatrix
 
     # Apply custom scaling last
     if tOptions.scale != 1.0:
-        posMatrix = Matrix.Scale(tOptions.scale, 4) * posMatrix 
+        posMatrix = Matrix.Scale(tOptions.scale, 4) @ posMatrix 
 
     # Vertices map: vertex Blender index to TVertex index
     faceVertexMap = {}
@@ -1789,69 +1798,89 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
     # Python trick: C = A and B, if A is False (None, empty list) then C=A, if A is
     # True (object, populated list) then C=B
     
-    # Check if the mesh has UV data
+
+    ## BLENDER2.8: SKIP THE MATERIAL STUFF
+
+    # # Check if the mesh has UV data
     uvs = None
     uvs2 = None
-    # In every texture of every material search if the name ends in "_UV1" or "_UV2",
-    # search also in names of the UV maps
-    for material in mesh.materials:
-        if not material:
-            continue
-        for texture in material.texture_slots:
-            if not texture or texture.texture_coords != "UV":
-                continue
-            tex = texture.name
-            uvMap = texture.uv_layer
-            if not tex or not uvMap or not (uvMap in mesh.uv_textures.keys()):
-                continue
-            if tex.endswith("_UV") or uvMap.endswith("_UV") or \
-               tex.endswith("_UV1") or uvMap.endswith("_UV1"):
-                uvs = mesh.tessface_uv_textures[uvMap].data
-            elif tex.endswith("_UV2") or uvMap.endswith("_UV2"):
-                uvs2 = mesh.tessface_uv_textures[uvMap].data
-    # If still we don't have UV1, try the current UV map selected
-    if not uvs and mesh.tessface_uv_textures.active:
-        uvs = mesh.tessface_uv_textures.active.data
-    # If still we don't have UV1, try the first UV map in Blender
-    if not uvs and mesh.tessface_uv_textures:
-        uvs = mesh.tessface_uv_textures[0].data
-    if tOptions.doGeometryUV and not uvs:
-        log.warning("Object {:s} has no UV data".format(meshObj.name))
-    if tOptions.doGeometryUV2 and not uvs2:
-        log.warning("Object {:s} has no texture with UV2 data. Append _UV2 to the texture slot name".format(meshObj.name))
-    
-    # Check if the mesh has vertex color data
-    colorsRgb = None
-    colorsAlpha = None
-    # In vertex colors layer search if the name ends in "_RGB" or "_ALPHA"
-    for vertexColors in mesh.tessface_vertex_colors:
-        if not colorsRgb and vertexColors.name.endswith("_RGB"):
-            colorsRgb = vertexColors.data
-        if not colorsAlpha and vertexColors.name.endswith("_ALPHA"):
-            colorsAlpha = vertexColors.data
-    # If still we don't have RGB, try the current vertex color layer selected
-    if not colorsRgb and mesh.tessface_vertex_colors.active:
-        colorsRgb = mesh.tessface_vertex_colors.active.data
-    # If still we don't have RGB, try the first vertex color layer in Blender
-    if not colorsRgb and mesh.tessface_vertex_colors:
-        colorsRgb = mesh.tessface_vertex_colors[0].data
-    if tOptions.doGeometryCol and not colorsRgb:
-        log.warning("Object {:s} has no rgb color data".format(meshObj.name))
-    if tOptions.doGeometryColAlpha and not colorsAlpha:
-        log.warning("Object {:s} has no alpha color data. Append _ALPHA to the color layer name".format(meshObj.name))
 
-    if tOptions.doMaterials:
-        if scene.render.engine == 'CYCLES':
-            log.warning("Cycles render engine not supported")
-        if not mesh.materials:
-            log.warning("Object {:s} has no materials data".format(meshObj.name))
+    
+
+    # # In every texture of every material search if the name ends in "_UV1" or "_UV2",
+    # # search also in names of the UV maps
+    # for material in mesh.materials:
+    #     if not material:
+    #         continue
+    #     for texture in material.texture_slots:
+    #         if not texture or texture.texture_coords != "UV":
+    #             continue
+    #         tex = texture.name
+    #         uvMap = texture.uv_layer
+    #         if not tex or not uvMap or not (uvMap in mesh.uv_textures.keys()):
+    #             continue
+    #         if tex.endswith("_UV") or uvMap.endswith("_UV") or \
+    #            tex.endswith("_UV1") or uvMap.endswith("_UV1"):
+    #             uvs = mesh.tessface_uv_textures[uvMap].data
+    #         elif tex.endswith("_UV2") or uvMap.endswith("_UV2"):
+    #             uvs2 = mesh.tessface_uv_textures[uvMap].data
+    
+    #blender2.8: using the first uv_map as uv0
+    # # If still we don't have UV1, try the current UV map selected
+    # if not uvs and mesh.tessface_uv_textures.active:
+    #     uvs = mesh.tessface_uv_textures.active.data
+    if not uvs and len(mesh.uv_layers)>0:
+        uvs = mesh.uv_layers[0].data
+    
+    
+    # # If still we don't have UV1, try the first UV map in Blender
+    # if not uvs and mesh.tessface_uv_textures:
+    #     uvs = mesh.tessface_uv_textures[0].data
+    # if tOptions.doGeometryUV and not uvs:
+    #     log.warning("Object {:s} has no UV data".format(meshObj.name))
+    # if tOptions.doGeometryUV2 and not uvs2:
+    #     log.warning("Object {:s} has no texture with UV2 data. Append _UV2 to the texture slot name".format(meshObj.name))
+    
+    # # Check if the mesh has vertex color data
+    # colorsRgb = None
+    # colorsAlpha = None
+    # # In vertex colors layer search if the name ends in "_RGB" or "_ALPHA"
+    # for vertexColors in mesh.tessface_vertex_colors:
+    #     if not colorsRgb and vertexColors.name.endswith("_RGB"):
+    #         colorsRgb = vertexColors.data
+    #     if not colorsAlpha and vertexColors.name.endswith("_ALPHA"):
+    #         colorsAlpha = vertexColors.data
+
+    #blender2.8: not sure about alpha-stuff!?
+    colorsRgb = None
+    # colorsAlpha = None
+    # # In vertex colors layer search if the name ends in "_RGB" or "_ALPHA"
+    if len(mesh.vertex_colors) > 0:
+        colorsRgb = mesh.vertex_colors[0].data
+
+
+    # # If still we don't have RGB, try the current vertex color layer selected
+    # if not colorsRgb and mesh.tessface_vertex_colors.active:
+    #     colorsRgb = mesh.tessface_vertex_colors.active.data
+    # # If still we don't have RGB, try the first vertex color layer in Blender
+    # if not colorsRgb and mesh.tessface_vertex_colors:
+    #     colorsRgb = mesh.tessface_vertex_colors[0].data
+    # if tOptions.doGeometryCol and not colorsRgb:
+    #     log.warning("Object {:s} has no rgb color data".format(meshObj.name))
+    # if tOptions.doGeometryColAlpha and not colorsAlpha:
+    #     log.warning("Object {:s} has no alpha color data. Append _ALPHA to the color layer name".format(meshObj.name))
+
+    # if tOptions.doMaterials:
+    #     if scene.render.engine == 'CYCLES':
+    #         log.warning("Cycles render engine not supported")
+    #     if not mesh.materials:
+    #         log.warning("Object {:s} has no materials data".format(meshObj.name))
 
     # Progress counter
     progressCur = 0
-    progressTot = 0.01 * len(mesh.tessfaces)
+    progressTot = 0.01 * len(mesh.loop_triangles)
 
-    for face in mesh.tessfaces:
-
+    for face in mesh.loop_triangles:
         if (progressCur % 10) == 0:
             print("{:.3f}%\r".format(progressCur / progressTot), end='' )
         progressCur += 1
@@ -1859,78 +1888,87 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         # Skip if this face has less than 3 unique vertices
         # (a frozenset is an immutable set of unique elements)
         if len(frozenset(face.vertices)) < 3: 
-            face.hide = True
+            #blender2.8: not sure how to do this "hiding" in 2.8. But isn't just to continue enough?
+            #face.hide = True
             continue
 
-        if face.hide:
-            continue
+        #if face.hide:
+        #   continue
 
+        faceLoops = face.loops
         # Get face vertices UV, type: MeshTextureFace(bpy_struct)
-        faceUv = uvs and uvs[face.index]
-        faceUv2 = uvs2 and uvs2[face.index]
+        #faceUv = uvs and uvs[face.index]
+        #faceUv2 = uvs2 and uvs2[face.index]
 
         # Get face 4 vertices colors
-        fcol = colorsRgb and colorsRgb[face.index]
-        faceRgbColor = fcol and (fcol.color1, fcol.color2, fcol.color3, fcol.color4)
-        fcol = colorsAlpha and colorsAlpha[face.index]
-        faceAlphaColor = fcol and (fcol.color1, fcol.color2, fcol.color3, fcol.color4)
+        #fcol = colorsRgb and colorsRgb[face.index]
+        #faceRgbColor = fcol and (fcol.color1, fcol.color2, fcol.color3, fcol.color4)
+        #fcol = colorsAlpha and colorsAlpha[face.index]
+        #faceAlphaColor = fcol and (fcol.color1, fcol.color2, fcol.color3, fcol.color4)
 
         # Get the face material
         # If no material is associated then face.material_index is 0 but mesh.materials
         # is not None
-        material = None
-        if mesh.materials and len(mesh.materials):
-            material = mesh.materials[face.material_index]
+        #material = None
+        #if mesh.materials and len(mesh.materials):
+        #    material = mesh.materials[face.material_index]
         
         # Add the material if it is new
-        materialName = material and material.name
-        if tOptions.doMaterials and materialName and (not materialName in materialsList):
-            tMaterial = TMaterial(materialName)
-            materialsList.append(tMaterial)
-
-            tMaterial.diffuseColor = material.diffuse_color
-            tMaterial.diffuseIntensity = material.diffuse_intensity
-            tMaterial.specularColor = material.specular_color
-            tMaterial.specularIntensity = material.specular_intensity
-            tMaterial.specularHardness = material.specular_hardness
-            tMaterial.twoSided = mesh.show_double_sided
-            tMaterial.shadeless = material.use_shadeless
-            if material.use_transparency:
-                tMaterial.opacity = material.alpha
-                if material.transparency_method == 'MASK':
-                    tMaterial.alphaMask = True
-
-            # In reverse order so the first slots have precedence
-            for texture in reversed(material.texture_slots):
-                if texture is None or texture.texture_coords != 'UV':
-                    continue
-                textureData = bpy.data.textures[texture.name]
-                if textureData.type != 'IMAGE':
-                    continue
-                if textureData.image is None:
-                    continue
-                # Skip disabled textures
-                textureIndex = material.texture_slots.find(texture.name)
-                if textureIndex >= 0 and not material.use_textures[textureIndex]:
-                    continue
-                imageName = textureData.image.name
-                if texture.use_map_color_diffuse:
-                    tMaterial.diffuseTexName = imageName
-                if texture.use_map_normal:
-                    tMaterial.normalTexName = imageName
-                if texture.use_map_color_spec:
-                    tMaterial.specularTexName = imageName
-                if texture.use_map_emit:
-                    tMaterial.emitTexName = imageName
-                    tMaterial.emitColor = Color((1.0, 1.0, 1.0))
-                    tMaterial.emitIntensity = texture.emit_factor
-                if "_LIGHTMAP" in texture.name:
-                    tMaterial.lightmapTexName = imageName
-                if "_AMBIENTLIGHT" in texture.name:
-                    tMaterial.ambientLightTexName = imageName
-                ##tMaterial.imagePath = bpy.path.abspath(faceUv.image.filepath)
+        #materialName = material and material.name
+        materialName = mesh.materialNodetreeName or "default_materialtree"
         
-        # If we are merging and want to have separate materials, add the object name
+        # blender2.8: just set the material-tree-name in the dictionary so we know what material-tree to export
+        if tOptions.doMaterials and materialName and (not materialName in materialsList):
+            materialsList.append(materialName)
+        
+        
+        #if tOptions.doMaterials and materialName and (not materialName in materialsList):
+        #    tMaterial = TMaterial(materialName)
+        #    materialsList.append(tMaterial)
+
+        #    tMaterial.diffuseColor = material.diffuse_color
+        #     tMaterial.diffuseIntensity = material.diffuse_intensity
+        #     tMaterial.specularColor = material.specular_color
+        #     tMaterial.specularIntensity = material.specular_intensity
+        #     tMaterial.specularHardness = material.specular_hardness
+        #     tMaterial.twoSided = mesh.show_double_sided
+        #     tMaterial.shadeless = material.use_shadeless
+        #     if material.use_transparency:
+        #         tMaterial.opacity = material.alpha
+        #         if material.transparency_method == 'MASK':
+        #             tMaterial.alphaMask = True
+
+        #     # In reverse order so the first slots have precedence
+        #     for texture in reversed(material.texture_slots):
+        #         if texture is None or texture.texture_coords != 'UV':
+        #             continue
+        #         textureData = bpy.data.textures[texture.name]
+        #         if textureData.type != 'IMAGE':
+        #             continue
+        #         if textureData.image is None:
+        #             continue
+        #         # Skip disabled textures
+        #         textureIndex = material.texture_slots.find(texture.name)
+        #         if textureIndex >= 0 and not material.use_textures[textureIndex]:
+        #             continue
+        #         imageName = textureData.image.name
+        #         if texture.use_map_color_diffuse:
+        #             tMaterial.diffuseTexName = imageName
+        #         if texture.use_map_normal:
+        #             tMaterial.normalTexName = imageName
+        #         if texture.use_map_color_spec:
+        #             tMaterial.specularTexName = imageName
+        #         if texture.use_map_emit:
+        #             tMaterial.emitTexName = imageName
+        #             tMaterial.emitColor = Color((1.0, 1.0, 1.0))
+        #             tMaterial.emitIntensity = texture.emit_factor
+        #         if "_LIGHTMAP" in texture.name:
+        #             tMaterial.lightmapTexName = imageName
+        #         if "_AMBIENTLIGHT" in texture.name:
+        #             tMaterial.ambientLightTexName = imageName
+        #         ##tMaterial.imagePath = bpy.path.abspath(faceUv.image.filepath)
+        
+        # # If we are merging and want to have separate materials, add the object name
         mapMaterialName = materialName
         if tOptions.mergeObjects and tOptions.mergeNotMaterials:
             mapMaterialName = str(materialName) + "---" + meshObj.name
@@ -1975,7 +2013,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             # Blender vertex
             vertex = mesh.vertices[vertexIndex]
 
-            position = posMatrix * vertex.co
+            position = posMatrix @ vertex.co
 
             if mesh.use_auto_smooth:
                 # if using Data->Normals->Auto Smooth, use split normal vector
@@ -1986,7 +2024,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             else:
                 # use face normal
                 normal = face.normal
-            normal = normalMatrix * normal
+            normal = normalMatrix @ normal
             
             # Create a new vertex
             tVertex = TVertex()
@@ -2003,37 +2041,54 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                 tVertex.normal = Vector((normal.x, normal.z, normal.y))
                 
             # Set Vertex UV coordinates
-            if tOptions.doGeometryUV:
-                if faceUv:
-                    uv = faceUv.uv[i]
+            if tOptions.doGeometryUV and uvs:
+                if uvs:
+                    idx = faceLoops[i]
+                    print("TYPE %s" % type(uvs))
+                    uvResult = uvs[idx]
+                    uv = uvResult.uv
                     tVertex.uv = Vector((uv[0], 1.0 - uv[1]))
-                elif tOptions.doForceElements:
-                    tVertex.uv = Vector((0.0, 0.0))
+            elif tOptions.doForceElements:
+                tVertex.uv = Vector((0.0, 0.0))
+
+            #blender2.8: todo uv2 (untested). uv2s not set at all
             if tOptions.doGeometryUV2:
-                if faceUv2:
-                    uv2 = faceUv2.uv[i]
+                if uvs2:
+                    uv2 = uvs2[faceLoops[i]]
                     tVertex.uv2 = Vector((uv2[0], 1.0 - uv2[1]))
                 elif tOptions.doForceElements:
                     tVertex.uv2 = Vector((0.0, 0.0))
 
             # Set Vertex color
+            # if tOptions.doGeometryCol or tOptions.doGeometryColAlpha:
+            #     color = [0, 0, 0, 255]
+            #     if faceRgbColor or faceAlphaColor:
+            #         if faceRgbColor:
+            #             # This is an array of 3 floats from 0.0 to 1.0
+            #             rgb = faceRgbColor[i]
+            #             # Approx 255*float to the closest int
+            #             color[:3] = ( int(round(rgb.r * 255.0)), 
+            #                           int(round(rgb.g * 255.0)), 
+            #                           int(round(rgb.b * 255.0)) )
+            #         if faceAlphaColor:
+            #             # For Alpha use Value of HSV
+            #             alpha = faceAlphaColor[i]
+            #             color[3] = int(round(alpha.v * 255.0))
+            #         tVertex.color = tuple(color)
+            #     elif tOptions.doForceElements:
+            #         tVertex.color = tuple(color)
+
+            # Set vertex color 2.8
             if tOptions.doGeometryCol or tOptions.doGeometryColAlpha:
-                color = [0, 0, 0, 255]
-                if faceRgbColor or faceAlphaColor:
-                    if faceRgbColor:
-                        # This is an array of 3 floats from 0.0 to 1.0
-                        rgb = faceRgbColor[i]
-                        # Approx 255*float to the closest int
-                        color[:3] = ( int(round(rgb.r * 255.0)), 
-                                      int(round(rgb.g * 255.0)), 
-                                      int(round(rgb.b * 255.0)) )
-                    if faceAlphaColor:
-                        # For Alpha use Value of HSV
-                        alpha = faceAlphaColor[i]
-                        color[3] = int(round(alpha.v * 255.0))
-                    tVertex.color = tuple(color)
-                elif tOptions.doForceElements:
-                    tVertex.color = tuple(color)
+                color = [0,0,0,255]
+                if colorsRgb:
+                    rgb = colorsRgb[faceLoops[i]]
+                    # Approx 255*float to the closest int
+                    color[:3] = ( int(round(rgb.r * 255.0)), 
+                                    int(round(rgb.g * 255.0)), 
+                                    int(round(rgb.b * 255.0)) )                    
+                tVertex.color =tuple(color)
+                
                     
             # Set Vertex bones weights
             if tOptions.doGeometryWei:
@@ -2181,7 +2236,9 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             #Set the shape key to 100%
             block.value = 1
             #Make a tempory copy of the mesh at this shape.
-            shapeMesh = meshObj.to_mesh(scene, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, tOptions.applySettings)
+            dgraph = bpy.context.depsgraph
+            #TODO2.8: not sure about calc_undeformed. formerly there was 'PREVIEW' or 'RENDER'
+            shapeMesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
             #Reset the shape key to 0%
             block.value = 0
 
@@ -2362,7 +2419,8 @@ def Scan(context, tDataList, errorsMem, tOptions):
 
       
         # Only not hidden
-        if obj.hide and tOptions.ignoreHidden:
+        # TODO2.8: obj.hide_viewport seems not to work!? atm 08march19
+        if obj.hide_viewport and tOptions.ignoreHidden:
             continue
     
         if tOptions.useLods:

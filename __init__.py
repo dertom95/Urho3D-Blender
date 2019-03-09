@@ -26,8 +26,8 @@ bl_info = {
     "name": "Urho3D export",
     "description": "Urho3D export",
     "author": "reattiva",
-    "version": (0, 6),
-    "blender": (2, 66, 0),
+    "version": (0, 7),
+    "blender": (2, 80, 0),
     "location": "Properties > Render > Urho export",
     "warning": "",
     "wiki_url": "",
@@ -141,59 +141,59 @@ log.addHandler(consoleHandler)
 class UrhoAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
 
-    outputPath = StringProperty(
+    outputPath : StringProperty(
             name = "Default export path",
             description = "Default path where to export",
             default = "", 
             maxlen = 1024,
             subtype = "DIR_PATH")
 
-    modelsPath = StringProperty(
+    modelsPath : StringProperty(
             name = "Default Models subpath",
             description = "Models subpath (relative to output)",
             default = "Models")
-    animationsPath = StringProperty(
+    animationsPath : StringProperty(
             name = "Default Animations subpath",
             description = "Animations subpath (relative to output)",
             default = "Models")
-    materialsPath = StringProperty(
+    materialsPath : StringProperty(
             name = "Default Materials subpath",
             description = "Materials subpath (relative to output)",
             default = "Materials")
-    techniquesPath = StringProperty(
+    techniquesPath : StringProperty(
             name = "Default Techniques subpath",
             description = "Techniques subpath (relative to output)",
             default = "Techniques")
-    texturesPath = StringProperty(
+    texturesPath : StringProperty(
             name = "Default Textures subpath",
             description = "Textures subpath (relative to output)",
             default = "Textures")
-    objectsPath = StringProperty(
+    objectsPath : StringProperty(
             name = "Default Objects subpath",
             description = "Objects subpath (relative to output)",
             default = "Objects")
-    scenesPath = StringProperty(
+    scenesPath : StringProperty(
             name = "Default Scenes subpath",
             description = "Scenes subpath (relative to output)",
             default = "Scenes")
 
-    bonesPerGeometry = IntProperty(
+    bonesPerGeometry : IntProperty(
             name = "Per geometry",
             description = "Max numbers of bones per geometry",
             min = 64, max = 2048,
             default = 64)
-    bonesPerVertex = IntProperty(
+    bonesPerVertex : IntProperty(
             name = "Per vertex",
             description = "Max numbers of bones per vertex",
             min = 4, max = 256,
             default = 4)
 
-    reportWidth = IntProperty(
+    reportWidth : IntProperty(
             name = "Window width",
             description = "Width of the report window",
             default = 500)
 
-    maxMessagesCount = IntProperty(
+    maxMessagesCount : IntProperty(
             name = "Max number of messages",
             description = "Max number of messages in the report window",
             default = 500)
@@ -209,11 +209,11 @@ class UrhoAddonPreferences(bpy.types.AddonPreferences):
         layout.prop(self, "objectsPath")
         layout.prop(self, "scenesPath")
         row = layout.row()
-        row.label("Max number of bones:")
+        row.label(text="Max number of bones:")
         row.prop(self, "bonesPerGeometry")
         row.prop(self, "bonesPerVertex")
         row = layout.row()
-        row.label("Report window:")
+        row.label(text="Report window:")
         row.prop(self, "reportWidth")
         row.prop(self, "maxMessagesCount")
 
@@ -222,8 +222,8 @@ class UrhoAddonPreferences(bpy.types.AddonPreferences):
 ##              USER-DATA-LIST
 ##############################################
 class KeyValue(bpy.types.PropertyGroup):
-    key = bpy.props.StringProperty(name="key",default="key")
-    value = bpy.props.StringProperty(name="value",default="value")
+    key : bpy.props.StringProperty(name="key",default="key")
+    value : bpy.props.StringProperty(name="value",default="value")
 
 class UL_URHO_LIST_USERDATA(bpy.types.UIList):
     """KeyValue UIList."""
@@ -232,7 +232,7 @@ class UL_URHO_LIST_USERDATA(bpy.types.UIList):
 
         # We could write some code to decide which icon to use here...
         if item.key.lower()=="tag":
-            custom_icon = 'INLINK'
+            custom_icon = 'EVENT_T'
         else:
             custom_icon = 'TEXT'
 
@@ -245,7 +245,7 @@ class UL_URHO_LIST_USERDATA(bpy.types.UIList):
 
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
-            layout.label("", icon = custom_icon)
+            layout.label(text="", icon = custom_icon)
 
 
 BUTTON_MAPPING={}
@@ -257,8 +257,8 @@ class UL_URHO_LIST_CREATE_GENERIC(bpy.types.Operator):
     bl_idname = "urho_button.generic"
     bl_label = "Add a new item"
 
-    typeName = bpy.props.StringProperty()
-    objectName = bpy.props.StringProperty(default="")
+    typeName : bpy.props.StringProperty()
+    objectName : bpy.props.StringProperty(default="")
 
     def execute(self, context):
         global BUTTON_MAPPING
@@ -305,7 +305,7 @@ class UL_URHO_LIST_ITEM_MOVE_USERDATA(bpy.types.Operator):
     bl_idname = "urho_keyvalue.move_item"
     bl_label = "Move an item in the list"
 
-    direction = bpy.props.EnumProperty(items=(('UP', 'Up', ""),
+    direction : bpy.props.EnumProperty(items=(('UP', 'Up', ""),
                                               ('DOWN', 'Down', ""),))
 
     @classmethod
@@ -338,8 +338,8 @@ class UL_URHO_LIST_ITEM_MOVE_USERDATA(bpy.types.Operator):
 
 class NodetreeInfo(bpy.types.PropertyGroup):
     import addon_jsonnodetree
-    nodetreeId = bpy.props.IntProperty(name="nodetreeId",default=-1)
-    nodetreeName = bpy.props.StringProperty(name="nodetreeName",get=addon_jsonnodetree.getNodetreeName,set=addon_jsonnodetree.setNodetreeName,update=addon_jsonnodetree.updateNodetreeName)
+    nodetreeId : bpy.props.IntProperty(name="nodetreeId",default=-1)
+    nodetreeName : bpy.props.StringProperty(name="nodetreeName",get=addon_jsonnodetree.getNodetreeName,set=addon_jsonnodetree.setNodetreeName,update=addon_jsonnodetree.updateNodetreeName)
 
 class UL_URHO_LIST_NODETREE(bpy.types.UIList):
     """KeyValue UIList."""
@@ -350,17 +350,17 @@ class UL_URHO_LIST_NODETREE(bpy.types.UIList):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             c = layout.column()
             row = c.row()
-            split = row.split(percentage=0.05)
+            split = row.split(factor=0.05)
             c = split.column()
-            c.label("")
+            c.label(text="")
 
             split = split.split()
             c= split.column()
             #layout.label(item.nodetreeName, icon = custom_icon)
-            c.prop_search(item,"nodetreeName",bpy.data,"node_groups","")
+            c.prop_search(item,"nodetreeName",bpy.data,"node_groups",text="")
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
-            layout.label("", icon = custom_icon)
+            layout.label(text="", icon = custom_icon)
 
 
 class UL_URHO_LIST_ITEM_NODETREE(bpy.types.Operator):
@@ -401,7 +401,7 @@ class UL_URHO_LIST_ITEM_MOVE_NODETREE(bpy.types.Operator):
     bl_idname = "urho_nodetrees.move_item"
     bl_label = "Move an item in the list"
 
-    direction = bpy.props.EnumProperty(items=(('UP', 'Up', ""),
+    direction : bpy.props.EnumProperty(items=(('UP', 'Up', ""),
                                               ('DOWN', 'Down', ""),))
 
     @classmethod
@@ -496,21 +496,21 @@ def setLodSetDataName(self,value):
 class LODData(bpy.types.PropertyGroup):
     #meshName = bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)
     #meshID = bpy.props.IntProperty()
-    meshObj = bpy.props.PointerProperty(type=bpy.types.Mesh)
-    distance = bpy.props.IntProperty(name="distance")
-    decimate = bpy.props.FloatProperty(name="decimateFactor",default=1.0,precision=3,max=1.0,min=0.0)
+    meshObj : bpy.props.PointerProperty(type=bpy.types.Mesh)
+    distance : bpy.props.IntProperty(name="distance")
+    decimate : bpy.props.FloatProperty(name="decimateFactor",default=1.0,precision=3,max=1.0,min=0.0)
 
 
 def armature_object_poll(self,object):
     return object.type=="ARMATURE"
 
 class LODSet(bpy.types.PropertyGroup):
-    lodset_id = bpy.props.IntProperty()
-    name = bpy.props.StringProperty(default="lodset")
-    lodset_name = bpy.props.StringProperty(default="lodset",get=getLodSetDataName,set=setLodSetDataName)
-    lods = bpy.props.CollectionProperty(type=LODData)
-    lods_idx = bpy.props.IntProperty()
-    armatureObj =  bpy.props.PointerProperty(type=bpy.types.Object,poll=armature_object_poll)
+    lodset_id : bpy.props.IntProperty()
+    name : bpy.props.StringProperty(default="lodset")
+    lodset_name : bpy.props.StringProperty(default="lodset",get=getLodSetDataName,set=setLodSetDataName)
+    lods : bpy.props.CollectionProperty(type=LODData)
+    lods_idx : bpy.props.IntProperty()
+    armatureObj :  bpy.props.PointerProperty(type=bpy.types.Object,poll=armature_object_poll)
         
 
 ## -- VISUALS --
@@ -552,7 +552,7 @@ class UL_URHO_LIST_LOD(bpy.types.UIList):
 
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
-            layout.label("", icon = custom_icon)
+            layout.label(text="", icon = custom_icon)
 
 
 class UL_URHO_LIST_ITEM_LOD(bpy.types.Operator):
@@ -599,7 +599,7 @@ class UL_URHO_LIST_ITEM_MOVE_LOD(bpy.types.Operator):
     bl_idname = "urho_lod.move_item"
     bl_label = "Move an item in the list"
 
-    direction = bpy.props.EnumProperty(items=(('UP', 'Up', ""),
+    direction : bpy.props.EnumProperty(items=(('UP', 'Up', ""),
                                               ('DOWN', 'Down', ""),))
 
     @classmethod
@@ -646,7 +646,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         self.updatingProperties = True
 
         # Save preferred output path
-        addonPrefs = context.user_preferences.addons[__name__].preferences
+        addonPrefs = context.preferences.addons[__name__].preferences
         if self.outputPath:
             addonPrefs.outputPath = self.outputPath
         # Skeleton implies weights    
@@ -764,7 +764,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     # Revert all the export settings back to their default values
     def reset(self, context): 
         
-        addonPrefs = context.user_preferences.addons[__name__].preferences
+        addonPrefs = context.preferences.addons[__name__].preferences
 
         self.updatingProperties = False
 
@@ -838,7 +838,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     # Revert the output paths back to their default values
     def reset_paths(self, context, forced):
 
-        addonPrefs = context.user_preferences.addons[__name__].preferences
+        addonPrefs = context.preferences.addons[__name__].preferences
 
         if forced or (not self.outputPath and addonPrefs.outputPath):
             self.outputPath = addonPrefs.outputPath
@@ -854,77 +854,77 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
     # --- Accessory ---
 
-    updatingProperties = BoolProperty(default = False)
+    updatingProperties : BoolProperty(default = False)
 
-    minimize = BoolProperty(
+    minimize : BoolProperty(
             name = "Minimize",
             description = "Minimize the export panel",
             default = False)
 
-    onlyErrors = BoolProperty(
+    onlyErrors : BoolProperty(
             name = "Log errors",
             description = "Show only warnings and errors in the log",
             default = False)
 
-    showLog = BoolProperty(
+    showLog : BoolProperty(
             name = "Show Log after export",
             description = "Show log after export",
             default = True)            
 
-    showDirs = BoolProperty(
+    showDirs : BoolProperty(
             name = "Show dirs",
             description = "Show the dirs list",
             default = False)
 
-    addDir = BoolProperty(
+    addDir : BoolProperty(
             name = "Output folder to subfolders",
             description = "Move the last output folder to the subfolders",
             default = False,
             update = update_subfolders)
 
-    removeDir = BoolProperty(
+    removeDir : BoolProperty(
             name = "Subfolders to output folder",
             description = "Move a common subfolder to the output folder",
             default = False,
             update = update_subfolders)
 
-    addSceneDir = BoolProperty(
+    addSceneDir : BoolProperty(
             name = "Scene to subfolders",
             description = "Append the scene name to the subfolders",
             default = False,
             update = update_subfolders)
 
     # --- RUNTIME SETTINGS ---
-    useRuntime = BoolProperty(
+    useRuntime : BoolProperty(
             name = "Use Urho3d runtime",
             description = "Start an external urho3d runtime. e.g. your game",
             default = False)
 
-    runtimeBlocking = BoolProperty(
+    runtimeBlocking : BoolProperty(
             name = "Block Blender while running",
             description = "Block Blender while running",
             default = True)            
 
-    runtimeFile = bpy.props.StringProperty(
+    runtimeFile : bpy.props.StringProperty(
                     name="Runtime",
                     description="Path of the urho3d runtime",
                     maxlen = 512,
                     default = "",
                     subtype='FILE_PATH')
-    runtimeWorkingDir = bpy.props.StringProperty(
+    runtimeWorkingDir : bpy.props.StringProperty(
                     name="Runtime WorkingDir",
                     description="WorkingDir",
                     maxlen = 512,
                     default = "",
                     subtype='FILE_PATH')
 
-    runtimeFlags = bpy.props.StringProperty(
+    runtimeFlags : bpy.props.StringProperty(
                     name="runtime flags",
                     description="Runtime Flags that get passed to the 'runtimeflags' argument and can be processed in your runtime",
                     maxlen = 512,
                     default = "")
 
-    runtimeExportComponents = bpy.props.StringProperty(
+    runtimeExportComponents : bpy.props.StringProperty(
                     name="component export file",
                     description="Override component export-file (default: ./urho3d_components.json)",
                     maxlen = 512,
@@ -933,7 +933,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
     # --- Output settings ---
     
-    outputPath = StringProperty(
+    outputPath : StringProperty(
             name = "",
             description = "Path where to export",
             default = "", 
@@ -941,41 +941,41 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             subtype = "DIR_PATH",
             update = update_func)   
 
-    useSubDirs = BoolProperty(
+    useSubDirs : BoolProperty(
             name = "Use sub folders",
             description = "Use sub folders inside the output folder (Materials, Models, Textures ...)",
             default = True)
 
-    modelsPath = StringProperty(
+    modelsPath : StringProperty(
             name = "Models",
             description = "Models subpath (relative to output)")
-    animationsPath = StringProperty(
+    animationsPath : StringProperty(
             name = "Animations",
             description = "Animations subpath (relative to output)")
-    materialsPath = StringProperty(
+    materialsPath : StringProperty(
             name = "Materials",
             description = "Materials subpath (relative to output)")
-    techniquesPath = StringProperty(
+    techniquesPath : StringProperty(
             name = "Techniques",
             description = "Techniques subpath (relative to output)")
-    texturesPath = StringProperty(
+    texturesPath : StringProperty(
             name = "Textures",
             description = "Textures subpath (relative to output)")
-    objectsPath = StringProperty(
+    objectsPath : StringProperty(
             name = "Objects",
             description = "Objects subpath (relative to output)")
-    scenesPath = StringProperty(
+    scenesPath : StringProperty(
             name = "Scenes",
             description = "Scenes subpath (relative to output)")
 
-    fileOverwrite = BoolProperty(
+    fileOverwrite : BoolProperty(
             name = "Files overwrite",
             description = "If enabled existing files are overwritten without warnings",
             default = False)
 
     # --- Source settings ---
             
-    source = EnumProperty(
+    source : EnumProperty(
             name = "Source",
             description = "Objects to be exported",
             items=(('ALL', "All", "all the objects in the scene"),
@@ -984,7 +984,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
 
 
-    orientation = EnumProperty(
+    orientation : EnumProperty(
             name = "Front view",
             description = "Front view of the model",
             items = (('X_MINUS', "Left (--X +Z)", ""),
@@ -995,7 +995,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
                      ('Z_PLUS',  "Top (+Z +Y)", "")),
             default = 'X_PLUS')
 
-    scale = FloatProperty(
+    scale : FloatProperty(
             name = "Scale", 
             description = "Scale to apply on the exported objects", 
             default = 1.0,
@@ -1004,154 +1004,154 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             step = 10,
             precision = 1)
 
-    modifiers = BoolProperty(
+    modifiers : BoolProperty(
             name = "Apply modifiers",
             description = "Apply the object modifiers before exporting",
             default = False)
 
-    modifiersRes = EnumProperty(
+    modifiersRes : EnumProperty(
             name = "Modifiers setting",
             description = "Resolution setting to use while applying modifiers",
             items = (('PREVIEW', "Preview", "use the Preview resolution setting"),
                      ('RENDER', "Render", "use the Render resolution setting")),
             default = 'RENDER')
 
-    origin = EnumProperty(
+    origin : EnumProperty(
             name = "Mesh origin",
             description = "Origin for the position of vertices/bones",
             items=(('GLOBAL', "Global", "Blender's global origin"),
                    ('LOCAL', "Local", "object's local origin (orange dot)")),
             default = 'LOCAL')
 
-    selectErrors = BoolProperty(
+    selectErrors : BoolProperty(
             name = "Select vertices with errors",
             description = "If a vertex has errors (e.g. invalid UV, missing UV or color or weights) select it",
             default = True,
             update = update_func)
 
     errorsMem = ErrorsMem()
-    errorsEnum = EnumProperty(
+    errorsEnum : EnumProperty(
             name = "",
             description = "List of errors",
             items = errors_items_func,
             update = errors_update_func)
 
-    forceElements = BoolProperty(
+    forceElements : BoolProperty(
             name = "Force missing elements",
             description = "If a vertex element (UV, color, weights) is missing add it with a zero value",
             default = False)
 
-    ignoreHidden = BoolProperty(
+    ignoreHidden : BoolProperty(
             name = "Ignore hidden objects",
             description = "Ignore hidden objects",
             default = False)  
 
-    wiredAsEmpty = BoolProperty(
+    wiredAsEmpty : BoolProperty(
             name = "Export wired MeshesNodes as empties",
             description = "MeshesNodes that are set to wired in ObjectPanel are exported as empties",
             default = False)                
 
-    exportOnSave = BoolProperty(
+    exportOnSave : BoolProperty(
             name = "Export Data on Save",
             description = "Export Data after Saving the blend",
             default = False)    
 
-    exportGroupsAsObject = BoolProperty(
+    exportGroupsAsObject : BoolProperty(
             name = "Export Groups as PrefabObject",
             description = "Export Groups as PrefabObject and write meta data into the group-instance-empties",
             default = False)                                        
 
-    merge = BoolProperty(
+    merge : BoolProperty(
             name = "Merge objects",
             description = ("Merge all the objects in a single file, one common geometry for each material. "
                            "It uses the current object name."),
             default = False,
             update = update_func2)
 
-    mergeNotMaterials = BoolProperty(
+    mergeNotMaterials : BoolProperty(
             name = "Don't merge materials",
             description = "Create a different geometry for each material of each object",
             default = False)
 
-    geometrySplit = BoolProperty(
+    geometrySplit : BoolProperty(
             name = "One vertex buffer per object",
             description = "Split each object into its own vertex buffer",
             default = False)
 
-    lods = BoolProperty(
+    lods : BoolProperty(
             name = "Use LODs",
             description = "Search for the LOD distance if the object name, objects with the same name are added as LODs",
             default = False)
 
-    strictLods = BoolProperty(
+    strictLods : BoolProperty(
             name = "Strict LODs",
             description = "Add a new vertex if the LOD0 does not contain a vertex with the exact same position, normal and UV",
             default = True)
             
-    optimizeIndices = BoolProperty(
+    optimizeIndices : BoolProperty(
             name = "Optimize indices (slow)",
             description = "Linear-Speed vertex cache optimisation",
             default = True)
 
     # --- Components settings ---
 
-    skeletons = BoolProperty(
+    skeletons : BoolProperty(
             name = "Skeletons",
             description = "Export model armature bones",
             default = False,
             update = update_func)
 
-    onlyKeyedBones = BoolProperty(
+    onlyKeyedBones : BoolProperty(
             name = "Only keyed bones",
             description = "In animinations export only bones with keys",
             default = False)
 
-    onlyDeformBones = BoolProperty(
+    onlyDeformBones : BoolProperty(
             name = "Only deform bones",
             description = "Don't export bones without Deform and its children",
             default = False,
             update = update_func2)
             
-    onlyVisibleBones = BoolProperty(
+    onlyVisibleBones : BoolProperty(
             name = "Only visible bones",
             description = "Don't export bones not visible and its children",
             default = False,
             update = update_func2)
 
-    actionsByFcurves = BoolProperty(
+    actionsByFcurves : BoolProperty(
             name = "Read actions by Fcurves",
             description = "Should be much faster than updating the whole scene, usable only for Actions and for Quaternion rotations",
             default = False)
 
-    derigify = BoolProperty(
+    derigify : BoolProperty(
             name = "Derigify",
             description = "Remove extra bones from Rigify armature",
             default = False,
             update = update_func)
 
-    clampBoundingBox = BoolProperty(
+    clampBoundingBox : BoolProperty(
             name = "Clamp bones bounding box",
             description = "Clamp each bone bounding box between bone head & tail. Use case: ragdoll, IK...",
             default = False)
 
-    parentBoneSkinning = BoolProperty(
+    parentBoneSkinning : BoolProperty(
             name = "Use skinning for parent bones",
             description = "If an object has a parent of type BONE use a 100% skinning on its vertices "
                           "(use this only for a quick prototype)",
             default = False,
             update = update_func)
 
-    animations = BoolProperty(
+    animations : BoolProperty(
             name = "Animations",
             description = "Export bones animations (Skeletons needed)",
             default = False)
 
-    objAnimations = BoolProperty(
+    objAnimations : BoolProperty(
             name = "of objects",
             description = "Export objects animations (without Skeletons)",
             default = False)
 
-    animationSource = EnumProperty(
+    animationSource : EnumProperty(
             name = "",
             items = (('ALL_ACTIONS', "All Actions", "Export all the actions in memory"),
                     ('CURRENT_ACTION', "Current Action", "Export the object's current action linked in the Dope Sheet editor"),
@@ -1165,172 +1165,172 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = 'USED_ACTIONS',
             update = update_func)
 
-    animationExtraFrame = BoolProperty(
+    animationExtraFrame : BoolProperty(
             name = "Ending extra frame",
             description = "In Blender to avoid pauses in a looping animation you normally want to skip the last frame "
                           "when it is the same as the first one. Urho needs this last frame, use this option to add it. "
                           "It is needed only when using the Timeline or Nla-Tracks.",
             default = True)
 
-    animationTriggers = BoolProperty(
+    animationTriggers : BoolProperty(
             name = "Export markers as triggers",
             description = "Export action pose markers (for actions, strips and tracks) or scene markers (for timeline) "
                           "as triggers, the time is expressed in seconds",
             default = False)
 
-    animationRatioTriggers = BoolProperty(
+    animationRatioTriggers : BoolProperty(
             name = "Normalize time",
             description = "Export the time of triggers as a number from 0 (start) to 1 (end)",
             default = False)
 
     #---------------------------------
 
-    animationPos = BoolProperty(
+    animationPos : BoolProperty(
             name = "Position",
             description = "Within animations export bone positions",
             default = True)
 
-    animationRot = BoolProperty(
+    animationRot : BoolProperty(
             name = "Rotation",
             description = "Within animations export bone rotations",
             default = True)
 
-    animationSca = BoolProperty(
+    animationSca : BoolProperty(
             name = "Scale",
             description = "Within animations export bone scales",
             default = False)
 
-    filterSingleKeyFrames = BoolProperty(
+    filterSingleKeyFrames : BoolProperty(
             name = "Remove single tracks",
             description = "Do not export tracks which contain only one keyframe, useful for layered animations",
             default = False)
 
-    geometries = BoolProperty(
+    geometries : BoolProperty(
             name = "Geometries",
             description = "Export vertex buffers, index buffers, geometries, lods",
             default = True,
             update = update_func)
 
-    geometryPos = BoolProperty(
+    geometryPos : BoolProperty(
             name = "Position",
             description = "Within geometry export vertex position",
             default = True,
             update = update_func)
 
-    geometryNor = BoolProperty(
+    geometryNor : BoolProperty(
             name = "Normal",
             description = "Within geometry export vertex normal (enable 'Auto Smooth' to export custom normals)",
             default = True,
             update = update_func)
 
-    geometryCol = BoolProperty(
+    geometryCol : BoolProperty(
             name = "Color",
             description = "Within geometry export vertex color",
             default = False)
 
-    geometryColAlpha = BoolProperty(
+    geometryColAlpha : BoolProperty(
             name = "Alpha",
             description = "Within geometry export vertex alpha (append _ALPHA to the color layer name)",
             default = False)
 
-    geometryUV = BoolProperty(
+    geometryUV : BoolProperty(
             name = "UV",
             description = "Within geometry export vertex UV",
             default = False,
             update = update_func)
 
-    geometryUV2 = BoolProperty(
+    geometryUV2 : BoolProperty(
             name = "UV2",
             description = "Within geometry export vertex UV2 (append _UV2 to the texture name)",
             default = False,
             update = update_func)
 
-    geometryTan = BoolProperty(
+    geometryTan : BoolProperty(
             name = "Tangent",
             description = "Within geometry export vertex tangent (Position, Normal, UV needed)",
             default = False,
             update = update_func)
 
-    geometryWei = BoolProperty(
+    geometryWei : BoolProperty(
             name = "Weights",
             description = "Within geometry export vertex bones weights (Skeletons needed)",
             default = False)
 
-    morphs = BoolProperty(
+    morphs : BoolProperty(
             name = "Morphs (shape keys)",
             description = "Export vertex morphs (Geometries needed)",
             default = False)
 
-    morphNor = BoolProperty(
+    morphNor : BoolProperty(
             name = "Normal",
             description = "Within morph export vertex normal (Geometry Normal needed)",
             default = True,
             update = update_func)
 
-    morphTan = BoolProperty(
+    morphTan : BoolProperty(
             name = "Tangent",
             description = "Within morph export vertex tangent (Morph Normal, Geometry Tangent needed)",
             default = False,
             update = update_func)
 
-    materials = BoolProperty(
+    materials : BoolProperty(
             name = "Export materials",
             description = "Export XML materials",
             default = False,
             update = update_func)
 
-    materialsList = BoolProperty(
+    materialsList : BoolProperty(
             name = "Materials text list",
             description = "Write a txt file with the list of materials filenames",
             default = False)
 
-    textures = BoolProperty(
+    textures : BoolProperty(
             name = "Copy textures",
             description = "Copy diffuse textures",
             default = False,
             update = update_func)            
 
-    prefabs = BoolProperty(
+    prefabs : BoolProperty(
             name = "Export Urho Prefabs",
             description = "Export Urho3D XML objects (prefabs)",
             default = False,
             update = update_func)
 
-    individualPrefab = BoolProperty(
+    individualPrefab : BoolProperty(
             name = "Individual Prefabs",
             description = "Create one prefab per exported object (so if \"Merge objects\" option is checked, export one prefab for the merged object only)",
             default = False,
             update = update_func)
 
-    individualPrefab_onlyRootObject = BoolProperty(
+    individualPrefab_onlyRootObject : BoolProperty(
             name = "Only Root-Objects",
             description = "Only export individual ROOT objects and pack children recursively inside",
             default = True)
 
 
-    collectivePrefab = BoolProperty(
+    collectivePrefab : BoolProperty(
             name = "One Collective",
             description = "Create one unic/global prefab containing every exported objects. An empty root node holds the objects.",
             default = False,
             update = update_func)
 
-    scenePrefab = BoolProperty(
+    scenePrefab : BoolProperty(
             name = "Scene Prefab",
             description = "Same content as 'Collective', but outputs a Urho3D xml scene (with Octree, PhysicsWorld and DebugRenderer)",
             default = False,
             update = update_func)
 
-    trasfObjects = BoolProperty(
+    trasfObjects : BoolProperty(
             name = "Transform objects",
             description = "Save objects position/rotation/scale, works only with 'Front View = Back'",
             default = True)
 
-    export_userdata = BoolProperty(
+    export_userdata : BoolProperty(
             name = "Export Object Userdata",
             description = "Export the userdata of every object that have any specified in object-tab",
             default = True)
 
-    physics = EnumProperty(
+    physics : EnumProperty(
             name = "Physics",
             description = "Generate physics RigidBody(s) & Shape(s)",
             items = (('DISABLE', "No physics", "Do not create physics stuff"),
@@ -1342,14 +1342,14 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     shapeItems = [ ('BOX', "Box", ""), ('CAPSULE', "Capsule", ""), ('CONE', "Cone", ""), \
                 ('CONVEXHULL', "ConvexHull", ""), ('CYLINDER', "Cylinder", ""), ('SPHERE', "Sphere", ""), \
                 ('STATICPLANE', "StaticPlane", ""), ('TRIANGLEMESH', "TriangleMesh", "") ]
-    shape = EnumProperty(
+    shape : EnumProperty(
             name = "CollisionShape",
             description = "CollisionShape type. Discarded if 'Collision Bounds' is checked in Physics panel.",
             items = shapeItems,
             default = 'TRIANGLEMESH',
             update = update_func2)
 
-    meshnameDerivedBy = EnumProperty(
+    meshnameDerivedBy : EnumProperty(
         name = "meshnameDerivedBy",
         description = "Meshname derived by",
         items=(('Object', "Object-Name", "The object's mesh gets the name of the node, which can result in duplicated meshes saved as different mesh-files"),
@@ -1357,8 +1357,8 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         default='Object')
         
 
-    bonesGlobalOrigin = BoolProperty(name = "Bones global origin", default = False)
-    actionsGlobalOrigin = BoolProperty(name = "Actions global origin", default = False)
+    bonesGlobalOrigin : BoolProperty(name = "Bones global origin", default = False)
+    actionsGlobalOrigin : BoolProperty(name = "Actions global origin", default = False)
     
 
 # Reset settings button
@@ -1406,7 +1406,7 @@ class UrhoReportDialog(bpy.types.Operator):
     def invoke(self, context, event):
         global logMaxCount
         wm = context.window_manager
-        addonPrefs = context.user_preferences.addons[__name__].preferences
+        addonPrefs = context.preferences.addons[__name__].preferences
         logMaxCount = addonPrefs.maxMessagesCount
         return wm.invoke_props_dialog(self, width = addonPrefs.reportWidth)
         #return wm.invoke_popup(self, width = addonPrefs.reportWidth)
@@ -1464,7 +1464,7 @@ class UrhoExportSelectLodMesh(bpy.types.Operator):
     bl_idname = "urho.selectmesh"
     bl_label = "Select mesh"
   
-    meshname = bpy.props.StringProperty(default="")
+    meshname : bpy.props.StringProperty(default="")
 
     def execute(self, context):
         if self.meshname and self.meshname!="":
@@ -1552,7 +1552,7 @@ class UrhoExportObjectPanel(bpy.types.Panel):
         obj = context.object
 
         box = layout.box()
-        row = box.label("Userdata")
+        row = box.label(text="Userdata")
         row = box.row()
         row.template_list("UL_URHO_LIST_USERDATA", "The_List", obj,
                           "user_data", obj, "list_index_userdata")
@@ -1597,7 +1597,7 @@ class UrhoExportMeshPanel(bpy.types.Panel):
 
         if lodset:
             row = box.row()
-            row = box.label("Lods")
+            row = box.label(text="Lods")
             row = box.row()
             row.template_list("UL_URHO_LIST_LOD", "The_List", lodset,
                             "lods", lodset, "lods_idx")
@@ -1626,9 +1626,9 @@ class UrhoExportScenePanel(bpy.types.Panel):
         obj = context.object
 
         box = layout.box()
-        row = box.label("Userdata")
+        row = box.label(text="Userdata")
         row = box.row()
-        row.prop_search(bpy.context.scene,"sceneNodetreeName",bpy.data,"node_groups","Component")
+        row.prop_search(bpy.context.scene,"sceneNodetreeName",bpy.data,"node_groups",text="Component")
 
 
 # The export panel, here we draw the panel using properties we have created earlier
@@ -1649,7 +1649,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
         row = layout.row()
         #row=layout.row(align=True)
-        minimizeIcon = 'ZOOMIN' if settings.minimize else 'ZOOMOUT'
+        minimizeIcon = 'ZOOM_IN' if settings.minimize else 'ZOOM_OUT'
         row.prop(settings, "minimize", text="", icon=minimizeIcon, toggle=False)
         row.operator("urho.export", icon='EXPORT')
         #split = layout.split(percentage=0.1)
@@ -1681,28 +1681,28 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row = box.row()
             row.prop(settings,"runtimeBlocking")
             row = box.row()
-            row.operator("urho.start_runtime",icon="GAME")
+            row.operator("urho.start_runtime",icon="GHOST_ENABLED")
 
 
 
         row = layout.row()
-        row.label("Output:")
+        row.label(text="Output:")
 
 
         box = layout.box()
 
-        box.label("Output folder:")
+        box.label(text="Output folder:")
         box.prop(settings, "outputPath")
 
         row = box.row()
-        row.label("Modelname:")
+        row.label(text="Modelname:")
         row.prop(settings, "meshnameDerivedBy", expand=True)
 
         box.prop(settings, "exportOnSave")
         box.prop(settings, "fileOverwrite")
         row = box.row()
         row.prop(settings, "useSubDirs")
-        showDirsIcon = 'ZOOMOUT' if settings.showDirs else 'ZOOMIN'
+        showDirsIcon = 'ZOOM_OUT' if settings.showDirs else 'ZOOM_IN'
         if settings.showDirs:
             subrow = row.row(align=True)
             subrow.prop(settings, "addDir", text="", icon='TRIA_DOWN_BAR')
@@ -1722,17 +1722,17 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             dbox.prop(settings, "scenesPath")
 
         row = layout.row()
-        row.label("Settings:")
+        row.label(text="Settings:")
         row.operator("urho.exportreset", text="", icon='LIBRARY_DATA_DIRECT')
         
         box = layout.box()
 
         row = box.row()
-        row.label("Objects:")
+        row.label(text="Objects:")
         row.prop(settings, "source", expand=True)
 
         row = box.row()
-        row.label("Origin:")
+        row.label(text="Origin:")
         row.prop(settings, "origin", expand=True)
 
         box.prop(settings, "orientation")
@@ -1772,7 +1772,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
         row = box.row()
         row.prop(settings, "skeletons")
-        row.label("", icon='BONE_DATA')
+        row.label(text="", icon='BONE_DATA')
         if settings.skeletons:
             row = box.row()
             row.separator()
@@ -1792,7 +1792,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         column = row.column()
         column.enabled = not settings.skeletons
         column.prop(settings, "objAnimations")
-        row.label("", icon='ANIM_DATA')
+        row.label(text="", icon='ANIM_DATA')
         if (settings.skeletons and settings.animations) or settings.objAnimations:
             row = box.row()
             row.separator()
@@ -1817,7 +1817,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         
         row = box.row()
         row.prop(settings, "geometries")
-        row.label("", icon='MESH_DATA')
+        row.label(text="", icon='MESH_DATA')
         if settings.geometries:
             row = box.row()
             row.separator()
@@ -1846,7 +1846,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         row = box.row()
         row.enabled = settings.geometries
         row.prop(settings, "morphs")
-        row.label("", icon='SHAPEKEY_DATA')
+        row.label(text="", icon='SHAPEKEY_DATA')
         if settings.geometries and settings.morphs:
             row = box.row()
             row.separator()
@@ -1859,7 +1859,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
         row = box.row()
         row.prop(settings, "materials")
-        row.label("", icon='MATERIAL_DATA')
+        row.label(text="", icon='MATERIAL_DATA')
         if settings.materials:
             row = box.row()
             row.separator()
@@ -1867,18 +1867,18 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
         row = box.row()
         row.prop(settings, "textures")
-        row.label("", icon='TEXTURE_DATA')
+        row.label(text="", icon='TEXTURE_DATA')
 
         row = box.row()
         row.prop(settings, "prefabs")
-        row.label("", icon='MOD_OCEAN')
+        row.label(text="", icon='MOD_OCEAN')
 
         if settings.prefabs:
             row = box.row()
             row.separator()
             row.prop(settings, "individualPrefab")
 
-            row.label("", icon='MOD_BUILD')
+            row.label(text="", icon='MOD_BUILD')
 
             if (settings.individualPrefab):
                 row = box.row()
@@ -1892,12 +1892,12 @@ class UrhoExportRenderPanel(bpy.types.Panel):
                 row = box.row()
                 row.separator()
                 row.prop(settings, "collectivePrefab")
-                row.label("", icon='URL')
+                row.label(text="", icon='URL')
 
             row = box.row()
             row.separator()
             row.prop(settings, "scenePrefab")
-            row.label("", icon='WORLD')
+            row.label(text="", icon='WORLD')
 
 
 
@@ -1910,15 +1910,15 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
             row = specialBox.row()
             # todo: make it possible to check if physics are used in component-nodes and otherwise take the default settings(!)
-            row.label("default physics settings are ignored for objects with component-nodes")
+            row.label(text="default physics settings are ignored for objects with component-nodes")
 
             row = specialBox.row()
             row.prop(settings, "physics")
-            row.label("", icon='PHYSICS')
+            row.label(text="", icon='PHYSICS')
 
             row = specialBox.row()
             row.prop(settings, "shape")
-            row.label("", icon='GROUP')
+            row.label(text="", icon='GROUP')
 
 class UrhoExportNodetreePanel(bpy.types.Panel):
     bl_space_type = 'NODE_EDITOR'
@@ -1936,15 +1936,15 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
 
             layout = self.layout
             box = layout.box()
-            row = box.label("Nodetrees:")
+            row = box.label(text="Nodetrees:")
 
             innerBox = box.box()
             row = innerBox.row()
-            row.prop_search(bpy.context.scene,"sceneNodetreeName",bpy.data,"node_groups","Scene")
+            row.prop_search(bpy.context.scene,"sceneNodetreeName",bpy.data,"node_groups",text="Scene")
 
             ## object's nodetree-managment
             box = box.box()
-            row = box.label("Object Nodetrees")
+            row = box.label(text="Object Nodetrees")
 
             row = layout.row()
             row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object's first nodetree")
@@ -1963,7 +1963,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
 
             
             row = innerBox.row()
-            row.prop_search(bpy.context.active_object,"materialNodetreeName",bpy.data,"node_groups","Material")
+            row.prop_search(bpy.context.active_object.data,"materialNodetreeName",bpy.data,"node_groups",text="Material")
 
 
 
@@ -1974,7 +1974,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
 # Called after loading a new blend. Set the default path if the path edit box is empty.        
 @persistent
 def PostLoad(dummy):
-    addonPrefs = bpy.context.user_preferences.addons[__name__].preferences
+    addonPrefs = bpy.context.preferences.addons[__name__].preferences
     settings = bpy.context.scene.urho_exportsettings
     settings.errorsMem.Clear()
     settings.updatingProperties = False
@@ -2118,8 +2118,8 @@ def register():
     bpy.utils.register_class(UrhoExportMeshPanel)
 
     if IsJsonNodeAddonAvailable():
-        bpy.types.Object.materialTreeId = bpy.props.IntProperty(default=-1)
-        bpy.types.Object.materialNodetreeName=bpy.props.StringProperty(get=getMaterialTreeName,set=setMaterialTreeName,update=updateMaterialTreeName)
+        bpy.types.Mesh.materialTreeId = bpy.props.IntProperty(default=-1)
+        bpy.types.Mesh.materialNodetreeName=bpy.props.StringProperty(get=getMaterialTreeName,set=setMaterialTreeName,update=updateMaterialTreeName)
         bpy.utils.register_class(UrhoExportNodetreePanel)
         bpy.utils.register_class(UrhoExportScenePanel)
 
@@ -2159,7 +2159,7 @@ def register():
 
     
 
-    #bpy.context.user_preferences.filepaths.use_relative_paths = False
+    #bpy.context.preferences.filepaths.use_relative_paths = False
     
     if not PostLoad in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(PostLoad)
@@ -2176,7 +2176,7 @@ def register():
     kmi = km.keymap_items.new("urho.start_runtime", 'SPACE', 'PRESS', ctrl=True, shift=True)
     addon_keymaps.append(km)
 
-    print("installed addons: %s" % bpy.context.user_preferences.addons.keys())
+    print("installed addons: %s" % bpy.context.preferences.addons.keys())
 
 # Note: the script __init__.py is executed only the first time the addons is enabled. After that
 # disabling or enabling the script will only call unregister() or register(). So in unregister()
@@ -2354,7 +2354,7 @@ def ExecuteUrhoExport(context):
     sOptions = SOptions()
     
     # Addons preferences
-    addonPrefs = context.user_preferences.addons[__name__].preferences
+    addonPrefs = context.preferences.addons[__name__].preferences
     
     # Copy from exporter UI settings to Decompose options
     tOptions.mergeObjects = settings.merge

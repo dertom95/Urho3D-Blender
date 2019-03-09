@@ -17,7 +17,7 @@ import math
 jsonNodetreeAvailable = False
 log = logging.getLogger("ExportLogger")
 
-jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.user_preferences.addons.keys()
+jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.preferences.addons.keys()
 if jsonNodetreeAvailable:
     from addon_jsonnodetree import JSONNodetree
     from addon_jsonnodetree import JSONNodetreeUtils
@@ -102,7 +102,7 @@ class UrhoSceneModel:
             # here we need to undo the previous rotation done by DecomposeMesh)
             if sOptions.orientation:
                 om = sOptions.orientation.to_matrix().to_4x4()
-                objMatrix = om * objMatrix * om.inverted()
+                objMatrix = om @ objMatrix @ om.inverted()
 
             # Get pos/rot/scale
             pos = objMatrix.to_translation()
@@ -716,8 +716,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
             # Gather materials
             materials = ""
-            if jsonNodetreeAvailable and obj.materialNodetreeName!="":
-                materialNT = ProcessNodetreeMaterial(obj)
+            if jsonNodetreeAvailable and obj.data.materialNodetreeName!="":
+                materialNT = ProcessNodetreeMaterial(obj.data)
                 if materialNT and materialNT!="": # could we get an urho3d-materialfile corresponding to the material-tree?
                     materials = ";"+materialNT
             

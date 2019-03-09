@@ -290,7 +290,7 @@ def SDBMHash(key):
 def IsJsonNodeAddonAvailable():
     #jsonNodetreeAvailable = False
     #log = logging.getLogger("ExportLogger")
-    jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.user_preferences.addons.keys()
+    jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.preferences.addons.keys()
     return jsonNodetreeAvailable
 
 def getLodSetWithID(id):
