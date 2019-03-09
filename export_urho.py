@@ -1260,69 +1260,70 @@ def UrhoExport(tData, uExportOptions, uExportData, errorsMem):
         if uAnimation.tracks:
             uAnimations.append(uAnimation)
     
-    uMaterials = uExportData.materials
-    for tMaterial in tData.materialsList:
-        uMaterial = UrhoMaterial()
-        # For material list to work the name must be the same 
-        uMaterial.name = tMaterial.name
+    # the material handling have to be done completely different
+    # uMaterials = uExportData.materials
+    # for tMaterial in tData.materialsList:
+    #     uMaterial = UrhoMaterial()
+    #     # For material list to work the name must be the same 
+    #     uMaterial.name = tMaterial.name
         
-        alpha = 1.0
-        if tMaterial.opacity:
-            alpha = tMaterial.opacity
+    #     alpha = 1.0
+    #     if tMaterial.opacity:
+    #         alpha = tMaterial.opacity
 
-        isEmissive = False
-        emissiveTexture = None
+    #     isEmissive = False
+    #     emissiveTexture = None
         
-        technique = "NoTexture"
-        if tMaterial.diffuseTexName:
-            technique = "Diff"
-            if tMaterial.normalTexName:
-                technique += "Normal"
-            if tMaterial.specularTexName:
-                technique += "Spec"
-            # Emission map, light map and AO (Ambient light map) use the same
-            # emission texture slot, we have to pick one
-            if tMaterial.emitTexName:
-                technique += "Emissive"
-                emissiveTexture = tMaterial.emitTexName
-                isEmissive = True
-            elif tMaterial.ambientLightTexName:
-                technique += "AO"
-                emissiveTexture = tMaterial.ambientLightTexName
-            elif tMaterial.lightmapTexName:
-                technique += "LightMap"
-                emissiveTexture = tMaterial.lightmapTexName
-        if tMaterial.shadeless:
-            technique += "Unlit";
-        if tMaterial.opacity:
-            technique += "Alpha";
-            if tMaterial.alphaMask:
-                uMaterial.psdefines += " ALPHAMASK"
+    #     technique = "NoTexture"
+    #     if tMaterial.diffuseTexName:
+    #         technique = "Diff"
+    #         if tMaterial.normalTexName:
+    #             technique += "Normal"
+    #         if tMaterial.specularTexName:
+    #             technique += "Spec"
+    #         # Emission map, light map and AO (Ambient light map) use the same
+    #         # emission texture slot, we have to pick one
+    #         if tMaterial.emitTexName:
+    #             technique += "Emissive"
+    #             emissiveTexture = tMaterial.emitTexName
+    #             isEmissive = True
+    #         elif tMaterial.ambientLightTexName:
+    #             technique += "AO"
+    #             emissiveTexture = tMaterial.ambientLightTexName
+    #         elif tMaterial.lightmapTexName:
+    #             technique += "LightMap"
+    #             emissiveTexture = tMaterial.lightmapTexName
+    #     if tMaterial.shadeless:
+    #         technique += "Unlit";
+    #     if tMaterial.opacity:
+    #         technique += "Alpha";
+    #         if tMaterial.alphaMask:
+    #             uMaterial.psdefines += " ALPHAMASK"
 
-        uMaterial.techniqueName = technique
+    #     uMaterial.techniqueName = technique
 
-        if tMaterial.diffuseColor:
-            diffuse = tMaterial.diffuseColor * tMaterial.diffuseIntensity
-            uMaterial.diffuseColor = (diffuse.r, diffuse.g, diffuse.b, alpha)
+    #     if tMaterial.diffuseColor:
+    #         diffuse = tMaterial.diffuseColor * tMaterial.diffuseIntensity
+    #         uMaterial.diffuseColor = (diffuse.r, diffuse.g, diffuse.b, alpha)
             
-        if tMaterial.specularColor and tMaterial.specularHardness:
-            specular = tMaterial.specularColor * tMaterial.specularIntensity
-            power = tMaterial.specularHardness
-            uMaterial.specularColor = (specular.r, specular.g, specular.b, power)
+    #     if tMaterial.specularColor and tMaterial.specularHardness:
+    #         specular = tMaterial.specularColor * tMaterial.specularIntensity
+    #         power = tMaterial.specularHardness
+    #         uMaterial.specularColor = (specular.r, specular.g, specular.b, power)
 
-        if isEmissive and tMaterial.emitColor and tMaterial.emitIntensity:
-            emissive = tMaterial.emitColor * tMaterial.emitIntensity
-            uMaterial.emissiveColor = (emissive.r, emissive.g, emissive.b)
+    #     if isEmissive and tMaterial.emitColor and tMaterial.emitIntensity:
+    #         emissive = tMaterial.emitColor * tMaterial.emitIntensity
+    #         uMaterial.emissiveColor = (emissive.r, emissive.g, emissive.b)
 
-        uMaterial.twoSided = tMaterial.twoSided
-        uMaterial.shadeless = tMaterial.shadeless
+    #     uMaterial.twoSided = tMaterial.twoSided
+    #     uMaterial.shadeless = tMaterial.shadeless
 
-        uMaterial.diffuseTexName = tMaterial.diffuseTexName
-        uMaterial.normalTexName = tMaterial.normalTexName
-        uMaterial.specularTexName = tMaterial.specularTexName
-        uMaterial.emissiveTexName = emissiveTexture
+    #     uMaterial.diffuseTexName = tMaterial.diffuseTexName
+    #     uMaterial.normalTexName = tMaterial.normalTexName
+    #     uMaterial.specularTexName = tMaterial.specularTexName
+    #     uMaterial.emissiveTexName = emissiveTexture
 
-        uMaterials.append(uMaterial)
+    #     uMaterials.append(uMaterial)
        
 
  

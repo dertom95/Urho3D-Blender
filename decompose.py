@@ -806,7 +806,7 @@ def SetRestPosePosition(context, armatureObj):
     # Force the armature in the rest position (warning: https://developer.blender.org/T24674)
     # This should reset bones matrices ok, but for sure it is not resetting the mesh tessfaces
     # positions
-    savedPosePositionAndVisibility = [armatureObj.data.pose_position, armatureObj.hide_viewport]
+    savedPosePositionAndVisibility = [armatureObj.data.pose_position, armatureObj.visible_get()]
     armatureObj.data.pose_position = 'REST'
     armatureObj.hide_viewport = False
     
@@ -2044,7 +2044,6 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             if tOptions.doGeometryUV and uvs:
                 if uvs:
                     idx = faceLoops[i]
-                    print("TYPE %s" % type(uvs))
                     uvResult = uvs[idx]
                     uv = uvResult.uv
                     tVertex.uv = Vector((uv[0], 1.0 - uv[1]))
@@ -2432,8 +2431,7 @@ def Scan(context, tDataList, errorsMem, tOptions):
 
       
         # Only not hidden
-        # TODO2.8: obj.hide_viewport seems not to work!? atm 08march19
-        if obj.hide_viewport and tOptions.ignoreHidden:
+        if not obj.visible_get() and tOptions.ignoreHidden:
             continue
     
         if tOptions.useLods:

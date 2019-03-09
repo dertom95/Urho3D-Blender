@@ -678,13 +678,20 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     def GetGroupName(grpName):
         return "group_"+grpName    
 
+
     if (sOptions.exportGroupsAsObject):
+        # groups are exported from the Groups-collections
+        if not "Groups" in bpy.data.collections:
+            # if this collection is not created,yet. Do so. Since we want actively decided to export the groups this should be ok, yes?
+            GroupsCollection = bpy.data.collections.new("Groups")
+            # link it with the scene-collection
+            bpy.context.scene.collection.children.link(GroupsCollection)
+
         ## create a mapping to determine in which groups the corressponding object is contained
-        for group in bpy.data.groups:
-            ## ignore internal groups (that might be created,...there are more to be fished out here)
-            if group.name=="RigidBodyConstraints" or group.name=="RigidBodyWorld":
-                continue
-            for grpObj in group.objects:
+        for group in bpy.data.collections["Groups"].children:
+            ## group-collections can have organisational sub-collections. only direct children of the groups-collection
+            ## are considered to be groups
+            for grpObj in group.all_objects:
                 print(("obj:%s grp:%s") %(grpObj.name,group.name) )
 
                 if grpObj.name in groupObjMapping:
@@ -774,7 +781,9 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     a[groupName] = ET.Element('node')
                     groups.append({'xml':a[groupName],'obj':obj,'group':group })
                     # apply group offset
-                    offset = group.dupli_offset
+                    #offset = group.dupli_offset
+                    
+                    offset = Vector((0,0,0)) # no offset in blender 2.8 anymore
                     modelPos = uSceneModel.position
                     ## CAUTION/TODO: this only works for default front-view (I guess)
                     print("POSITION %s : offset %s" % ( modelPos,offset ))
@@ -810,8 +819,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         if sOptions.exportUserdata and obj and len(obj.user_data)>0:
             m = ExportUserdata(a,m,obj,modelNode)
         
-        if sOptions.exportGroupsAsObject and obj.dupli_type == 'GROUP':
-            grp = obj.dupli_group
+        if sOptions.exportGroupsAsObject and obj.instance_type == 'COLLECTION':
+            grp = obj.instance_collection
             grpFilename = sOptions.objectsPath+"/"+GetGroupName(grp.name)+".xml"
             m = AddGroupInstanceComponent(a,m,grpFilename,modelNode)
 
