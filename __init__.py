@@ -1418,7 +1418,7 @@ class UrhoReportDialog(bpy.types.Operator):
         for line in logList:
             lines = line.split(":", 1)
             if lines[0] == 'CRITICAL':
-                lineicon = 'RADIO'
+                lineicon = 'LIGHT'
             elif lines[0] == 'ERROR':
                 lineicon = 'CANCEL'
             elif lines[0] == 'WARNING':
@@ -1961,9 +1961,9 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             ####
 
 
-            
-            row = innerBox.row()
-            row.prop_search(bpy.context.active_object.data,"materialNodetreeName",bpy.data,"node_groups",text="Material")
+            if bpy.context.active_object.type=="OBJECT":
+                row = innerBox.row()
+                row.prop_search(bpy.context.active_object.data,"materialNodetreeName",bpy.data,"node_groups",text="Material")
 
 
 
