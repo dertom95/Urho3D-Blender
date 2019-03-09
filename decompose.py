@@ -2261,18 +2261,19 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                         shapeMesh.vertices[i].co = data.co
 
             # Recalculate normals
-            shapeMesh.update(calc_edges = True, calc_tessface = True)
+            shapeMesh.update(calc_edges = True, calc_loop_triangles = True)
 
             # Compute local space unit length split normals vectors
             shapeMesh.calc_normals_split()
-            shapeMesh.calc_tessface()
+            shapeMesh.calc_loop_triangles()
             
             # TODO: if set use 'vertex group' of the shape to filter affected vertices
             # TODO: can we use mesh tessfaces and not shapeMesh tessfaces ?
             
-            for face in shapeMesh.tessfaces:
-                if face.hide:
-                    continue
+            for face in shapeMesh.loop_triangles:
+                #blender2.8: some replacement?
+                #if face.hide:
+                #    continue
 
                 # TODO: add only affected triangles not faces, use morphed as a mask
                 morphed = False
@@ -2287,7 +2288,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                     # Get the Blender morphed vertex
                     vertex = shapeMesh.vertices[vertexIndex]
                     
-                    position = posMatrix * vertex.co
+                    position = posMatrix @ vertex.co
                     
                     if mesh.use_auto_smooth:
                         # if using Data->Normals->Auto Smooth, use split normal vector
@@ -2298,7 +2299,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                     else:
                         # use face normal
                         normal = face.normal
-                    normal = normalMatrix * normal
+                    normal = normalMatrix @ normal
 
                     # Try to find the TVertex index corresponding to this Blender vertex index
                     try:
