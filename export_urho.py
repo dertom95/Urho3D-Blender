@@ -1123,7 +1123,7 @@ def UrhoExport(tData, uExportOptions, uExportData, errorsMem):
                         uBone.collisionMask |= BONE_BOUNDING_SPHERE
                         uBone.radius = distance
                     # Calculate the vertex position in bone space
-                    boneVertexPos = uBone.inverseMatrix * vertexPos
+                    boneVertexPos = uBone.inverseMatrix @ vertexPos
                     # Update the bone boundingBox
                     uBone.collisionMask |= BONE_BOUNDING_BOX
                     uBone.boundingBox.merge(boneVertexPos)

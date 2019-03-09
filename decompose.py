@@ -813,7 +813,7 @@ def SetRestPosePosition(context, armatureObj):
     # This should help to recalculate all the mesh vertices, it is needed by decomposeMesh
     # and maybe it helps decomposeArmature (but no problem was seen there)
     # TODO: find the correct way, for sure it is not this
-    objects = context.scene.objects
+    objects = context.view_layer.objects
     savedObjectActive = objects.active
     objects.active = armatureObj
     if bpy.ops.object.mode_set.poll():
@@ -1111,16 +1111,16 @@ def DecomposeArmature(scene, armatureObj, meshObj, tData, tOptions):
         # Here 'bone.matrix_local' is in object(armature) space, so we have to
         # calculate the bone transformation in parent bone space
         if parent:
-            boneMatrix = parent.matrix_local.inverted() * boneMatrix
+            boneMatrix = parent.matrix_local.inverted() @ boneMatrix
         else:
-            boneMatrix = originMatrix * boneMatrix
+            boneMatrix = originMatrix @ boneMatrix
             if tOptions.orientation:
-                boneMatrix = tOptions.orientation.to_matrix().to_4x4() * boneMatrix
+                boneMatrix = tOptions.orientation.to_matrix().to_4x4() @ boneMatrix
             # Normally we don't have to worry that Blender is Z up and we want
             # Y up because we use relative transformations between bones. However
             # the parent bone is relative to the armature so we need to convert
             # Z up to Y up by rotating its matrix by -90° on X
-            boneMatrix = Matrix.Rotation(math.radians(-90.0), 4, 'X' ) * boneMatrix
+            boneMatrix = Matrix.Rotation(math.radians(-90.0), 4, 'X' ) @ boneMatrix
 
         if tOptions.scale != 1.0:
             boneMatrix.translation *= tOptions.scale
@@ -1148,7 +1148,7 @@ def DecomposeArmature(scene, armatureObj, meshObj, tData, tOptions):
         # - negate column 2
         ml = bone.matrix_local.copy()
         if tOptions.orientation:
-            ml = tOptions.orientation.to_matrix().to_4x4() * ml
+            ml = tOptions.orientation.to_matrix().to_4x4() @ ml
         if tOptions.scale != 1.0:
             ml.translation *= tOptions.scale
         (ml[1][:], ml[2][:]) = (ml[2][:], ml[1][:])
@@ -1575,7 +1575,7 @@ def DecomposeActions(scene, armatureObj, tData, tOptions):
 
                         if parent:
                             # Bone matrix relative to its parent bone
-                            poseMatrix = parent.matrix.inverted() * poseMatrix
+                            poseMatrix = parent.matrix.inverted() @ poseMatrix
                     else:
                         # Object animations: use the matrix relative to the parent (local matrix)
                         poseMatrix = poseBone.matrix_local.copy()
@@ -1585,14 +1585,14 @@ def DecomposeActions(scene, armatureObj, tData, tOptions):
                     if isArmature:
                         # Root bone matrix relative to the armature
                         if tOptions.orientation:
-                            poseMatrix = tOptions.orientation.to_matrix().to_4x4() * poseMatrix
-                        poseMatrix = Matrix.Rotation(math.radians(-90.0), 4, 'X' ) * originMatrix * poseMatrix
+                            poseMatrix = tOptions.orientation.to_matrix().to_4x4() @ poseMatrix
+                        poseMatrix = Matrix.Rotation(math.radians(-90.0), 4, 'X' ) @ originMatrix @ poseMatrix
                     else:
                         # Object animations: reorient the animations
                         if tOptions.orientation:
                             # Remove the orientation from the object, apply the animation then orient again
                             om = tOptions.orientation.to_matrix().to_4x4()
-                            poseMatrix = om * poseMatrix * om.inverted()
+                            poseMatrix = om * poseMatrix @ om.inverted()
 
                 if tOptions.scale != 1.0:
                     poseMatrix.translation *= tOptions.scale
