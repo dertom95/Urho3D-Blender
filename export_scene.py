@@ -707,13 +707,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         obj = None
         try:
             obj = bpy.data.objects[modelNode]
-            isEmpty = (sOptions.wiredAsEmpty and obj.draw_type=="WIRE") or obj.type=="EMPTY"
+            isEmpty = obj.type=="EMPTY" or (sOptions.wiredAsEmpty and obj.display_type=="WIRE") 
         except:
             pass
 
         if not obj:
             print("Skipping non-object:%s" % modelNode)
             continue
+
+        print("Process:%s Type:%s IsEmpty:%s DrawType:%s" % (obj.name,obj.type,isEmpty,obj.display_type) )
 
         modelFile = None
         materials = None

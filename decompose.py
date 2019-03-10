@@ -2487,7 +2487,7 @@ def Scan(context, tDataList, errorsMem, tOptions):
             createNew = False
             # If we are merging objects, use the current selected object name (only if it is a mesh)
             if context.selected_objects:
-                selectedObject = scene.objects.active
+                selectedObject = bpy.context.active_object
                 if selectedObject.type == 'MESH' and selectedObject.name:
                     lodName = selectedObject.name
 

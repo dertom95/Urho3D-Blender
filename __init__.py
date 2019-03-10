@@ -2559,32 +2559,23 @@ def ExecuteUrhoExport(context):
         if DEBUG: ttt = time.time() #!TIME
 
         uScene.Load(uExportData, tData.blenderObjectName, sOptions)
-        print("")
         for uModel in uExportData.models:
-            print("1")
             obj = None
             try:
-                print("2")
                 obj = bpy.data.objects[uModel.name]
-                uModel.isEmpty=(sOptions.wiredAsEmpty and obj.draw_type=="WIRE") or obj.type=="EMPTY"
+                uModel.isEmpty=obj.type=="EMPTY" or (sOptions.wiredAsEmpty and obj.display_type=="WIRE")
                 if uModel.isEmpty:
-                    print("2")
                     uModel.meshName=obj.name
                 else:
-                    print("3")
                     if obj.lodsetID!=-1:
-                        print("4")
                         lodset = getLodSetWithID(obj.lodsetID)
                         uModel.meshName=lodset.name
                     elif tOptions.meshNameDerivedBy == 'Object':
-                        print("5")
                         uModel.meshName=uModel.name
                     else:
-                        print("6")
                         uModel.meshName=obj.data.name
                 
             except:
-                print("7")
                 uModel.meshName=uModel.name
                 uModel.isEmpty=False
             #
