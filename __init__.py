@@ -1597,13 +1597,15 @@ class UrhoExportMeshPanel(bpy.types.Panel):
 
         if lodset:
             row = box.row()
+            row.prop(lodset,"name")
+            row = box.row();
             row = box.label(text="Lods")
             row = box.row()
             row.template_list("UL_URHO_LIST_LOD", "The_List", lodset,
                             "lods", lodset, "lods_idx")
 
-            row = box.row()
-            row.prop(lodset,"armatureObj")
+#            row = box.row()
+#            row.prop(lodset,"armatureObj")
             row = box.row()
             row.operator('urho_lod.new_item', text='NEW')
             row.operator('urho_lod.delete_item', text='REMOVE')
