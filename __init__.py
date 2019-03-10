@@ -1961,7 +1961,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             ####
 
 
-            if bpy.context.active_object.type=="OBJECT":
+            if bpy.context.active_object.type=="MESH":
                 row = innerBox.row()
                 row.prop_search(bpy.context.active_object.data,"materialNodetreeName",bpy.data,"node_groups",text="Material")
 
@@ -2523,7 +2523,7 @@ def ExecuteUrhoExport(context):
 
             firstLOD = False
             tempObjects.append(new_obj)
-            bpy.context.scene.objects.link(new_obj)
+            bpy.context.scene.collection.objects.link(new_obj)
             print ("LODSET:%s" % lodset.name)
 
     # Decompose
