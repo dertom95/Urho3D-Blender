@@ -45,7 +45,7 @@ if "decompose" in locals():
 from .decompose import TOptions, Scan
 from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, UrhoWriteAnimation, \
                          UrhoWriteTriggers, UrhoExport
-from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterial, UrhoWriteMaterialsList
+from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterialTrees
 from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable,getLodSetWithID,getObjectWithID
 if DEBUG: from .testing import PrintUrhoData, PrintAll
 
@@ -2652,21 +2652,15 @@ def ExecuteUrhoExport(context):
                         except:
                             log.error( "Cannot copy texture to {:s}".format(filepath[0]) )
 
-        if settings.materials:
-            for uMaterial in uExportData.materials:
-                filepath = GetFilepath(PathType.MATERIALS, uMaterial.name, fOptions)
-                uScene.AddFile(PathType.MATERIALS, uMaterial.name, filepath[1])
-                if CheckFilepath(filepath[0], fOptions):
-                    log.info( "Creating material {:s}".format(filepath[1]) )
-                    UrhoWriteMaterial(uScene, uMaterial, filepath[0], fOptions)
+
                     
-            if settings.materialsList:
-                for uModel in uExportData.models:
-                    filepath = GetFilepath(PathType.MATLIST, uModel.name, fOptions)
-                    uScene.AddFile(PathType.MATLIST, uModel.name, filepath[1])
-                    if CheckFilepath(filepath[0], fOptions):
-                        log.info( "Creating materials list {:s}".format(filepath[1]) )
-                        UrhoWriteMaterialsList(uScene, uModel, filepath[0])
+            # if settings.materialsList:
+            #     for uModel in uExportData.models:
+            #         filepath = GetFilepath(PathType.MATLIST, uModel.name, fOptions)
+            #         uScene.AddFile(PathType.MATLIST, uModel.name, filepath[1])
+            #         if CheckFilepath(filepath[0], fOptions):
+            #             log.info( "Creating materials list {:s}".format(filepath[1]) )
+            #             UrhoWriteMaterialsList(uScene, uModel, filepath[0])
 
         if DEBUG: print("[TIME] Write in {:.4f} sec".format(time.time() - ttt) ) #!TIME
 

@@ -6,7 +6,6 @@
 from .utils import PathType, GetFilepath, CheckFilepath, \
                    FloatToString, Vector3ToString, Vector4ToString, \
                    WriteXmlFile, SDBMHash, getLodSetWithID, getObjectWithID
-
 from xml.etree import ElementTree as ET
 from mathutils import Vector, Quaternion, Matrix
 import bpy
@@ -22,6 +21,7 @@ if jsonNodetreeAvailable:
     from addon_jsonnodetree import JSONNodetree
     from addon_jsonnodetree import JSONNodetreeUtils
 
+usedMaterialTrees = []
  
 #-------------------------
 # Scene and nodes classes
@@ -305,7 +305,96 @@ def UrhoWriteMaterial(uScene, uMaterial, filepath, fOptions):
         shadowCullElem = ET.SubElement(materialElem, "shadowcull")
         shadowCullElem.set("value", "none")
 
-    WriteXmlFile(materialElem, filepath, fOptions)
+    WriteXmlFile(materialElem, directory, fOptions)
+
+def UrhoWriteMaterialTrees(fOptions):
+    print ("EXPORT MATERIAL-NODETREES")
+    for materialTree in usedMaterialTrees:
+        fileFullPath = GetFilepath(PathType.MATERIALS, materialTree.name, fOptions)
+        print("Try to export material-nodetree %s" % fileFullPath[0])        
+        if os.path.exists(fileFullPath[0]) and not fOptions.fileOverwrite:
+            log.error( "File already exists {:s}".format(fileFullPath[0]) )
+            continue
+
+        print("n1")
+        materialElem = ET.Element('material')
+
+        for node in materialTree.nodes:
+            print("n2")
+            if node.bl_idname=="urho3dmaterials__techniqueNode":
+                techniqueElem = ET.SubElement(materialElem, "technique")
+                techniqueElem.set("name", node.prop_Technique)
+                techniqueElem.set("quality",str(node.prop_quality))
+                print("n3")
+            elif node.bl_idname=="urho3dmaterials__textureNode":
+                textureElem = ET.SubElement(materialElem, "texture")
+                textureElem.set("unit", node.prop_unit)
+                textureElem.set("name", node.prop_Texture)            
+                print("n4")
+            elif node.bl_idname=="urho3dmaterials__customParameterNode":
+                customParamElem = ET.SubElement(materialElem, "parameter")
+                customParamElem.set("name", node.prop_key)
+                customParamElem.set("value", node.prop_value )           
+                print("n5")
+            elif node.bl_idname=="urho3dmaterials__parameterNode":
+                customParamElem = ET.SubElement(materialElem, "parameter")
+                customParamElem.set("name", node.prop_name)
+                customParamElem.set("value", node.prop_value )           
+            elif node.bl_idname=="urho3dmaterials__standardParams" or node.bl_idname=="urho3dmaterials__pbsParams":
+                print("n6")
+                paramElement = ET.SubElement(materialElem, "parameter")
+                paramElement.set("name", "MatDiffColor")
+                paramElement.set("value", Vector4ToString(node.prop_MatDiffColor) )            
+                paramElement = ET.SubElement(materialElem, "parameter")
+                paramElement.set("name", "MatSpecColor")
+                paramElement.set("value", Vector4ToString(node.prop_MatSpecColor) )            
+                paramElement = ET.SubElement(materialElem, "parameter")
+                paramElement.set("name", "MatEmissiveColor")
+                paramElement.set("value", Vector3ToString(node.prop_MatEmissiveColor) )
+                paramElement = ET.SubElement(materialElem, "parameter")
+                paramElement.set("name", "UOffset")
+                paramElement.set("value", "%s 0 0 0" % node.prop_UOffset) 
+                paramElement = ET.SubElement(materialElem, "parameter")
+                paramElement.set("name", "VOffset")
+                paramElement.set("value", "0 %s 0 0" % node.prop_VOffset) 
+                print("n7")
+
+                if node.bl_idname=="urho3dmaterials__pbsParams":
+                    paramElement = ET.SubElement(materialElem, "parameter")
+                    paramElement.set("name", "MatEnvMapColor")
+                    paramElement.set("value", Vector3ToString(node.prop_MatEnvMapColor) )                               
+                    paramElement = ET.SubElement(materialElem, "parameter")
+                    paramElement.set("name", "Metallic")
+                    paramElement.set("value", node.prop_Metallic) 
+                    paramElement = ET.SubElement(materialElem, "parameter")
+                    paramElement.set("name", "Roughness")
+                    paramElement.set("value", node.prop_Roughness)
+            elif node.bl_idname=="urho3dmaterials__materialNode":
+                # the material node has no real function at the moment. it is just for being there and to connect to
+                # but every thing would work just fine without the node since there is only one material per material-tree
+                pass
+            else:
+                print("Unknown MaterialNode: %s" % node.bl_idname)
+
+        # TODO: 2.8 create nodes for this:
+        # # PS defines
+        # if uMaterial.psdefines != "":
+        #     psdefineElem = ET.SubElement(materialElem, "shader")
+        #     psdefineElem.set("psdefines", uMaterial.psdefines.lstrip())
+
+        # # VS defines
+        # if uMaterial.vsdefines != "":
+        #     vsdefineElem = ET.SubElement(materialElem, "shader")
+        #     vsdefineElem.set("vsdefines", uMaterial.vsdefines.lstrip())
+
+        # if uMaterial.twoSided:
+        #     cullElem = ET.SubElement(materialElem, "cull")
+        #     cullElem.set("value", "none")
+        #     shadowCullElem = ET.SubElement(materialElem, "shadowcull")
+        #     shadowCullElem.set("value", "none")
+
+        WriteXmlFile(materialElem, fileFullPath[0], fOptions)
+
 
 
 def UrhoWriteMaterialsList(uScene, uModel, filepath):
@@ -540,13 +629,17 @@ def ProcessNodetreeMaterial(obj):
         print("Using invalid material-nodetree:"+obj.materialNodetreeName+" on "+obj.name)
         return None
 
+    # search for predef-material-node and use the material it defines
     for node in materialNT.nodes:
-        if node.bl_idname=="urho3dmaterials__materialNode":
+        if node.bl_idname=="urho3dmaterials__predefMaterialNode":
             return node.prop_Material
     
-    print("Using invalid material-nodetree:"+obj.materialNodetreeName+" on "+obj.name)
+    # add this material-nodetree in the list of used materialtrees for later export
+    if materialNT not in usedMaterialTrees:
+        usedMaterialTrees.append(materialNT)
 
-    return None
+    # no predef. use the material created by this nodetree
+    return "Materials/"+obj.materialNodetreeName+".xml"
 
 
 # Export scene and nodes
@@ -989,3 +1082,12 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             if CheckFilepath(filepath[0], fOptions):
                 log.info( "Creating scene prefab {:s}".format(filepath[1]) )
                 WriteXmlFile(sceneRoot, filepath[0], fOptions)
+
+            print("START EXPORTING MATERIALNODETREES")
+            print("FILEPATH %s" % filepath[0])
+            
+            log.info( "Creating material {:s}".format(filepath[1]) )
+            
+            UrhoWriteMaterialTrees(fOptions)                    
+
+            
