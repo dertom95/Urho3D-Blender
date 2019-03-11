@@ -2083,9 +2083,9 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                 if colorsRgb:
                     rgb = colorsRgb[faceLoops[i]]
                     # Approx 255*float to the closest int
-                    color[:3] = ( int(round(rgb.r * 255.0)), 
-                                    int(round(rgb.g * 255.0)), 
-                                    int(round(rgb.b * 255.0)) )                    
+                    color[:3] = ( int(round(rgb.color[0] * 255.0)), 
+                                    int(round(rgb.color[1] * 255.0)), 
+                                    int(round(rgb.color[2] * 255.0)) )                    
                 tVertex.color =tuple(color)
                 
                     
