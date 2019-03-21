@@ -2567,13 +2567,17 @@ def ExecuteUrhoExport(context):
                 if uModel.isEmpty:
                     uModel.meshName=obj.name
                 else:
-                    if obj.lodsetID!=-1:
+                    if obj.lodsetID>0:
+                        print("0")
                         lodset = getLodSetWithID(obj.lodsetID)
                         uModel.meshName=lodset.name
                     elif tOptions.meshNameDerivedBy == 'Object':
+                        print("1")
                         uModel.meshName=uModel.name
                     else:
+                        print("2")
                         uModel.meshName=obj.data.name
+                    print("SET MESHNAME:%s" % uModel.meshName)
                 
             except:
                 uModel.meshName=uModel.name
