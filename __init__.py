@@ -1910,17 +1910,18 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row = specialBox.row()
             row.prop(settings, "export_userdata")
 
-            row = specialBox.row()
-            # todo: make it possible to check if physics are used in component-nodes and otherwise take the default settings(!)
-            row.label(text="default physics settings are ignored for objects with component-nodes")
 
-            row = specialBox.row()
-            row.prop(settings, "physics")
-            row.label(text="", icon='PHYSICS')
+            # row = specialBox.row()
+            # # todo: make it possible to check if physics are used in component-nodes and otherwise take the default settings(!)
+            # row.label(text="default physics settings are ignored for objects with component-nodes")
 
-            row = specialBox.row()
-            row.prop(settings, "shape")
-            row.label(text="", icon='GROUP')
+            # row = specialBox.row()
+            # row.prop(settings, "physics")
+            # row.label(text="", icon='PHYSICS')
+
+            # row = specialBox.row()
+            # row.prop(settings, "shape")
+            # row.label(text="", icon='GROUP')
 
 class UrhoExportNodetreePanel(bpy.types.Panel):
     bl_space_type = 'NODE_EDITOR'
