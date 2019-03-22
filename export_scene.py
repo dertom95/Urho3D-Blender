@@ -319,12 +319,12 @@ def UrhoWriteMaterialTrees(fOptions):
         print("n1")
         materialElem = ET.Element('material')
 
+        techniques = []
+
         for node in materialTree.nodes:
             print("n2")
             if node.bl_idname=="urho3dmaterials__techniqueNode":
-                techniqueElem = ET.SubElement(materialElem, "technique")
-                techniqueElem.set("name", node.prop_Technique)
-                techniqueElem.set("quality",str(node.prop_quality))
+                techniques.append(node);
                 print("n3")
             elif node.bl_idname=="urho3dmaterials__textureNode":
                 textureElem = ET.SubElement(materialElem, "texture")
@@ -365,16 +365,33 @@ def UrhoWriteMaterialTrees(fOptions):
                     paramElement.set("value", Vector3ToString(node.prop_MatEnvMapColor) )                               
                     paramElement = ET.SubElement(materialElem, "parameter")
                     paramElement.set("name", "Metallic")
-                    paramElement.set("value", node.prop_Metallic) 
+                    paramElement.set("value", str(node.prop_Metallic)) 
                     paramElement = ET.SubElement(materialElem, "parameter")
                     paramElement.set("name", "Roughness")
-                    paramElement.set("value", node.prop_Roughness)
+                    paramElement.set("value", str(node.prop_Roughness))
             elif node.bl_idname=="urho3dmaterials__materialNode":
-                # the material node has no real function at the moment. it is just for being there and to connect to
-                # but every thing would work just fine without the node since there is only one material per material-tree
-                pass
+                paramElement = ET.SubElement(materialElem, "cull")
+                paramElement.set("value", node.prop_cull);
+                paramElement = ET.SubElement(materialElem, "shadowcull")
+                paramElement.set("value", node.prop_shadowcull);
+                paramElement = ET.SubElement(materialElem, "fill")
+                paramElement.set("value", node.prop_fill);
+            elif node.bl_idname=="urho3dmaterials__DepthBiasNode":
+                paramElement = ET.SubElement(materialElem, "depth")
+                paramElement.set("constant", node.prop_constant);
+                paramElement.set("slopescaled", node.prop_slopescaled);
             else:
                 print("Unknown MaterialNode: %s" % node.bl_idname)
+
+        # sort the techniques according to their quality and distance
+        techniques = sorted(techniques,key = lambda x: (x.prop_distance,x.prop_quality),reverse=True)
+
+        for node in techniques:
+            techniqueElem = ET.SubElement(materialElem, "technique")
+            techniqueElem.set("name", node.prop_Technique)
+            techniqueElem.set("quality",str(node.prop_quality))
+            techniqueElem.set("loddistance",str(node.prop_distance))
+
 
         # TODO: 2.8 create nodes for this:
         # # PS defines
@@ -453,6 +470,9 @@ def CreateNodeTreeXML(xmlroot,nodetreeID,nodeID):
                 value = value.replace(")","")
                 value = value.replace(","," ")
                 print("V-Result:%s" % value)
+            elif prop["type"]=="string" and prop["default"]=="REF_Model":
+                print("FOUND MODEL-Mapping")
+                value = "Model;Models/"+prop["value"]+".mdl"
 
             modelElem.set("value", value)
 
@@ -644,6 +664,8 @@ def ProcessNodetreeMaterial(obj):
 
 # Export scene and nodes
 def UrhoExportScene(context, uScene, sOptions, fOptions):
+    usedMaterialTrees.clear();
+
     blenderScene = bpy.data.scenes[uScene.blenderSceneName]
     
     '''
