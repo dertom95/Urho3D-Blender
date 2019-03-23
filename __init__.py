@@ -543,10 +543,24 @@ class UL_URHO_LIST_LOD(bpy.types.UIList):
         # Make sure your code supports all 3 layout types
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             #layout.prop_search(item,"meshName",bpy.data,"meshes","Mesh")
-            layout.prop(item,"meshObj")
-            layout.prop(item,"distance")
+            c = layout.column()
+            row = c.row()
+            split = row.split(factor=0.5)
+            c = split.column()
+            c.prop(item,"meshObj")
+
+            split = split.split()
+            c= split.column()
+            #layout.label(item.nodetreeName, icon = custom_icon)
+            c.prop(item,"distance")
+            c = split.column()
+            c.prop(item,"decimate")
+
+
+          #  layout.prop(item,"meshObj")
+          #  layout.prop(item,"distance")
             ## todo: make this smaller
-            layout.prop(item,"decimate",text="")
+           # layout.prop(item,"decimate",text="")
             if item.meshObj:
                 layout.operator("urho.selectmesh",icon="RESTRICT_SELECT_OFF",text="").meshname=item.meshObj.name
 
@@ -2138,17 +2152,30 @@ def register():
             #print("Try to remove the default-nodetree-selector")
             import addon_jsonnodetree
             
-            def customAutoSelection(current_obj):
-                print("CUSTOM CHECK")
+            def customAutoSelection(current_obj,current_treetype,current_tree):
+                print("CUSTOM CHECK:%s %s %s" % (current_obj.name,current_treetype,current_tree))
                 # check if we have at least one nodetree for this object
-                if current_obj and bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree and len(current_obj.nodetrees)>0:
-                    try:
-                        autoNodetree = bpy.data.node_groups[current_obj.nodetrees[0].nodetreeName]
-                        return autoNodetree
-                    except:
-                        pass
-                # default behaviour
+                if bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree:
+                    if current_treetype=="urho3dcomponents":
+                        if current_obj and len(current_obj.nodetrees)>0:
+                            try:
+                                autoNodetree = bpy.data.node_groups[current_obj.nodetrees[0].nodetreeName]
+                                return autoNodetree
+                            except:
+                                pass
+                    elif current_treetype=="urho3dmaterials":
+                        print("auto material. currentName:%s" % current_obj.data.materialNodetreeName)
+                        if current_obj and current_obj.data and current_obj.data.materialNodetreeName!="":
+                            try:
+                                autoNodetree = bpy.data.node_groups[current_obj.data.materialNodetreeName]
+                                return autoNodetree
+                            except:
+                                pass                            
+                    # dont show anything if in auto mode and no nodetree found
+                    return "NOTREE"
                 return None
+
+
 
 
             JSONNodetreeUtils.overrideAutoNodetree = customAutoSelection

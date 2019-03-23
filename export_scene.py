@@ -244,6 +244,8 @@ def UrhoWriteMaterial(uScene, uMaterial, filepath, fOptions):
 
     materialElem = ET.Element('material')
 
+    
+
     #comment = ET.Comment("Material {:s} created from Blender".format(uMaterial.name))
     #materialElem.append(comment)
 
@@ -305,7 +307,7 @@ def UrhoWriteMaterial(uScene, uMaterial, filepath, fOptions):
         shadowCullElem = ET.SubElement(materialElem, "shadowcull")
         shadowCullElem.set("value", "none")
 
-    WriteXmlFile(materialElem, directory, fOptions)
+    WriteXmlFile(materialElem, directroy, fOptions)
 
 def UrhoWriteMaterialTrees(fOptions):
     print ("EXPORT MATERIAL-NODETREES")
@@ -445,7 +447,7 @@ def UrhoWriteMaterialsList(uScene, uModel, filepath):
 # Export scene and nodes
 #------------------------
 
-def CreateNodeTreeXML(xmlroot,nodetreeID,nodeID):
+def CreateNodeTreeXML(xmlroot,nodetreeID,nodeID,currentModel=None):
     nodetree = JSONNodetreeUtils.getNodetreeById(nodetreeID)
     # get all changed values
     # TODO: this might be a bit fragile. Maybe using an property-event to set a dirty-flag!?
@@ -470,9 +472,8 @@ def CreateNodeTreeXML(xmlroot,nodetreeID,nodeID):
                 value = value.replace(")","")
                 value = value.replace(","," ")
                 print("V-Result:%s" % value)
-            elif prop["type"]=="string" and prop["default"]=="REF_Model":
-                print("FOUND MODEL-Mapping")
-                value = "Model;Models/"+prop["value"]+".mdl"
+            elif prop["type"]=="enum" and value=="__Node-Mesh": # not happy with this condtion, but must work for now
+                value = currentModel
 
             modelElem.set("value", value)
 
@@ -642,6 +643,8 @@ def ProcessNodetreeMaterial(obj):
     if obj.materialNodetreeName=="":
         print("No materialnodetree on obj:"+obj.name)
         return None
+
+    print("MaterialNodeTree %s is used!" % obj.materialNodetreeName)
 
     materialNT = bpy.data.node_groups[obj.materialNodetreeName]
 
@@ -951,7 +954,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
             a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
             a["{:d}".format(m)].set("name", "Model")
-            a["{:d}".format(m)].set("value", "Model;" + modelFile)
+            currentModel = "Model;" + modelFile
+            a["{:d}".format(m)].set("value", currentModel)
             m += 1
 
             a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
@@ -970,7 +974,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     for nodetreeSlot in obj.nodetrees:
                         handleId = nodetreeSlot.nodetreeId
                         if (handleId not in handledNodetreeIDS):
-                            compoID = CreateNodeTreeXML(a[modelNode],nodetreeSlot.nodetreeId,compoID)
+                            compoID = CreateNodeTreeXML(a[modelNode],nodetreeSlot.nodetreeId,compoID,currentModel)
                             handledNodetreeIDS.append(handleId)
                         else:
                             # we already added this nodetree! nothing more to do
