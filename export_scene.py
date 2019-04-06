@@ -822,8 +822,6 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     # list of collections that get instanced in the scene
     instancedCollections = []
 
-    # collection=>obj-mapping
-    collections = []
 
     # Export each decomposed object
     def ObjInGroup(obj):
@@ -832,6 +830,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         return "col_"+grpName    
 
 
+    # add all collections that are marked as "export as urho object" to the export-collection list
+    for col in bpy.data.collections:
+        print("Check collection %s" % col.name)
+        if col.urhoExport:
+            if not col in instancedCollections:
+                print("Export collection:%s" % col.name)
+                instancedCollections.append(col)            
 
     if sOptions.exportGroupsAsObject:
         # find all instanced collections
@@ -842,18 +847,18 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 if not collection in instancedCollections:
                     instancedCollections.append(collection)
 
-        ## create a mapping to determine in which collection the corressponding object is contained
-        for col in instancedCollections:
-            ## group-collections can have organisational sub-collections. only direct children of the groups-collection
-            ## are considered to be groups
-            for grpObj in col.all_objects:
-                print(("obj:%s grp:%s") %(grpObj.name,col.name) )
+    ## create a mapping to determine in which collection the corressponding object is contained
+    for col in instancedCollections:
+        ## group-collections can have organisational sub-collections. only direct children of the groups-collection
+        ## are considered to be groups
+        for grpObj in col.all_objects:
+            print(("obj:%s grp:%s") %(grpObj.name,col.name) )
 
-                if grpObj.name in groupObjMapping:
-                    groupObjMapping[grpObj.name].append(col)
-                    #log.critical("Object:{:s} is in multiple collections! Only one collection per object is supported, atm! Using grp:{:s} ".format(grpObj.name, groupObjMapping[grpObj.name]) )
-                else:
-                    groupObjMapping[grpObj.name]=[col]
+            if grpObj.name in groupObjMapping:
+                groupObjMapping[grpObj.name].append(col)
+                #log.critical("Object:{:s} is in multiple collections! Only one collection per object is supported, atm! Using grp:{:s} ".format(grpObj.name, groupObjMapping[grpObj.name]) )
+            else:
+                groupObjMapping[grpObj.name]=[col]
 
         
     for uSceneModel in uScene.modelsList:

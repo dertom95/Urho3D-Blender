@@ -1570,8 +1570,18 @@ class UrhoExportObjectPanel(bpy.types.Panel):
         layout = self.layout
         obj = context.object
 
+
+        currentCollection = bpy.context.collection
+        if currentCollection:
+            box = layout.box()
+            box.label(text="Collection '%s'" % currentCollection.name)
+            row = box.row()
+            row.prop(currentCollection,"urhoExport",text="export as urho object")
+
+
+
         box = layout.box()
-        row = box.label(text="Userdata")
+        row = box.label(text="Object Userdata")
         row = box.row()
         row.template_list("UL_URHO_LIST_USERDATA", "The_List", obj,
                           "user_data", obj, "list_index_userdata")
@@ -2132,6 +2142,7 @@ def register():
     bpy.types.World.lodset_counter=bpy.props.IntProperty()
     bpy.types.World.meshid_counter=bpy.props.IntProperty()
     bpy.types.World.objid_counter=bpy.props.IntProperty()
+    bpy.types.Collection.urhoExport = bpy.props.BoolProperty(description="export as urho3d object")
 
     
     bpy.utils.register_class(UL_URHO_LIST_LOD)
@@ -2277,6 +2288,7 @@ def unregister():
         del bpy.types.Object.materialTreeId
         del bpy.types.Scene.sceneNodetreeName
         del bpy.types.Scene.sceneTreeId
+        del bpy.types.Collection.urhoExport
 
 
     if PostLoad in bpy.app.handlers.load_post:
@@ -2708,8 +2720,7 @@ def ExecuteUrhoExport(context):
         selectErrors(context, settings.errorsMem, 'ALL')
     
     # Export scene and nodes
-    if settings.prefabs:
-        UrhoExportScene(context, uScene, sOptions, fOptions)
+    UrhoExportScene(context, uScene, sOptions, fOptions)
 
     return True
 
