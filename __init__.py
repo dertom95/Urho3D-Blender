@@ -917,7 +917,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     runtimeBlocking : BoolProperty(
             name = "Block Blender while running",
             description = "Block Blender while running",
-            default = True)            
+            default = False)            
 
     runtimeFile : bpy.props.StringProperty(
                     name="Runtime",
@@ -985,7 +985,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     fileOverwrite : BoolProperty(
             name = "Files overwrite",
             description = "If enabled existing files are overwritten without warnings",
-            default = False)
+            default = True)
 
     # --- Source settings ---
             
@@ -1368,7 +1368,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         description = "Meshname derived by",
         items=(('Object', "Object-Name", "The object's mesh gets the name of the node, which can result in duplicated meshes saved as different mesh-files"),
                 ('Mesh', "Mesh-Name", "The object's mesh gets its name by the mesh preventing duplicated mesh-files")),
-        default='Object')
+        default='Mesh')
         
 
     bonesGlobalOrigin : BoolProperty(name = "Bones global origin", default = False)
