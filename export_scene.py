@@ -580,7 +580,7 @@ def CreateNodeTreeXML(xmlroot,nodetreeID,nodeID,currentModel=None):
 
 
 
-def AddGroupInstanceComponent(a,m,groupFilename,modelNode):
+def AddGroupInstanceComponent(a,m,groupFilename,offset,modelNode):
 
     attribID = m
     a["{:d}".format(m)] = ET.SubElement(a[modelNode], "component")
@@ -592,6 +592,10 @@ def AddGroupInstanceComponent(a,m,groupFilename,modelNode):
     a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "attribute")
     a["{:d}".format(m)].set("name", "groupFilename")
     a["{:d}".format(m)].set("value", groupFilename)
+    
+    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "attribute")
+    a["{:d}".format(m)].set("name", "groupOffset")
+    a["{:d}".format(m)].set("value", Vector3ToString(Vector( (offset.y,offset.z,offset.x) )))
     
     return m
 
@@ -945,7 +949,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         if sOptions.exportGroupsAsObject and obj.instance_type == 'COLLECTION':
             grp = obj.instance_collection
             grpFilename = sOptions.objectsPath+"/"+GetGroupName(grp.name)+".xml"
-            m = AddGroupInstanceComponent(a,m,grpFilename,modelNode)
+            m = AddGroupInstanceComponent(a,m,grpFilename,grp.instance_offset,modelNode)
 
 
         if not isEmpty:
