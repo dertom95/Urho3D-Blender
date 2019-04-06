@@ -200,9 +200,15 @@ def XmlToPrettyString(elem):
 # XML writers
 #--------------------
 
+def ensure_dir(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
 # Write XML to a text file
 def WriteXmlFile(xmlContent, filepath, fOptions):
     try:
+        ensure_dir(filepath)
         file = open(filepath, "w")
     except Exception as e:
         log.error("Cannot open file {:s} {:s}".format(filepath, e))
