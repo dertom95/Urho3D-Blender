@@ -46,6 +46,7 @@ class SOptions:
         self.orientation = Quaternion((1.0, 0.0, 0.0, 0.0))
         self.wiredAsEmpty = False
         self.exportGroupsAsObject = True
+        self.exportObjectCollectionAsTag = True
         self.objectsPath = "Objects"
 
 
@@ -600,7 +601,8 @@ def AddGroupInstanceComponent(a,m,groupFilename,offset,modelNode):
     return m
 
 ## add userdata-attributes 
-def ExportUserdata(a,m,obj,modelNode):
+def ExportUserdata(a,m,obj,modelNode,includeCollectionTags=True):
+    print("EXPORT USERDATA")
     attribID = m
     a["{:d}".format(m)] = ET.SubElement(a[modelNode], "attribute")
     a["{:d}".format(m)].set("name", "Variables")
@@ -618,6 +620,14 @@ def ExportUserdata(a,m,obj,modelNode):
         else:
             tags.extend(ud.value.split(","))
 
+    if includeCollectionTags:
+        print("INCLUDE COLTAGS")
+        collectionTags = GetCollectionTags(obj)
+        for colTag in collectionTags:
+            print("TAG:"+colTag)
+            tags.append(colTag)
+
+
     if tags:
         tagsID = m
         a["{:d}".format(tagsID)] = ET.SubElement(a[modelNode], "attribute")
@@ -626,7 +636,11 @@ def ExportUserdata(a,m,obj,modelNode):
         for tag in tags:
             a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(tagsID)], "string")
             a["{:d}".format(m)].set("value", tag.strip())
-            m += 1                    
+            m += 1
+
+
+            
+
     return m
 
 # look up userdata in the specific object with the given key. return None if not present
@@ -668,6 +682,16 @@ def ProcessNodetreeMaterial(obj):
     # no predef. use the material created by this nodetree
     return "Materials/"+obj.materialNodetreeName+".xml"
 
+
+# get all tags of the direct collections and the collections in which it is nested in (postfix: _recursive )
+def GetCollectionTags(obj):
+    result = []
+    for col in bpy.data.collections:
+        if obj.name in col.objects:
+            result.append(col.name)
+        if obj.name in col.all_objects:
+            result.append(col.name+"_recursive")
+    return result
 
 # Export scene and nodes
 def UrhoExportScene(context, uScene, sOptions, fOptions):
@@ -797,6 +821,10 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     groups=[]
     # list of collections that get instanced in the scene
     instancedCollections = []
+
+    # collection=>obj-mapping
+    collections = []
+
     # Export each decomposed object
     def ObjInGroup(obj):
         return obj.name in groupObjMapping
@@ -804,7 +832,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         return "col_"+grpName    
 
 
-    if (sOptions.exportGroupsAsObject):
+
+    if sOptions.exportGroupsAsObject:
         # find all instanced collections
         for obj in bpy.context.scene.objects:
             if obj.instance_type=="COLLECTION":
@@ -821,9 +850,10 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 print(("obj:%s grp:%s") %(grpObj.name,col.name) )
 
                 if grpObj.name in groupObjMapping:
-                    log.critical("Object:{:s} is in multiple collections! Only one collection per object is supported, atm! Using grp:{:s} ".format(grpObj.name, groupObjMapping[grpObj.name]) )
+                    groupObjMapping[grpObj.name].append(col)
+                    #log.critical("Object:{:s} is in multiple collections! Only one collection per object is supported, atm! Using grp:{:s} ".format(grpObj.name, groupObjMapping[grpObj.name]) )
                 else:
-                    groupObjMapping[grpObj.name]=col
+                    groupObjMapping[grpObj.name]=[col]
 
         
     for uSceneModel in uScene.modelsList:
@@ -899,27 +929,28 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
             if ObjInGroup(obj):
                 print("FOUND GROUP OBJ:%s",obj.name)
-                group = groupObjMapping[obj.name]
-                groupName = GetGroupName(group.name)
                 
-                # get or create node for the group
-                if  groupName not in a:
-                    a[groupName] = ET.Element('node')
-                    groups.append({'xml':a[groupName],'obj':obj,'group':group })
-                    # apply group offset
-                    #offset = group.dupli_offset
+                for group in groupObjMapping[obj.name]:
+                    groupName = GetGroupName(group.name)
                     
-                    offset = Vector((0,0,0)) # no offset in blender 2.8 anymore
-                    modelPos = uSceneModel.position
-                    ## CAUTION/TODO: this only works for default front-view (I guess)
-                    print("POSITION %s : offset %s" % ( modelPos,offset ))
-                    newPos = Vector( (modelPos.x - offset.y, modelPos.y - offset.z, modelPos.z - offset.x) )
-                    uSceneModel.position = newPos
+                    # get or create node for the group
+                    if  groupName not in a:
+                        a[groupName] = ET.Element('node')
+                        groups.append({'xml':a[groupName],'obj':obj,'group':group })
+                        # apply group offset
+                        #offset = group.dupli_offset
+                        
+                        offset = Vector((0,0,0)) # no offset in blender 2.8 anymore
+                        modelPos = uSceneModel.position
+                        ## CAUTION/TODO: this only works for default front-view (I guess)
+                        print("POSITION %s : offset %s" % ( modelPos,offset ))
+                        newPos = Vector( (modelPos.x - offset.y, modelPos.y - offset.z, modelPos.z - offset.x) )
+                        uSceneModel.position = newPos
 
 
-                
-                # create root for the group object
-                a[groupName].append(a[modelNode])
+                    
+                    # create root for the group object
+                    a[groupName].append(a[modelNode])
                 #a[modelNode] = ET.SubElement(a[groupName],'node') 
 
         a[modelNode].set("id", "{:d}".format(k))
@@ -943,8 +974,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(m)].set("value", Vector3ToString(uSceneModel.scale))
             m += 1
         
-        if sOptions.exportUserdata and obj and len(obj.user_data)>0:
-            m = ExportUserdata(a,m,obj,modelNode)
+        if (sOptions.exportUserdata or sOptions.exportObjectCollectionAsTag) and obj:
+            m = ExportUserdata(a,m,obj,modelNode,sOptions.exportObjectCollectionAsTag)
         
         if sOptions.exportGroupsAsObject and obj.instance_type == 'COLLECTION':
             grp = obj.instance_collection

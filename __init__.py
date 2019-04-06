@@ -1073,7 +1073,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     exportGroupsAsObject : BoolProperty(
             name = "Export Groups as PrefabObject",
             description = "Export Groups as PrefabObject and write meta data into the group-instance-empties",
-            default = False)                                        
+            default = False)   
+
+    exportObjectCollectionAsTag   : BoolProperty(
+            name = "add collections as tag",
+            description = "Export object's collection containment as tag",
+            default = True)                                                  
 
     merge : BoolProperty(
             name = "Merge objects",
@@ -1768,6 +1773,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
         box.prop(settings,"ignoreHidden")
         box.prop(settings, "exportGroupsAsObject")
+        box.prop(settings, "exportObjectCollectionAsTag")
         box.prop(settings,"wiredAsEmpty")
 
         row = box.row()
@@ -2468,6 +2474,7 @@ def ExecuteUrhoExport(context):
     sOptions.individualPhysics = (settings.physics == 'INDIVIDUAL')
     sOptions.wiredAsEmpty = settings.wiredAsEmpty
     sOptions.exportGroupsAsObject = settings.exportGroupsAsObject
+    sOptions.exportObjectCollectionAsTag = settings.exportObjectCollectionAsTag
     sOptions.globalPhysics = (settings.physics == 'GLOBAL')
     sOptions.trasfObjects = settings.trasfObjects
     sOptions.exportUserdata = settings.export_userdata
