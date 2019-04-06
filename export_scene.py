@@ -787,35 +787,39 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     # save the parent objects
     parentObjects = []
 
-    # what object in what groups
+    # what object in what collection
     groupObjMapping = {}
+    # list to contain xml-data for each collection to be exported
     groups=[]
+    # list of collections that get instanced in the scene
+    instancedCollections = []
     # Export each decomposed object
     def ObjInGroup(obj):
         return obj.name in groupObjMapping
     def GetGroupName(grpName):
-        return "group_"+grpName    
+        return "col_"+grpName    
 
 
     if (sOptions.exportGroupsAsObject):
-        # groups are exported from the Groups-collections
-        if not "Groups" in bpy.data.collections:
-            # if this collection is not created,yet. Do so. Since we want actively decided to export the groups this should be ok, yes?
-            GroupsCollection = bpy.data.collections.new("Groups")
-            # link it with the scene-collection
-            bpy.context.scene.collection.children.link(GroupsCollection)
+        # find all instanced collections
+        for obj in bpy.context.scene.objects:
+            if obj.instance_type=="COLLECTION":
+                # found an instanced collection
+                collection = obj.instance_collection
+                if not collection in instancedCollections:
+                    instancedCollections.append(collection)
 
-        ## create a mapping to determine in which groups the corressponding object is contained
-        for group in bpy.data.collections["Groups"].children:
+        ## create a mapping to determine in which collection the corressponding object is contained
+        for col in instancedCollections:
             ## group-collections can have organisational sub-collections. only direct children of the groups-collection
             ## are considered to be groups
-            for grpObj in group.all_objects:
-                print(("obj:%s grp:%s") %(grpObj.name,group.name) )
+            for grpObj in col.all_objects:
+                print(("obj:%s grp:%s") %(grpObj.name,col.name) )
 
                 if grpObj.name in groupObjMapping:
-                    log.critical("Object:{:s} is in multiple groups! Only one group supported! Using grp:%s".format(grpObj.name, groupObjMapping[grpObj.name]) )
+                    log.critical("Object:{:s} is in multiple collections! Only one collection per object is supported, atm! Using grp:{:s} ".format(grpObj.name, groupObjMapping[grpObj.name]) )
                 else:
-                    groupObjMapping[grpObj.name]=group
+                    groupObjMapping[grpObj.name]=col
 
         
     for uSceneModel in uScene.modelsList:
@@ -880,21 +884,19 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     a[modelNode] = ET.SubElement(a[usm.name], "node")
                     break
         else:
-            if not ObjInGroup(obj):
-                print("not in group:"+obj.name)
-                if not uSceneModel.parentObjectName:
-                    a[modelNode] = ET.SubElement(root, "node")
-                    parentObjects.append({'xml':a[modelNode],'uSceneModel':uSceneModel})
-                else:
-                    ## TODO: Check how to unify the whole parenting process. not sure about this "in a"-part from above
-                    for usm in uScene.modelsList:
-                        if usm.name == uSceneModel.parentObjectName:
-                            a[modelNode] = ET.SubElement(a[usm.name], "node")
-                            break                    
+            if not uSceneModel.parentObjectName:
+                a[modelNode] = ET.SubElement(root, "node")
+                parentObjects.append({'xml':a[modelNode],'uSceneModel':uSceneModel})
             else:
+                for usm in uScene.modelsList:
+                    if usm.name == uSceneModel.parentObjectName:
+                        a[modelNode] = ET.SubElement(a[usm.name], "node")
+                        break                    
+
+            if ObjInGroup(obj):
                 print("FOUND GROUP OBJ:%s",obj.name)
                 group = groupObjMapping[obj.name]
-                groupName = "grp_"+group.name
+                groupName = GetGroupName(group.name)
                 
                 # get or create node for the group
                 if  groupName not in a:
@@ -912,8 +914,9 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
 
                 
-                # create root for the object
-                a[modelNode] = ET.SubElement(a[groupName],'node') 
+                # create root for the group object
+                a[groupName].append(a[modelNode])
+                #a[modelNode] = ET.SubElement(a[groupName],'node') 
 
         a[modelNode].set("id", "{:d}".format(k))
 
