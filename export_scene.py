@@ -658,7 +658,7 @@ def HasTag(obj,tagName):
     return False
 
 def ProcessNodetreeMaterial(obj):
-    if obj.materialNodetreeName=="":
+    if not obj.materialNodetreeName or  obj.materialNodetreeName=="":
         print("No materialnodetree on obj:"+obj.name)
         return None
 
@@ -831,8 +831,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
 
     # add all collections that are marked as "export as urho object" to the export-collection list
+    print("COLLECTION-Handling:")
     for col in bpy.data.collections:
         print("Check collection %s" % col.name)
+        if col.library:
+            print("Ignoring linked collection:%s",col.name)
+            continue
+
         if col.urhoExport:
             if not col in instancedCollections:
                 print("Export collection:%s" % col.name)
@@ -844,13 +849,16 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             if obj.instance_type=="COLLECTION":
                 # found an instanced collection
                 collection = obj.instance_collection
+                
+                if collection.library:
+                    print("ignoring linked collection: %s" % collection.name)
+                    continue
+                
                 if not collection in instancedCollections:
                     instancedCollections.append(collection)
 
     ## create a mapping to determine in which collection the corressponding object is contained
     for col in instancedCollections:
-        ## group-collections can have organisational sub-collections. only direct children of the groups-collection
-        ## are considered to be groups
         for grpObj in col.all_objects:
             print(("obj:%s grp:%s") %(grpObj.name,col.name) )
 

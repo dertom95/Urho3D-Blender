@@ -1071,8 +1071,8 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = False)    
 
     exportGroupsAsObject : BoolProperty(
-            name = "Export Groups as PrefabObject",
-            description = "Export Groups as PrefabObject and write meta data into the group-instance-empties",
+            name = "Export Instanced Collections as PrefabObject",
+            description = "Export Collections as PrefabObject and write meta data into the group-instance-empties",
             default = False)   
 
     exportObjectCollectionAsTag   : BoolProperty(
