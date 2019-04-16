@@ -448,12 +448,8 @@ def UrhoWriteMaterialsList(uScene, uModel, filepath):
 # Export scene and nodes
 #------------------------
 
-def CreateNodeTreeXML(xmlroot,nodetreeID,nodeID,currentModel=None):
-    nodetree = JSONNodetreeUtils.getNodetreeById(nodetreeID)
-    # get all changed values
-    # TODO: this might be a bit fragile. Maybe using an property-event to set a dirty-flag!?
+def CreateNodeTreeXML(xmlroot,nodetree,nodeID,currentModel=None):
     exportNodeTree = JSONNodetree.exportNodes(nodetree,True)
-
     # a node is in urho3d a component
     for node in exportNodeTree["nodes"]:
         bodyElem = ET.SubElement(xmlroot, "component")
@@ -658,16 +654,16 @@ def HasTag(obj,tagName):
     return False
 
 def ProcessNodetreeMaterial(obj):
-    if not obj.materialNodetreeName or  obj.materialNodetreeName=="":
+    if not obj.materialNodetree:
         print("No materialnodetree on obj:"+obj.name)
         return None
 
-    print("MaterialNodeTree %s is used!" % obj.materialNodetreeName)
+    print("MaterialNodeTree %s is used!" % obj.materialNodetree.name)
 
-    materialNT = bpy.data.node_groups[obj.materialNodetreeName]
+    materialNT = obj.materialNodetree
 
     if materialNT.id_data.bl_idname!="urho3dmaterials":
-        print("Using invalid material-nodetree:"+obj.materialNodetreeName+" on "+obj.name)
+        print("Using invalid material-nodetree:"+obj.materialNodetree.name+" on "+obj.name)
         return None
 
     # search for predef-material-node and use the material it defines
@@ -680,7 +676,7 @@ def ProcessNodetreeMaterial(obj):
         usedMaterialTrees.append(materialNT)
 
     # no predef. use the material created by this nodetree
-    return "Materials/"+obj.materialNodetreeName+".xml"
+    return "Materials/"+obj.materialNodetree.name+".xml"
 
 
 # get all tags of the direct collections and the collections in which it is nested in (postfix: _recursive )
@@ -722,14 +718,14 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
         foundSceneNodeTree = False
         try:
-            print("SCENETREE CHECK: %s %s %s" % ( jsonNodetreeAvailable, hasattr(blenderScene,"sceneTreeId"), blenderScene.sceneTreeId) )
-            if jsonNodetreeAvailable and hasattr(blenderScene,"sceneTreeId") and blenderScene.sceneTreeId!=-1:
+#            print("SCENETREE CHECK: %s %s %s" % ( jsonNodetreeAvailable, str(blenderScene.nodetree is not None), blenderScene.nodetree.name)) 
+            if jsonNodetreeAvailable and blenderScene.nodetree:
                 # bypass nodeID and receive the new value
                 print("FOUND SCENE")
-                compoID = CreateNodeTreeXML(sceneRoot,blenderScene.sceneTreeId,compoID)
+                compoID = CreateNodeTreeXML(sceneRoot,blenderScene.nodetree,compoID)
                 foundSceneNodeTree = True
         except Exception as e:
-            log.error("Cannot export scene nodetree {:s} " % e)
+            log.error("Cannot export scene nodetree {:s} " % str(e) )
             log.critical("Couldn't export scene-nodetree. skipping nodetree and going on with default behaviour")
             pass
 
@@ -894,7 +890,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
             # Gather materials
             materials = ""
-            if jsonNodetreeAvailable and obj.data.materialNodetreeName!="":
+            if jsonNodetreeAvailable and obj.data.materialNodetree:
                 materialNT = ProcessNodetreeMaterial(obj.data)
                 if materialNT and materialNT!="": # could we get an urho3d-materialfile corresponding to the material-tree?
                     materials = ";"+materialNT
@@ -1017,16 +1013,16 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
             finishedNodeTree = False
             try:
-                if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and len(obj.nodetrees)>0:
+                if jsonNodetreeAvailable and len(obj.nodetrees)>0:
                     # keep track of already exported nodetrees to prevent one nodetree added multiple times
                     # TODO: prevent inconsistend data in the first place
-                    handledNodetreeIDS = []
+                    handledNodetrees = []
                     
                     for nodetreeSlot in obj.nodetrees:
-                        handleId = nodetreeSlot.nodetreeId
-                        if (handleId not in handledNodetreeIDS):
-                            compoID = CreateNodeTreeXML(a[modelNode],nodetreeSlot.nodetreeId,compoID,currentModel)
-                            handledNodetreeIDS.append(handleId)
+                        nt = nodetreeSlot.nodetreePointer
+                        if (nt not in handledNodetrees):
+                            compoID = CreateNodeTreeXML(a[modelNode],nt,compoID,currentModel)
+                            handledNodetrees.append(nt)
                         else:
                             # we already added this nodetree! nothing more to do
                             pass
@@ -1103,14 +1099,14 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
                     compoID += 2
         else:
-            if jsonNodetreeAvailable and hasattr(obj,"nodetreeId") and len(obj.nodetrees)>0:
-                handledNodetreeIDS = []
+            if jsonNodetreeAvailable and hasattr(obj,"nodetrees") and len(obj.nodetrees)>0:
+                handledNodetrees = []
                 
                 for nodetreeSlot in obj.nodetrees:
-                    handleId = nodetreeSlot.nodetreeId
-                    if (handleId not in handledNodetreeIDS):
-                        compoID = CreateNodeTreeXML(a[modelNode],nodetreeSlot.nodetreeId,compoID)
-                        handledNodetreeIDS.append(handleId)
+                    nt = nodetreeSlot.nodetreePointer
+                    if (nt not in handledNodetrees):
+                        compoID = CreateNodeTreeXML(a[modelNode],nt,compoID)
+                        handledNodetrees.append(id)
                     else:
                         # we already added this nodetree! nothing more to do
                         pass
