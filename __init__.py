@@ -2201,8 +2201,8 @@ def register():
 
             JSONNodetreeUtils.overrideAutoNodetree = customAutoSelection
             
-            #addon_jsonnodetree.unregisterSelectorPanel()
-            #bpy.utils.unregister_class(addon_jsonnodetree.NODE_PT_json_nodetree_select)
+            addon_jsonnodetree.unregisterSelectorPanel()
+            bpy.utils.unregister_class(addon_jsonnodetree.NODE_PT_json_nodetree_select)
             print("ok!")
         except:
             print("did not work")
