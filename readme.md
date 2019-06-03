@@ -1,6 +1,11 @@
 Urho3D-Blender
 ==============
 
+Caution: This version is highly experimental. Consider it proof of concept. 
+ 
+Also install and activate [addon_jsonnodetree](https://github.com/dertom95/addon_jsonnodetree) for support of setting components and adding materials 
+ 
+
 [Blender](http://www.blender.org) to [Urho3D](https://urho3d.github.io) mesh exporter.
 
 Guide [here](https://github.com/reattiva/Urho3D-Blender/blob/master/guide.txt).
