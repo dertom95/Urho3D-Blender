@@ -1916,7 +1916,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         # Add the material if it is new
         #materialName = material and material.name
         materialName = "default_materialtree"
-        if mesh.materialNodetree:
+        if hasattr(mesh,"materialNodetree") and mesh.materialNodetree:
             materialName = mesh.materialNodetree.name
         
         # blender2.8: just set the material-tree-name in the dictionary so we know what material-tree to export
