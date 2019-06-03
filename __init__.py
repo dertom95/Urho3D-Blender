@@ -2224,7 +2224,7 @@ def register():
     #km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
     km = wm.keyconfigs.addon.keymaps.new('Window', space_type='EMPTY', region_type='WINDOW', modal=False)
 
-    kmi = km.keymap_items.new("urho.start_runtime", 'SPACE', 'PRESS', ctrl=True, shift=True)
+    kmi = km.keymap_items.new("urho.start_runtime", 'A', 'PRESS', ctrl=True,shift=True)
     addon_keymaps.append(km)
 
     print("installed addons: %s" % bpy.context.preferences.addons.keys())
