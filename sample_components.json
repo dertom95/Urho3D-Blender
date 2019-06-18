@@ -1,0 +1,3533 @@
+{
+	"customUI": [],
+	"trees": [
+		{
+			"id": "urho3dcomponents",
+			"name": "Tree urho3dcomponents",
+			"icon": "OUTLINER_OB_GROUP_INSTANCE",
+			"nodes": [
+				{
+					"category": "Logic",
+					"id": "urho3dcomponents__AnimationController",
+					"name": "AnimationController",
+					"props": [
+						{
+							"name": "Is Enabled",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Sample Component",
+					"id": "urho3dcomponents__CNavigationMesh",
+					"name": "CNavigationMesh",
+					"props": [
+						{
+							"name": "Navmesh Type",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "Dynamic",
+									"name": "Dynamic",
+									"description": "Dynamic",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Static",
+									"name": "Static",
+									"description": "Static",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "1"
+						},
+						{
+							"name": "activateNavigation",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "showNavmesh",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "tileSize",
+							"default": "32",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "agent height",
+							"default": "0.5",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "agent max climb",
+							"default": "0.25",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "cell height",
+							"default": "0.05",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "game component",
+					"id": "urho3dcomponents__Character",
+					"name": "Character",
+					"props": [
+						{
+							"name": "Animation Idle",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "none",
+									"name": "None",
+									"description": "No Animation",
+									"icon": "ANIM",
+									"number": "0"
+								},
+								{
+									"id": "Animation;Models/ArmatureAction.ani",
+									"name": "Models/ArmatureAction.ani",
+									"description": "Animation Models/ArmatureAction.ani",
+									"icon": "ANIM",
+									"number": "9414690"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "Animation Run",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "none",
+									"name": "None",
+									"description": "No Animation",
+									"icon": "ANIM",
+									"number": "0"
+								},
+								{
+									"id": "Animation;Models/ArmatureAction.ani",
+									"name": "Models/ArmatureAction.ani",
+									"description": "Animation Models/ArmatureAction.ani",
+									"icon": "ANIM",
+									"number": "9414690"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "Animation Jump",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "none",
+									"name": "None",
+									"description": "No Animation",
+									"icon": "ANIM",
+									"number": "0"
+								},
+								{
+									"id": "Animation;Models/ArmatureAction.ani",
+									"name": "Models/ArmatureAction.ani",
+									"description": "Animation Models/ArmatureAction.ani",
+									"icon": "ANIM",
+									"number": "9414690"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "Head Bone",
+							"default": "",
+							"type": "string",
+							"subtype": "NONE"
+						},
+						{
+							"name": "MOVE_FORCE",
+							"default": "0.8",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "INAIR_MOVE_FORCE",
+							"default": "0.02",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "JUMP_FORCE",
+							"default": "7",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "INAIR_THRESHOLD_TIME",
+							"default": "0.1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "BRAKE_FORCE",
+							"default": "0.2",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "game component",
+					"id": "urho3dcomponents__CharacterController",
+					"name": "CharacterController",
+					"props": [
+						{
+							"name": "Use Camera",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "First Person",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "CAMERA_MIN_DIST",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "CAMERA_INITIAL_DIST",
+							"default": "5",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "CAMERA_MAX_DIST",
+							"default": "20",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "YAW_SENSITIVITY",
+							"default": "0.1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Physics",
+					"id": "urho3dcomponents__CollisionShape",
+					"name": "CollisionShape",
+					"props": [
+						{
+							"name": "Is Enabled",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Shape Type",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "Box",
+									"name": "Box",
+									"description": "Box",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Sphere",
+									"name": "Sphere",
+									"description": "Sphere",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "StaticPlane",
+									"name": "StaticPlane",
+									"description": "StaticPlane",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Cylinder",
+									"name": "Cylinder",
+									"description": "Cylinder",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Capsule",
+									"name": "Capsule",
+									"description": "Capsule",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Cone",
+									"name": "Cone",
+									"description": "Cone",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "TriangleMesh",
+									"name": "TriangleMesh",
+									"description": "TriangleMesh",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "ConvexHull",
+									"name": "ConvexHull",
+									"description": "ConvexHull",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Terrain",
+									"name": "Terrain",
+									"description": "Terrain",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "GImpactMesh",
+									"name": "GImpactMesh",
+									"description": "GImpactMesh",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "Size",
+							"default": "(1,1,1)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Offset Position",
+							"default": "(0,0,0)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Model",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "None",
+									"name": "None",
+									"description": "No Mesh",
+									"icon": "MESH",
+									"number": "0"
+								},
+								{
+									"id": "__Node-Mesh",
+									"name": "Node-Mesh",
+									"description": "The node's current mesh",
+									"icon": "MESH",
+									"number": "1"
+								},
+								{
+									"id": "Model;Models/Cube.001.mdl",
+									"name": "Models/Cube.001.mdl",
+									"description": "Model Models/Cube.001.mdl",
+									"icon": "MESH",
+									"number": "1710468"
+								},
+								{
+									"id": "Model;Models/Cube.001.mdl",
+									"name": "Models/Cube.001.mdl",
+									"description": "Model Models/Cube.001.mdl",
+									"icon": "MESH",
+									"number": "1710468"
+								},
+								{
+									"id": "Model;Models/Cube.002.mdl",
+									"name": "Models/Cube.002.mdl",
+									"description": "Model Models/Cube.002.mdl",
+									"icon": "MESH",
+									"number": "6307461"
+								},
+								{
+									"id": "Model;Models/Cube.002.mdl",
+									"name": "Models/Cube.002.mdl",
+									"description": "Model Models/Cube.002.mdl",
+									"icon": "MESH",
+									"number": "6307461"
+								},
+								{
+									"id": "Model;Models/Cube.003.mdl",
+									"name": "Models/Cube.003.mdl",
+									"description": "Model Models/Cube.003.mdl",
+									"icon": "MESH",
+									"number": "5871750"
+								},
+								{
+									"id": "Model;Models/Cube.003.mdl",
+									"name": "Models/Cube.003.mdl",
+									"description": "Model Models/Cube.003.mdl",
+									"icon": "MESH",
+									"number": "5871750"
+								},
+								{
+									"id": "Model;Models/Cube.mdl",
+									"name": "Models/Cube.mdl",
+									"description": "Model Models/Cube.mdl",
+									"icon": "MESH",
+									"number": "3981441"
+								},
+								{
+									"id": "Model;Models/Cube.mdl",
+									"name": "Models/Cube.mdl",
+									"description": "Model Models/Cube.mdl",
+									"icon": "MESH",
+									"number": "3981441"
+								},
+								{
+									"id": "Model;Models/Cube.mdl",
+									"name": "Models/Cube.mdl",
+									"description": "Model Models/Cube.mdl",
+									"icon": "MESH",
+									"number": "3981441"
+								},
+								{
+									"id": "Model;Models/Cube.mdl",
+									"name": "Models/Cube.mdl",
+									"description": "Model Models/Cube.mdl",
+									"icon": "MESH",
+									"number": "3981441"
+								},
+								{
+									"id": "Model;Models/Plane.mdl",
+									"name": "Models/Plane.mdl",
+									"description": "Model Models/Plane.mdl",
+									"icon": "MESH",
+									"number": "7543166"
+								},
+								{
+									"id": "Model;Models/Plane.mdl",
+									"name": "Models/Plane.mdl",
+									"description": "Model Models/Plane.mdl",
+									"icon": "MESH",
+									"number": "7543166"
+								},
+								{
+									"id": "Model;Models/demonmesh.mdl",
+									"name": "Models/demonmesh.mdl",
+									"description": "Model Models/demonmesh.mdl",
+									"icon": "MESH",
+									"number": "1251482"
+								},
+								{
+									"id": "Model;Models/demonmesh.mdl",
+									"name": "Models/demonmesh.mdl",
+									"description": "Model Models/demonmesh.mdl",
+									"icon": "MESH",
+									"number": "1251482"
+								},
+								{
+									"id": "Model;Models/new-lodset 1.mdl",
+									"name": "Models/new-lodset 1.mdl",
+									"description": "Model Models/new-lodset 1.mdl",
+									"icon": "MESH",
+									"number": "5669099"
+								},
+								{
+									"id": "Model;Models/new-lodset 1.mdl",
+									"name": "Models/new-lodset 1.mdl",
+									"description": "Model Models/new-lodset 1.mdl",
+									"icon": "MESH",
+									"number": "5669099"
+								},
+								{
+									"id": "Model;Models/new-lodset 1.mdl",
+									"name": "Models/new-lodset 1.mdl",
+									"description": "Model Models/new-lodset 1.mdl",
+									"icon": "MESH",
+									"number": "5669099"
+								},
+								{
+									"id": "Model;Models/new-lodset 1.mdl",
+									"name": "Models/new-lodset 1.mdl",
+									"description": "Model Models/new-lodset 1.mdl",
+									"icon": "MESH",
+									"number": "5669099"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "LOD Level",
+							"default": "0",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Collision Margin",
+							"default": "0.04",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "CustomGeometry ComponentID",
+							"default": "0",
+							"type": "int",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Subsystem",
+					"id": "urho3dcomponents__DebugRenderer",
+					"name": "DebugRenderer",
+					"props": [
+						{
+							"name": "Line Antialias",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Misc",
+					"id": "urho3dcomponents__GroupInstance",
+					"name": "GroupInstance",
+					"props": [
+						{
+							"name": "groupFilename",
+							"default": "",
+							"type": "string",
+							"subtype": "NONE"
+						},
+						{
+							"name": "groupOffset",
+							"default": "(0,0,0)",
+							"type": "vector3",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Scene",
+					"id": "urho3dcomponents__Light",
+					"name": "Light",
+					"props": [
+						{
+							"name": "Is Enabled",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Light Type",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "Directional",
+									"name": "Directional",
+									"description": "Directional",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Spot",
+									"name": "Spot",
+									"description": "Spot",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Point",
+									"name": "Point",
+									"description": "Point",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "2"
+						},
+						{
+							"name": "Color",
+							"default": "(1,1,1,1)",
+							"type": "color",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Specular Intensity",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Brightness Multiplier",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Temperature",
+							"default": "6590",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Use Physical Values",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Radius",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Length",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Range",
+							"default": "10",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Spot FOV",
+							"default": "30",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Spot Aspect Ratio",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Can Be Occluded",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Cast Shadows",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Per Vertex",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Draw Distance",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Fade Distance",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Shadow Distance",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Shadow Fade Distance",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Shadow Intensity",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Shadow Resolution",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Focus To Scene",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Non-uniform View",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Auto-Reduce Size",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "CSM Splits",
+							"default": "(1000,0,0,0)",
+							"type": "vector4",
+							"subtype": "NONE"
+						},
+						{
+							"name": "CSM Fade Start",
+							"default": "0.8",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "CSM Bias Auto Adjust",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "View Size Quantize",
+							"default": "0.5",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "View Size Minimum",
+							"default": "3",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Depth Constant Bias",
+							"default": "0.0002",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Depth Slope Bias",
+							"default": "0.5",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Normal Offset",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Near/Farclip Ratio",
+							"default": "0.002",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Max Extrusion",
+							"default": "1000",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "View Mask",
+							"default": "-1",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Light Mask",
+							"default": "-1",
+							"type": "int",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Navigation",
+					"id": "urho3dcomponents__NavArea",
+					"name": "NavArea",
+					"props": [
+						{
+							"name": "Bounding Box Min",
+							"default": "(-10,-10,-10)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Bounding Box Max",
+							"default": "(10,10,10)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Area ID",
+							"default": "0",
+							"type": "int",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Navigation",
+					"id": "urho3dcomponents__Navigable",
+					"name": "Navigable",
+					"props": [
+						{
+							"name": "Is Enabled",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Recursive",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Navigation",
+					"id": "urho3dcomponents__NavigationMesh",
+					"name": "NavigationMesh",
+					"props": [
+						{
+							"name": "Tile Size",
+							"default": "128",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Cell Size",
+							"default": "0.3",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Cell Height",
+							"default": "0.2",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Agent Height",
+							"default": "2",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Agent Radius",
+							"default": "0.6",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Agent Max Climb",
+							"default": "0.9",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Agent Max Slope",
+							"default": "45",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Region Min Size",
+							"default": "8",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Region Merge Size",
+							"default": "20",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Edge Max Length",
+							"default": "12",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Edge Max Error",
+							"default": "1.3",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Detail Sample Distance",
+							"default": "6",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Detail Sample Max Error",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Bounding Box Padding",
+							"default": "(1,1,1)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Partition Type",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "watershed",
+									"name": "watershed",
+									"description": "watershed",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "monotone",
+									"name": "monotone",
+									"description": "monotone",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "Draw OffMeshConnections",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Draw NavAreas",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Subsystem",
+					"id": "urho3dcomponents__Octree",
+					"name": "Octree",
+					"props": [
+						{
+							"name": "Bounding Box Min",
+							"default": "(-1000,-1000,-1000)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Bounding Box Max",
+							"default": "(1000,1000,1000)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Number of Levels",
+							"default": "8",
+							"type": "int",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Sample Component",
+					"id": "urho3dcomponents__ParentBone",
+					"name": "ParentBone",
+					"props": [
+						{
+							"name": "boneName",
+							"default": "",
+							"type": "string",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Subsystem",
+					"id": "urho3dcomponents__PhysicsWorld",
+					"name": "PhysicsWorld",
+					"props": [
+						{
+							"name": "Gravity",
+							"default": "(0,-9.81,0)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Physics FPS",
+							"default": "60",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Max Substeps",
+							"default": "0",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Solver Iterations",
+							"default": "10",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Net Max Angular Vel",
+							"default": "100",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Interpolation",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Internal Edge Utility",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Split Impulse",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Sample Component",
+					"id": "urho3dcomponents__PlayAnimation",
+					"name": "PlayAnimation",
+					"props": [
+						{
+							"name": "animationFile",
+							"default": "",
+							"type": "string",
+							"subtype": "NONE"
+						},
+						{
+							"name": "speed",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Misc",
+					"id": "urho3dcomponents__RaycastVehicle",
+					"name": "RaycastVehicle",
+					"props": [
+						{
+							"name": "Maximum side slip threshold",
+							"default": "4",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "RPM for wheel motors in air (0=calculate)",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Physics",
+					"id": "urho3dcomponents__RigidBody",
+					"name": "RigidBody",
+					"props": [
+						{
+							"name": "Is Enabled",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Mass",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Friction",
+							"default": "0.5",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Anisotropic Friction",
+							"default": "(1,1,1)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Rolling Friction",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Restitution",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Linear Velocity",
+							"default": "(0,0,0)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Angular Velocity",
+							"default": "(0,0,0)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Linear Factor",
+							"default": "(1,1,1)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Angular Factor",
+							"default": "(1,1,1)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Linear Damping",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Angular Damping",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Linear Rest Threshold",
+							"default": "0.8",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Angular Rest Threshold",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Collision Layer",
+							"default": "1",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Collision Mask",
+							"default": "-1",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Contact Threshold",
+							"default": "1e+18",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "CCD Radius",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "CCD Motion Threshold",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Collision Event Mode",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "Never",
+									"name": "Never",
+									"description": "Never",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "When Active",
+									"name": "When Active",
+									"description": "When Active",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Always",
+									"name": "Always",
+									"description": "Always",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "1"
+						},
+						{
+							"name": "Use Gravity",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Is Kinematic",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Is Trigger",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Gravity Override",
+							"default": "(0,0,0)",
+							"type": "vector3",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Sample Component",
+					"id": "urho3dcomponents__Rotator",
+					"name": "Rotator",
+					"props": [
+						{
+							"name": "axis",
+							"default": "(1,1,1)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "speed",
+							"default": "8",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "game component",
+					"id": "urho3dcomponents__SceneLogic",
+					"name": "SceneLogic",
+					"props": [
+						{
+							"name": "activateNavigation",
+							"default": "0",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "showNavmesh",
+							"default": "0",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "showPhysics",
+							"default": "0",
+							"type": "bool",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Sample Component",
+					"id": "urho3dcomponents__ShapeKey",
+					"name": "ShapeKey",
+					"props": [
+						{
+							"name": "shapeKey",
+							"default": "",
+							"type": "string",
+							"subtype": "NONE"
+						},
+						{
+							"name": "value",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"category": "Scene",
+					"id": "urho3dcomponents__Zone",
+					"name": "Zone",
+					"props": [
+						{
+							"name": "Is Enabled",
+							"default": "true",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Bounding Box Min",
+							"default": "(-10,-10,-10)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Bounding Box Max",
+							"default": "(10,10,10)",
+							"type": "vector3",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Ambient Color",
+							"default": "(0.1,0.1,0.1,1)",
+							"type": "color",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Fog Color",
+							"default": "(0,0,0,1)",
+							"type": "color",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Fog Start",
+							"default": "250",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Fog End",
+							"default": "1000",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Fog Height",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Fog Height Scale",
+							"default": "0.5",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "Height Fog Mode",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Override Mode",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Ambient Gradient",
+							"default": "false",
+							"type": "bool",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Priority",
+							"default": "0",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Light Mask",
+							"default": "-1",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Shadow Mask",
+							"default": "-1",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Zone Mask",
+							"default": "-1",
+							"type": "int",
+							"subtype": "NONE"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "urho3dmaterials",
+			"name": "Tree urho3dmaterials",
+			"icon": "COLOR_RED",
+			"nodes": [
+				{
+					"id": "urho3dmaterials__predefMaterialNode",
+					"name": "PredefMaterial",
+					"category": "Material",
+					"props": [
+						{
+							"name": "Material",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "Materials/BoxMaterial.xml",
+									"name": "Materials/BoxMaterial.xml",
+									"description": "Material Materials/BoxMaterial.xml",
+									"icon": "MATERIAL",
+									"number": "8164440"
+								},
+								{
+									"id": "Materials/DefaultGrey.xml",
+									"name": "Materials/DefaultGrey.xml",
+									"description": "Material Materials/DefaultGrey.xml",
+									"icon": "MATERIAL",
+									"number": "8019942"
+								},
+								{
+									"id": "Materials/Material.xml",
+									"name": "Materials/Material.xml",
+									"description": "Material Materials/Material.xml",
+									"icon": "MATERIAL",
+									"number": "9558419"
+								},
+								{
+									"id": "Materials/RED.xml",
+									"name": "Materials/RED.xml",
+									"description": "Material Materials/RED.xml",
+									"icon": "MATERIAL",
+									"number": "9786327"
+								},
+								{
+									"id": "Materials/aaaa.xml",
+									"name": "Materials/aaaa.xml",
+									"description": "Material Materials/aaaa.xml",
+									"icon": "MATERIAL",
+									"number": "2469004"
+								},
+								{
+									"id": "Materials/demonmat.xml",
+									"name": "Materials/demonmat.xml",
+									"description": "Material Materials/demonmat.xml",
+									"icon": "MATERIAL",
+									"number": "3669665"
+								}
+							],
+							"default": "0"
+						}
+					]
+				},
+				{
+					"id": "urho3dmaterials__materialNode",
+					"name": "Material",
+					"category": "Material",
+					"outputsockets": [
+						{
+							"name": "defs",
+							"type": "bool"
+						}
+					],
+					"props": [
+						{
+							"name": "cull",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "ccw",
+									"name": "ccw",
+									"description": "ccw",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "cw",
+									"name": "cw",
+									"description": "cw",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "none",
+									"name": "none",
+									"description": "none",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "shadowcull",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "ccw",
+									"name": "ccw",
+									"description": "ccw",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "cw",
+									"name": "cw",
+									"description": "cw",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "none",
+									"name": "none",
+									"description": "none",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "fill",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "solid",
+									"name": "solid",
+									"description": "solid",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "wireframe",
+									"name": "wireframe",
+									"description": "wireframe",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "point",
+									"name": "point",
+									"description": "point",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "0"
+						}
+					]
+				},
+				{
+					"id": "urho3dmaterials__DepthBiasNode",
+					"name": "DepthBias",
+					"category": "Material",
+					"inputsockets": [
+						{
+							"name": "Material",
+							"type": "bool"
+						}
+					],
+					"props": [
+						{
+							"name": "constant",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						},
+						{
+							"name": "slopescaled",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"id": "urho3dmaterials__parameterNode",
+					"name": "Parameter",
+					"category": "Material",
+					"inputsockets": [
+						{
+							"name": "Material",
+							"type": "bool"
+						}
+					],
+					"props": [
+						{
+							"name": "name",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "MatDiffColor",
+									"name": "MatDiffColor",
+									"description": "MatDiffColor",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "MatSpecColor",
+									"name": "MatSpecColor",
+									"description": "MatSpecColor",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "MatEmissiveColor",
+									"name": "MatEmissiveColor",
+									"description": "MatEmissiveColor",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "MatEnvMapColor",
+									"name": "MatEnvMapColor",
+									"description": "MatEnvMapColor",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "UOffset",
+									"name": "UOffset",
+									"description": "UOffset",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "VOffset",
+									"name": "VOffset",
+									"description": "VOffset",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Roughness",
+									"name": "Roughness",
+									"description": "Roughness",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "Metallic",
+									"name": "Metallic",
+									"description": "Metallic",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "value",
+							"default": "0",
+							"type": "string",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"id": "urho3dmaterials__customParameterNode",
+					"name": "CustomParameter",
+					"category": "Material",
+					"inputsockets": [
+						{
+							"name": "Material",
+							"type": "bool"
+						}
+					],
+					"props": [
+						{
+							"name": "key",
+							"default": "",
+							"type": "string",
+							"subtype": "NONE"
+						},
+						{
+							"name": "value",
+							"default": "",
+							"type": "string",
+							"subtype": "NONE"
+						}
+					]
+				},
+				{
+					"id": "urho3dmaterials__standardParams",
+					"name": "StandardParams",
+					"category": "Material",
+					"inputsockets": [
+						{
+							"name": "Material",
+							"type": "bool"
+						}
+					],
+					"props": [
+						{
+							"name": "MatDiffColor",
+							"default": "((1,1,1,1))",
+							"type": "color",
+							"subtype": "NONE"
+						},
+						{
+							"name": "MatSpecColor",
+							"default": "((0.1,0.1,0.1,1))",
+							"type": "color",
+							"subtype": "NONE"
+						},
+						{
+							"name": "MatEmissiveColor",
+							"default": "((0,0,0,1))",
+							"type": "color",
+							"subtype": "NONE"
+						},
+						{
+							"name": "UOffset",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "FACTOR"
+						},
+						{
+							"name": "VOffset",
+							"default": "1",
+							"type": "float",
+							"precision": 3,
+							"subtype": "FACTOR"
+						}
+					]
+				},
+				{
+					"id": "urho3dmaterials__pbsParams",
+					"name": "PBSParams",
+					"category": "Material",
+					"inputsockets": [
+						{
+							"name": "Material",
+							"type": "bool"
+						}
+					],
+					"props": [
+						{
+							"name": "MatDiffColor",
+							"default": "((1,1,1,1))",
+							"type": "color",
+							"subtype": "NONE"
+						},
+						{
+							"name": "MatSpecColor",
+							"default": "((0.1,0.1,0.1,1))",
+							"type": "color",
+							"subtype": "NONE"
+						},
+						{
+							"name": "MatEmissiveColor",
+							"default": "((0,0,0,1))",
+							"type": "color",
+							"subtype": "NONE"
+						},
+						{
+							"name": "MatEnvMapColor",
+							"default": "((1,1,1,1))",
+							"type": "color",
+							"subtype": "NONE"
+						},
+						{
+							"name": "Roughness",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "FACTOR"
+						},
+						{
+							"name": "Metallic",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "FACTOR"
+						},
+						{
+							"name": "UOffset",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "FACTOR"
+						},
+						{
+							"name": "VOffset",
+							"default": "0",
+							"type": "float",
+							"precision": 3,
+							"subtype": "FACTOR"
+						}
+					]
+				},
+				{
+					"id": "urho3dmaterials__techniqueNode",
+					"name": "technique",
+					"category": "Material",
+					"props": [
+						{
+							"name": "Technique",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "Techniques/BasicVColUnlitAlpha.xml",
+									"name": "Techniques/BasicVColUnlitAlpha.xml",
+									"description": "Technique Techniques/BasicVColUnlitAlpha.xml",
+									"icon": "COLOR",
+									"number": "1253141"
+								},
+								{
+									"id": "Techniques/Diff.xml",
+									"name": "Techniques/Diff.xml",
+									"description": "Technique Techniques/Diff.xml",
+									"icon": "COLOR",
+									"number": "201658"
+								},
+								{
+									"id": "Techniques/DiffAO.xml",
+									"name": "Techniques/DiffAO.xml",
+									"description": "Technique Techniques/DiffAO.xml",
+									"icon": "COLOR",
+									"number": "9237128"
+								},
+								{
+									"id": "Techniques/DiffAOAlpha.xml",
+									"name": "Techniques/DiffAOAlpha.xml",
+									"description": "Technique Techniques/DiffAOAlpha.xml",
+									"icon": "COLOR",
+									"number": "6339080"
+								},
+								{
+									"id": "Techniques/DiffAdd.xml",
+									"name": "Techniques/DiffAdd.xml",
+									"description": "Technique Techniques/DiffAdd.xml",
+									"icon": "COLOR",
+									"number": "6909785"
+								},
+								{
+									"id": "Techniques/DiffAddAlpha.xml",
+									"name": "Techniques/DiffAddAlpha.xml",
+									"description": "Technique Techniques/DiffAddAlpha.xml",
+									"icon": "COLOR",
+									"number": "8256375"
+								},
+								{
+									"id": "Techniques/DiffAlpha.xml",
+									"name": "Techniques/DiffAlpha.xml",
+									"description": "Technique Techniques/DiffAlpha.xml",
+									"icon": "COLOR",
+									"number": "7518038"
+								},
+								{
+									"id": "Techniques/DiffAlphaTranslucent.xml",
+									"name": "Techniques/DiffAlphaTranslucent.xml",
+									"description": "Technique Techniques/DiffAlphaTranslucent.xml",
+									"icon": "COLOR",
+									"number": "2676501"
+								},
+								{
+									"id": "Techniques/DiffEmissive.xml",
+									"name": "Techniques/DiffEmissive.xml",
+									"description": "Technique Techniques/DiffEmissive.xml",
+									"icon": "COLOR",
+									"number": "6706705"
+								},
+								{
+									"id": "Techniques/DiffEmissiveAlpha.xml",
+									"name": "Techniques/DiffEmissiveAlpha.xml",
+									"description": "Technique Techniques/DiffEmissiveAlpha.xml",
+									"icon": "COLOR",
+									"number": "6890559"
+								},
+								{
+									"id": "Techniques/DiffEnvCube.xml",
+									"name": "Techniques/DiffEnvCube.xml",
+									"description": "Technique Techniques/DiffEnvCube.xml",
+									"icon": "COLOR",
+									"number": "7092314"
+								},
+								{
+									"id": "Techniques/DiffEnvCubeAO.xml",
+									"name": "Techniques/DiffEnvCubeAO.xml",
+									"description": "Technique Techniques/DiffEnvCubeAO.xml",
+									"icon": "COLOR",
+									"number": "3743400"
+								},
+								{
+									"id": "Techniques/DiffEnvCubeAOAlpha.xml",
+									"name": "Techniques/DiffEnvCubeAOAlpha.xml",
+									"description": "Technique Techniques/DiffEnvCubeAOAlpha.xml",
+									"icon": "COLOR",
+									"number": "7068520"
+								},
+								{
+									"id": "Techniques/DiffEnvCubeAlpha.xml",
+									"name": "Techniques/DiffEnvCubeAlpha.xml",
+									"description": "Technique Techniques/DiffEnvCubeAlpha.xml",
+									"icon": "COLOR",
+									"number": "2969654"
+								},
+								{
+									"id": "Techniques/DiffLightMap.xml",
+									"name": "Techniques/DiffLightMap.xml",
+									"description": "Technique Techniques/DiffLightMap.xml",
+									"icon": "COLOR",
+									"number": "1871296"
+								},
+								{
+									"id": "Techniques/DiffLightMapAlpha.xml",
+									"name": "Techniques/DiffLightMapAlpha.xml",
+									"description": "Technique Techniques/DiffLightMapAlpha.xml",
+									"icon": "COLOR",
+									"number": "2586576"
+								},
+								{
+									"id": "Techniques/DiffLitParticleAlpha.xml",
+									"name": "Techniques/DiffLitParticleAlpha.xml",
+									"description": "Technique Techniques/DiffLitParticleAlpha.xml",
+									"icon": "COLOR",
+									"number": "4360539"
+								},
+								{
+									"id": "Techniques/DiffLitParticleAlphaSoft.xml",
+									"name": "Techniques/DiffLitParticleAlphaSoft.xml",
+									"description": "Technique Techniques/DiffLitParticleAlphaSoft.xml",
+									"icon": "COLOR",
+									"number": "4915781"
+								},
+								{
+									"id": "Techniques/DiffLitParticleAlphaSoftExpand.xml",
+									"name": "Techniques/DiffLitParticleAlphaSoftExpand.xml",
+									"description": "Technique Techniques/DiffLitParticleAlphaSoftExpand.xml",
+									"icon": "COLOR",
+									"number": "9386271"
+								},
+								{
+									"id": "Techniques/DiffMultiply.xml",
+									"name": "Techniques/DiffMultiply.xml",
+									"description": "Technique Techniques/DiffMultiply.xml",
+									"icon": "COLOR",
+									"number": "8799998"
+								},
+								{
+									"id": "Techniques/DiffNormal.xml",
+									"name": "Techniques/DiffNormal.xml",
+									"description": "Technique Techniques/DiffNormal.xml",
+									"icon": "COLOR",
+									"number": "515233"
+								},
+								{
+									"id": "Techniques/DiffNormalAO.xml",
+									"name": "Techniques/DiffNormalAO.xml",
+									"description": "Technique Techniques/DiffNormalAO.xml",
+									"icon": "COLOR",
+									"number": "7519343"
+								},
+								{
+									"id": "Techniques/DiffNormalAOAlpha.xml",
+									"name": "Techniques/DiffNormalAOAlpha.xml",
+									"description": "Technique Techniques/DiffNormalAOAlpha.xml",
+									"icon": "COLOR",
+									"number": "95585"
+								},
+								{
+									"id": "Techniques/DiffNormalAlpha.xml",
+									"name": "Techniques/DiffNormalAlpha.xml",
+									"description": "Technique Techniques/DiffNormalAlpha.xml",
+									"icon": "COLOR",
+									"number": "7023407"
+								},
+								{
+									"id": "Techniques/DiffNormalAlphaTranslucent.xml",
+									"name": "Techniques/DiffNormalAlphaTranslucent.xml",
+									"description": "Technique Techniques/DiffNormalAlphaTranslucent.xml",
+									"icon": "COLOR",
+									"number": "3249660"
+								},
+								{
+									"id": "Techniques/DiffNormalEmissive.xml",
+									"name": "Techniques/DiffNormalEmissive.xml",
+									"description": "Technique Techniques/DiffNormalEmissive.xml",
+									"icon": "COLOR",
+									"number": "3177464"
+								},
+								{
+									"id": "Techniques/DiffNormalEmissiveAlpha.xml",
+									"name": "Techniques/DiffNormalEmissiveAlpha.xml",
+									"description": "Technique Techniques/DiffNormalEmissiveAlpha.xml",
+									"icon": "COLOR",
+									"number": "2757272"
+								},
+								{
+									"id": "Techniques/DiffNormalEnvCube.xml",
+									"name": "Techniques/DiffNormalEnvCube.xml",
+									"description": "Technique Techniques/DiffNormalEnvCube.xml",
+									"icon": "COLOR",
+									"number": "5816115"
+								},
+								{
+									"id": "Techniques/DiffNormalEnvCubeAlpha.xml",
+									"name": "Techniques/DiffNormalEnvCubeAlpha.xml",
+									"description": "Technique Techniques/DiffNormalEnvCubeAlpha.xml",
+									"icon": "COLOR",
+									"number": "9218717"
+								},
+								{
+									"id": "Techniques/DiffNormalSpec.xml",
+									"name": "Techniques/DiffNormalSpec.xml",
+									"description": "Technique Techniques/DiffNormalSpec.xml",
+									"icon": "COLOR",
+									"number": "3497532"
+								},
+								{
+									"id": "Techniques/DiffNormalSpecAO.xml",
+									"name": "Techniques/DiffNormalSpecAO.xml",
+									"description": "Technique Techniques/DiffNormalSpecAO.xml",
+									"icon": "COLOR",
+									"number": "6683018"
+								},
+								{
+									"id": "Techniques/DiffNormalSpecAOAlpha.xml",
+									"name": "Techniques/DiffNormalSpecAOAlpha.xml",
+									"description": "Technique Techniques/DiffNormalSpecAOAlpha.xml",
+									"icon": "COLOR",
+									"number": "4100614"
+								},
+								{
+									"id": "Techniques/DiffNormalSpecAlpha.xml",
+									"name": "Techniques/DiffNormalSpecAlpha.xml",
+									"description": "Technique Techniques/DiffNormalSpecAlpha.xml",
+									"icon": "COLOR",
+									"number": "407508"
+								},
+								{
+									"id": "Techniques/DiffNormalSpecEmissive.xml",
+									"name": "Techniques/DiffNormalSpecEmissive.xml",
+									"description": "Technique Techniques/DiffNormalSpecEmissive.xml",
+									"icon": "COLOR",
+									"number": "5132435"
+								},
+								{
+									"id": "Techniques/DiffNormalSpecEmissiveAlpha.xml",
+									"name": "Techniques/DiffNormalSpecEmissiveAlpha.xml",
+									"description": "Technique Techniques/DiffNormalSpecEmissiveAlpha.xml",
+									"icon": "COLOR",
+									"number": "8959421"
+								},
+								{
+									"id": "Techniques/DiffOverlay.xml",
+									"name": "Techniques/DiffOverlay.xml",
+									"description": "Technique Techniques/DiffOverlay.xml",
+									"icon": "COLOR",
+									"number": "5008680"
+								},
+								{
+									"id": "Techniques/DiffSkybox.xml",
+									"name": "Techniques/DiffSkybox.xml",
+									"description": "Technique Techniques/DiffSkybox.xml",
+									"icon": "COLOR",
+									"number": "9339780"
+								},
+								{
+									"id": "Techniques/DiffSkyboxHDRScale.xml",
+									"name": "Techniques/DiffSkyboxHDRScale.xml",
+									"description": "Technique Techniques/DiffSkyboxHDRScale.xml",
+									"icon": "COLOR",
+									"number": "8802744"
+								},
+								{
+									"id": "Techniques/DiffSkydome.xml",
+									"name": "Techniques/DiffSkydome.xml",
+									"description": "Technique Techniques/DiffSkydome.xml",
+									"icon": "COLOR",
+									"number": "6350716"
+								},
+								{
+									"id": "Techniques/DiffSkyplane.xml",
+									"name": "Techniques/DiffSkyplane.xml",
+									"description": "Technique Techniques/DiffSkyplane.xml",
+									"icon": "COLOR",
+									"number": "9676597"
+								},
+								{
+									"id": "Techniques/DiffSpec.xml",
+									"name": "Techniques/DiffSpec.xml",
+									"description": "Technique Techniques/DiffSpec.xml",
+									"icon": "COLOR",
+									"number": "2302421"
+								},
+								{
+									"id": "Techniques/DiffSpecAlpha.xml",
+									"name": "Techniques/DiffSpecAlpha.xml",
+									"description": "Technique Techniques/DiffSpecAlpha.xml",
+									"icon": "COLOR",
+									"number": "1646331"
+								},
+								{
+									"id": "Techniques/DiffUnlit.xml",
+									"name": "Techniques/DiffUnlit.xml",
+									"description": "Technique Techniques/DiffUnlit.xml",
+									"icon": "COLOR",
+									"number": "9600950"
+								},
+								{
+									"id": "Techniques/DiffUnlitAlpha.xml",
+									"name": "Techniques/DiffUnlitAlpha.xml",
+									"description": "Technique Techniques/DiffUnlitAlpha.xml",
+									"icon": "COLOR",
+									"number": "9795674"
+								},
+								{
+									"id": "Techniques/DiffUnlitParticleAdd.xml",
+									"name": "Techniques/DiffUnlitParticleAdd.xml",
+									"description": "Technique Techniques/DiffUnlitParticleAdd.xml",
+									"icon": "COLOR",
+									"number": "687383"
+								},
+								{
+									"id": "Techniques/DiffUnlitParticleAddSoft.xml",
+									"name": "Techniques/DiffUnlitParticleAddSoft.xml",
+									"description": "Technique Techniques/DiffUnlitParticleAddSoft.xml",
+									"icon": "COLOR",
+									"number": "7766273"
+								},
+								{
+									"id": "Techniques/DiffUnlitParticleAddSoftExpand.xml",
+									"name": "Techniques/DiffUnlitParticleAddSoftExpand.xml",
+									"description": "Technique Techniques/DiffUnlitParticleAddSoftExpand.xml",
+									"icon": "COLOR",
+									"number": "7281243"
+								},
+								{
+									"id": "Techniques/DiffUnlitParticleAlpha.xml",
+									"name": "Techniques/DiffUnlitParticleAlpha.xml",
+									"description": "Technique Techniques/DiffUnlitParticleAlpha.xml",
+									"icon": "COLOR",
+									"number": "390548"
+								},
+								{
+									"id": "Techniques/DiffUnlitParticleAlphaSoft.xml",
+									"name": "Techniques/DiffUnlitParticleAlphaSoft.xml",
+									"description": "Technique Techniques/DiffUnlitParticleAlphaSoft.xml",
+									"icon": "COLOR",
+									"number": "5699966"
+								},
+								{
+									"id": "Techniques/DiffUnlitParticleAlphaSoftExpand.xml",
+									"name": "Techniques/DiffUnlitParticleAlphaSoftExpand.xml",
+									"description": "Technique Techniques/DiffUnlitParticleAlphaSoftExpand.xml",
+									"icon": "COLOR",
+									"number": "3675480"
+								},
+								{
+									"id": "Techniques/DiffVCol.xml",
+									"name": "Techniques/DiffVCol.xml",
+									"description": "Technique Techniques/DiffVCol.xml",
+									"icon": "COLOR",
+									"number": "3743588"
+								},
+								{
+									"id": "Techniques/DiffVColAdd.xml",
+									"name": "Techniques/DiffVColAdd.xml",
+									"description": "Technique Techniques/DiffVColAdd.xml",
+									"icon": "COLOR",
+									"number": "844847"
+								},
+								{
+									"id": "Techniques/DiffVColAddAlpha.xml",
+									"name": "Techniques/DiffVColAddAlpha.xml",
+									"description": "Technique Techniques/DiffVColAddAlpha.xml",
+									"icon": "COLOR",
+									"number": "5942305"
+								},
+								{
+									"id": "Techniques/DiffVColMultiply.xml",
+									"name": "Techniques/DiffVColMultiply.xml",
+									"description": "Technique Techniques/DiffVColMultiply.xml",
+									"icon": "COLOR",
+									"number": "6485928"
+								},
+								{
+									"id": "Techniques/DiffVColUnlitAlpha.xml",
+									"name": "Techniques/DiffVColUnlitAlpha.xml",
+									"description": "Technique Techniques/DiffVColUnlitAlpha.xml",
+									"icon": "COLOR",
+									"number": "3293956"
+								},
+								{
+									"id": "Techniques/NoTexture.xml",
+									"name": "Techniques/NoTexture.xml",
+									"description": "Technique Techniques/NoTexture.xml",
+									"icon": "COLOR",
+									"number": "3259959"
+								},
+								{
+									"id": "Techniques/NoTextureAO.xml",
+									"name": "Techniques/NoTextureAO.xml",
+									"description": "Technique Techniques/NoTextureAO.xml",
+									"icon": "COLOR",
+									"number": "8593797"
+								},
+								{
+									"id": "Techniques/NoTextureAOAlpha.xml",
+									"name": "Techniques/NoTextureAOAlpha.xml",
+									"description": "Technique Techniques/NoTextureAOAlpha.xml",
+									"icon": "COLOR",
+									"number": "1355339"
+								},
+								{
+									"id": "Techniques/NoTextureAdd.xml",
+									"name": "Techniques/NoTextureAdd.xml",
+									"description": "Technique Techniques/NoTextureAdd.xml",
+									"icon": "COLOR",
+									"number": "9172380"
+								},
+								{
+									"id": "Techniques/NoTextureAddAlpha.xml",
+									"name": "Techniques/NoTextureAddAlpha.xml",
+									"description": "Technique Techniques/NoTextureAddAlpha.xml",
+									"icon": "COLOR",
+									"number": "3565044"
+								},
+								{
+									"id": "Techniques/NoTextureAlpha.xml",
+									"name": "Techniques/NoTextureAlpha.xml",
+									"description": "Technique Techniques/NoTextureAlpha.xml",
+									"icon": "COLOR",
+									"number": "4038809"
+								},
+								{
+									"id": "Techniques/NoTextureEnvCube.xml",
+									"name": "Techniques/NoTextureEnvCube.xml",
+									"description": "Technique Techniques/NoTextureEnvCube.xml",
+									"icon": "COLOR",
+									"number": "7075869"
+								},
+								{
+									"id": "Techniques/NoTextureEnvCubeAO.xml",
+									"name": "Techniques/NoTextureEnvCubeAO.xml",
+									"description": "Technique Techniques/NoTextureEnvCubeAO.xml",
+									"icon": "COLOR",
+									"number": "543083"
+								},
+								{
+									"id": "Techniques/NoTextureEnvCubeAOAlpha.xml",
+									"name": "Techniques/NoTextureEnvCubeAOAlpha.xml",
+									"description": "Technique Techniques/NoTextureEnvCubeAOAlpha.xml",
+									"icon": "COLOR",
+									"number": "2706789"
+								},
+								{
+									"id": "Techniques/NoTextureEnvCubeAlpha.xml",
+									"name": "Techniques/NoTextureEnvCubeAlpha.xml",
+									"description": "Technique Techniques/NoTextureEnvCubeAlpha.xml",
+									"icon": "COLOR",
+									"number": "8664115"
+								},
+								{
+									"id": "Techniques/NoTextureMultiply.xml",
+									"name": "Techniques/NoTextureMultiply.xml",
+									"description": "Technique Techniques/NoTextureMultiply.xml",
+									"icon": "COLOR",
+									"number": "4108667"
+								},
+								{
+									"id": "Techniques/NoTextureNormal.xml",
+									"name": "Techniques/NoTextureNormal.xml",
+									"description": "Technique Techniques/NoTextureNormal.xml",
+									"icon": "COLOR",
+									"number": "9806750"
+								},
+								{
+									"id": "Techniques/NoTextureNormalAlpha.xml",
+									"name": "Techniques/NoTextureNormalAlpha.xml",
+									"description": "Technique Techniques/NoTextureNormalAlpha.xml",
+									"icon": "COLOR",
+									"number": "3316850"
+								},
+								{
+									"id": "Techniques/NoTextureOverlay.xml",
+									"name": "Techniques/NoTextureOverlay.xml",
+									"description": "Technique Techniques/NoTextureOverlay.xml",
+									"icon": "COLOR",
+									"number": "4992235"
+								},
+								{
+									"id": "Techniques/NoTextureUnlit.xml",
+									"name": "Techniques/NoTextureUnlit.xml",
+									"description": "Technique Techniques/NoTextureUnlit.xml",
+									"icon": "COLOR",
+									"number": "6121721"
+								},
+								{
+									"id": "Techniques/NoTextureUnlitAlpha.xml",
+									"name": "Techniques/NoTextureUnlitAlpha.xml",
+									"description": "Technique Techniques/NoTextureUnlitAlpha.xml",
+									"icon": "COLOR",
+									"number": "6285655"
+								},
+								{
+									"id": "Techniques/NoTextureUnlitVCol.xml",
+									"name": "Techniques/NoTextureUnlitVCol.xml",
+									"description": "Technique Techniques/NoTextureUnlitVCol.xml",
+									"icon": "COLOR",
+									"number": "7293091"
+								},
+								{
+									"id": "Techniques/NoTextureVCol.xml",
+									"name": "Techniques/NoTextureVCol.xml",
+									"description": "Technique Techniques/NoTextureVCol.xml",
+									"icon": "COLOR",
+									"number": "3885921"
+								},
+								{
+									"id": "Techniques/NoTextureVColAdd.xml",
+									"name": "Techniques/NoTextureVColAdd.xml",
+									"description": "Technique Techniques/NoTextureVColAdd.xml",
+									"icon": "COLOR",
+									"number": "828402"
+								},
+								{
+									"id": "Techniques/NoTextureVColAddAlpha.xml",
+									"name": "Techniques/NoTextureVColAddAlpha.xml",
+									"description": "Technique Techniques/NoTextureVColAddAlpha.xml",
+									"icon": "COLOR",
+									"number": "1636766"
+								},
+								{
+									"id": "Techniques/NoTextureVColMultiply.xml",
+									"name": "Techniques/NoTextureVColMultiply.xml",
+									"description": "Technique Techniques/NoTextureVColMultiply.xml",
+									"icon": "COLOR",
+									"number": "2180389"
+								},
+								{
+									"id": "Techniques/PBR/DiffNormalSpecEmissive.xml",
+									"name": "Techniques/PBR/DiffNormalSpecEmissive.xml",
+									"description": "Technique Techniques/PBR/DiffNormalSpecEmissive.xml",
+									"icon": "COLOR",
+									"number": "1480162"
+								},
+								{
+									"id": "Techniques/PBR/DiffNormalSpecEmissiveAlpha.xml",
+									"name": "Techniques/PBR/DiffNormalSpecEmissiveAlpha.xml",
+									"description": "Technique Techniques/PBR/DiffNormalSpecEmissiveAlpha.xml",
+									"icon": "COLOR",
+									"number": "3820462"
+								},
+								{
+									"id": "Techniques/PBR/PBRDiff.xml",
+									"name": "Techniques/PBR/PBRDiff.xml",
+									"description": "Technique Techniques/PBR/PBRDiff.xml",
+									"icon": "COLOR",
+									"number": "6899187"
+								},
+								{
+									"id": "Techniques/PBR/PBRDiffAlpha.xml",
+									"name": "Techniques/PBR/PBRDiffAlpha.xml",
+									"description": "Technique Techniques/PBR/PBRDiffAlpha.xml",
+									"icon": "COLOR",
+									"number": "5395805"
+								},
+								{
+									"id": "Techniques/PBR/PBRDiffNormal.xml",
+									"name": "Techniques/PBR/PBRDiffNormal.xml",
+									"description": "Technique Techniques/PBR/PBRDiffNormal.xml",
+									"icon": "COLOR",
+									"number": "7190362"
+								},
+								{
+									"id": "Techniques/PBR/PBRDiffNormalAlpha.xml",
+									"name": "Techniques/PBR/PBRDiffNormalAlpha.xml",
+									"description": "Technique Techniques/PBR/PBRDiffNormalAlpha.xml",
+									"icon": "COLOR",
+									"number": "4257590"
+								},
+								{
+									"id": "Techniques/PBR/PBRDiffNormalEmissive.xml",
+									"name": "Techniques/PBR/PBRDiffNormalEmissive.xml",
+									"description": "Technique Techniques/PBR/PBRDiffNormalEmissive.xml",
+									"icon": "COLOR",
+									"number": "9831729"
+								},
+								{
+									"id": "Techniques/PBR/PBRDiffNormalEmissiveAlpha.xml",
+									"name": "Techniques/PBR/PBRDiffNormalEmissiveAlpha.xml",
+									"description": "Technique Techniques/PBR/PBRDiffNormalEmissiveAlpha.xml",
+									"icon": "COLOR",
+									"number": "9520031"
+								},
+								{
+									"id": "Techniques/PBR/PBRMetallicRoughDiffNormalSpec.xml",
+									"name": "Techniques/PBR/PBRMetallicRoughDiffNormalSpec.xml",
+									"description": "Technique Techniques/PBR/PBRMetallicRoughDiffNormalSpec.xml",
+									"icon": "COLOR",
+									"number": "1489733"
+								},
+								{
+									"id": "Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissive.xml",
+									"name": "Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissive.xml",
+									"description": "Technique Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissive.xml",
+									"icon": "COLOR",
+									"number": "8297116"
+								},
+								{
+									"id": "Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissiveAlpha.xml",
+									"name": "Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissiveAlpha.xml",
+									"description": "Technique Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissiveAlpha.xml",
+									"icon": "COLOR",
+									"number": "5476596"
+								},
+								{
+									"id": "Techniques/PBR/PBRMetallicRoughDiffSpec.xml",
+									"name": "Techniques/PBR/PBRMetallicRoughDiffSpec.xml",
+									"description": "Technique Techniques/PBR/PBRMetallicRoughDiffSpec.xml",
+									"icon": "COLOR",
+									"number": "8133982"
+								},
+								{
+									"id": "Techniques/PBR/PBRMetallicRoughDiffSpecAlpha.xml",
+									"name": "Techniques/PBR/PBRMetallicRoughDiffSpecAlpha.xml",
+									"description": "Technique Techniques/PBR/PBRMetallicRoughDiffSpecAlpha.xml",
+									"icon": "COLOR",
+									"number": "4772530"
+								},
+								{
+									"id": "Techniques/PBR/PBRNoTexture.xml",
+									"name": "Techniques/PBR/PBRNoTexture.xml",
+									"description": "Technique Techniques/PBR/PBRNoTexture.xml",
+									"icon": "COLOR",
+									"number": "1137726"
+								},
+								{
+									"id": "Techniques/PBR/PBRNoTextureAlpha.xml",
+									"name": "Techniques/PBR/PBRNoTextureAlpha.xml",
+									"description": "Technique Techniques/PBR/PBRNoTextureAlpha.xml",
+									"icon": "COLOR",
+									"number": "1832274"
+								},
+								{
+									"id": "Techniques/TerrainBlend.xml",
+									"name": "Techniques/TerrainBlend.xml",
+									"description": "Technique Techniques/TerrainBlend.xml",
+									"icon": "COLOR",
+									"number": "3594161"
+								},
+								{
+									"id": "Techniques/VegetationDiff.xml",
+									"name": "Techniques/VegetationDiff.xml",
+									"description": "Technique Techniques/VegetationDiff.xml",
+									"icon": "COLOR",
+									"number": "280232"
+								},
+								{
+									"id": "Techniques/VegetationDiffUnlit.xml",
+									"name": "Techniques/VegetationDiffUnlit.xml",
+									"description": "Technique Techniques/VegetationDiffUnlit.xml",
+									"icon": "COLOR",
+									"number": "9697352"
+								},
+								{
+									"id": "Techniques/Water.xml",
+									"name": "Techniques/Water.xml",
+									"description": "Technique Techniques/Water.xml",
+									"icon": "COLOR",
+									"number": "8324852"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "quality",
+							"default": "0",
+							"type": "int",
+							"subtype": "NONE"
+						},
+						{
+							"name": "distance",
+							"default": "0",
+							"type": "int",
+							"subtype": "NONE"
+						}
+					],
+					"inputsockets": [
+						{
+							"name": "material",
+							"type": "bool"
+						}
+					]
+				},
+				{
+					"id": "urho3dmaterials__textureNode",
+					"name": "texture",
+					"category": "Material",
+					"props": [
+						{
+							"name": "unit",
+							"type": "enum",
+							"elements": [
+								{
+									"id": "diffuse",
+									"name": "diffuse",
+									"description": "diffuse",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "normal",
+									"name": "normal",
+									"description": "normal",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "specular",
+									"name": "specular",
+									"description": "specular",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "emissive",
+									"name": "emissive",
+									"description": "emissive",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "environment",
+									"name": "environment",
+									"description": "environment",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "0",
+									"name": "0",
+									"description": "0",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "1",
+									"name": "1",
+									"description": "1",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "2",
+									"name": "2",
+									"description": "2",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "3",
+									"name": "3",
+									"description": "3",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "4",
+									"name": "4",
+									"description": "4",
+									"icon": "COLOR",
+									"number": "0"
+								},
+								{
+									"id": "5",
+									"name": "5",
+									"description": "5",
+									"icon": "COLOR",
+									"number": "0"
+								}
+							],
+							"default": "0"
+						},
+						{
+							"name": "Texture",
+							"type": "enumPreview",
+							"elements": [
+								{
+									"id": "Textures/demon_NM (copy).jpg",
+									"name": "Textures/demon_NM (copy).jpg",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/demon_NM (copy).jpg",
+									"icon": "COLOR",
+									"number": "2042485"
+								},
+								{
+									"id": "Textures/mymo.jpg",
+									"name": "Textures/mymo.jpg",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/mymo.jpg",
+									"icon": "COLOR",
+									"number": "8494168"
+								},
+								{
+									"id": "Textures/aaaa (3rd copy).png",
+									"name": "Textures/aaaa (3rd copy).png",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/aaaa (3rd copy).png",
+									"icon": "COLOR",
+									"number": "9596533"
+								},
+								{
+									"id": "Textures/mymo2.png",
+									"name": "Textures/mymo2.png",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/mymo2.png",
+									"icon": "COLOR",
+									"number": "9289096"
+								},
+								{
+									"id": "Textures/spot.png",
+									"name": "Textures/spot.png",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/spot.png",
+									"icon": "COLOR",
+									"number": "6537300"
+								},
+								{
+									"id": "Textures/demon_NM.png",
+									"name": "Textures/demon_NM.png",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/demon_NM.png",
+									"icon": "COLOR",
+									"number": "8433285"
+								},
+								{
+									"id": "Textures/RampExtreme.png",
+									"name": "Textures/RampExtreme.png",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/RampExtreme.png",
+									"icon": "COLOR",
+									"number": "9358078"
+								},
+								{
+									"id": "Textures/Spot.png",
+									"name": "Textures/Spot.png",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/Spot.png",
+									"icon": "COLOR",
+									"number": "8816884"
+								},
+								{
+									"id": "Textures/SpotWide.png",
+									"name": "Textures/SpotWide.png",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/SpotWide.png",
+									"icon": "COLOR",
+									"number": "9030087"
+								},
+								{
+									"id": "Textures/RampWide.png",
+									"name": "Textures/RampWide.png",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/RampWide.png",
+									"icon": "COLOR",
+									"number": "7183223"
+								},
+								{
+									"id": "Textures/Ramp.png",
+									"name": "Textures/Ramp.png",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/Ramp.png",
+									"icon": "COLOR",
+									"number": "8141988"
+								},
+								{
+									"id": "Textures/LUTIdentity.png",
+									"name": "Textures/LUTIdentity.png",
+									"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/LUTIdentity.png",
+									"icon": "COLOR",
+									"number": "6313101"
+								}
+							],
+							"default": "0"
+						}
+					],
+					"inputsockets": [
+						{
+							"name": "material",
+							"type": "bool"
+						}
+					]
+				}
+			]
+		}
+	],
+	"globalData": {
+		"techniques": [
+			{
+				"id": "Techniques/BasicVColUnlitAlpha.xml",
+				"name": "Techniques/BasicVColUnlitAlpha.xml",
+				"description": "Technique Techniques/BasicVColUnlitAlpha.xml",
+				"icon": "COLOR",
+				"number": "1253141"
+			},
+			{
+				"id": "Techniques/Diff.xml",
+				"name": "Techniques/Diff.xml",
+				"description": "Technique Techniques/Diff.xml",
+				"icon": "COLOR",
+				"number": "201658"
+			},
+			{
+				"id": "Techniques/DiffAO.xml",
+				"name": "Techniques/DiffAO.xml",
+				"description": "Technique Techniques/DiffAO.xml",
+				"icon": "COLOR",
+				"number": "9237128"
+			},
+			{
+				"id": "Techniques/DiffAOAlpha.xml",
+				"name": "Techniques/DiffAOAlpha.xml",
+				"description": "Technique Techniques/DiffAOAlpha.xml",
+				"icon": "COLOR",
+				"number": "6339080"
+			},
+			{
+				"id": "Techniques/DiffAdd.xml",
+				"name": "Techniques/DiffAdd.xml",
+				"description": "Technique Techniques/DiffAdd.xml",
+				"icon": "COLOR",
+				"number": "6909785"
+			},
+			{
+				"id": "Techniques/DiffAddAlpha.xml",
+				"name": "Techniques/DiffAddAlpha.xml",
+				"description": "Technique Techniques/DiffAddAlpha.xml",
+				"icon": "COLOR",
+				"number": "8256375"
+			},
+			{
+				"id": "Techniques/DiffAlpha.xml",
+				"name": "Techniques/DiffAlpha.xml",
+				"description": "Technique Techniques/DiffAlpha.xml",
+				"icon": "COLOR",
+				"number": "7518038"
+			},
+			{
+				"id": "Techniques/DiffAlphaTranslucent.xml",
+				"name": "Techniques/DiffAlphaTranslucent.xml",
+				"description": "Technique Techniques/DiffAlphaTranslucent.xml",
+				"icon": "COLOR",
+				"number": "2676501"
+			},
+			{
+				"id": "Techniques/DiffEmissive.xml",
+				"name": "Techniques/DiffEmissive.xml",
+				"description": "Technique Techniques/DiffEmissive.xml",
+				"icon": "COLOR",
+				"number": "6706705"
+			},
+			{
+				"id": "Techniques/DiffEmissiveAlpha.xml",
+				"name": "Techniques/DiffEmissiveAlpha.xml",
+				"description": "Technique Techniques/DiffEmissiveAlpha.xml",
+				"icon": "COLOR",
+				"number": "6890559"
+			},
+			{
+				"id": "Techniques/DiffEnvCube.xml",
+				"name": "Techniques/DiffEnvCube.xml",
+				"description": "Technique Techniques/DiffEnvCube.xml",
+				"icon": "COLOR",
+				"number": "7092314"
+			},
+			{
+				"id": "Techniques/DiffEnvCubeAO.xml",
+				"name": "Techniques/DiffEnvCubeAO.xml",
+				"description": "Technique Techniques/DiffEnvCubeAO.xml",
+				"icon": "COLOR",
+				"number": "3743400"
+			},
+			{
+				"id": "Techniques/DiffEnvCubeAOAlpha.xml",
+				"name": "Techniques/DiffEnvCubeAOAlpha.xml",
+				"description": "Technique Techniques/DiffEnvCubeAOAlpha.xml",
+				"icon": "COLOR",
+				"number": "7068520"
+			},
+			{
+				"id": "Techniques/DiffEnvCubeAlpha.xml",
+				"name": "Techniques/DiffEnvCubeAlpha.xml",
+				"description": "Technique Techniques/DiffEnvCubeAlpha.xml",
+				"icon": "COLOR",
+				"number": "2969654"
+			},
+			{
+				"id": "Techniques/DiffLightMap.xml",
+				"name": "Techniques/DiffLightMap.xml",
+				"description": "Technique Techniques/DiffLightMap.xml",
+				"icon": "COLOR",
+				"number": "1871296"
+			},
+			{
+				"id": "Techniques/DiffLightMapAlpha.xml",
+				"name": "Techniques/DiffLightMapAlpha.xml",
+				"description": "Technique Techniques/DiffLightMapAlpha.xml",
+				"icon": "COLOR",
+				"number": "2586576"
+			},
+			{
+				"id": "Techniques/DiffLitParticleAlpha.xml",
+				"name": "Techniques/DiffLitParticleAlpha.xml",
+				"description": "Technique Techniques/DiffLitParticleAlpha.xml",
+				"icon": "COLOR",
+				"number": "4360539"
+			},
+			{
+				"id": "Techniques/DiffLitParticleAlphaSoft.xml",
+				"name": "Techniques/DiffLitParticleAlphaSoft.xml",
+				"description": "Technique Techniques/DiffLitParticleAlphaSoft.xml",
+				"icon": "COLOR",
+				"number": "4915781"
+			},
+			{
+				"id": "Techniques/DiffLitParticleAlphaSoftExpand.xml",
+				"name": "Techniques/DiffLitParticleAlphaSoftExpand.xml",
+				"description": "Technique Techniques/DiffLitParticleAlphaSoftExpand.xml",
+				"icon": "COLOR",
+				"number": "9386271"
+			},
+			{
+				"id": "Techniques/DiffMultiply.xml",
+				"name": "Techniques/DiffMultiply.xml",
+				"description": "Technique Techniques/DiffMultiply.xml",
+				"icon": "COLOR",
+				"number": "8799998"
+			},
+			{
+				"id": "Techniques/DiffNormal.xml",
+				"name": "Techniques/DiffNormal.xml",
+				"description": "Technique Techniques/DiffNormal.xml",
+				"icon": "COLOR",
+				"number": "515233"
+			},
+			{
+				"id": "Techniques/DiffNormalAO.xml",
+				"name": "Techniques/DiffNormalAO.xml",
+				"description": "Technique Techniques/DiffNormalAO.xml",
+				"icon": "COLOR",
+				"number": "7519343"
+			},
+			{
+				"id": "Techniques/DiffNormalAOAlpha.xml",
+				"name": "Techniques/DiffNormalAOAlpha.xml",
+				"description": "Technique Techniques/DiffNormalAOAlpha.xml",
+				"icon": "COLOR",
+				"number": "95585"
+			},
+			{
+				"id": "Techniques/DiffNormalAlpha.xml",
+				"name": "Techniques/DiffNormalAlpha.xml",
+				"description": "Technique Techniques/DiffNormalAlpha.xml",
+				"icon": "COLOR",
+				"number": "7023407"
+			},
+			{
+				"id": "Techniques/DiffNormalAlphaTranslucent.xml",
+				"name": "Techniques/DiffNormalAlphaTranslucent.xml",
+				"description": "Technique Techniques/DiffNormalAlphaTranslucent.xml",
+				"icon": "COLOR",
+				"number": "3249660"
+			},
+			{
+				"id": "Techniques/DiffNormalEmissive.xml",
+				"name": "Techniques/DiffNormalEmissive.xml",
+				"description": "Technique Techniques/DiffNormalEmissive.xml",
+				"icon": "COLOR",
+				"number": "3177464"
+			},
+			{
+				"id": "Techniques/DiffNormalEmissiveAlpha.xml",
+				"name": "Techniques/DiffNormalEmissiveAlpha.xml",
+				"description": "Technique Techniques/DiffNormalEmissiveAlpha.xml",
+				"icon": "COLOR",
+				"number": "2757272"
+			},
+			{
+				"id": "Techniques/DiffNormalEnvCube.xml",
+				"name": "Techniques/DiffNormalEnvCube.xml",
+				"description": "Technique Techniques/DiffNormalEnvCube.xml",
+				"icon": "COLOR",
+				"number": "5816115"
+			},
+			{
+				"id": "Techniques/DiffNormalEnvCubeAlpha.xml",
+				"name": "Techniques/DiffNormalEnvCubeAlpha.xml",
+				"description": "Technique Techniques/DiffNormalEnvCubeAlpha.xml",
+				"icon": "COLOR",
+				"number": "9218717"
+			},
+			{
+				"id": "Techniques/DiffNormalSpec.xml",
+				"name": "Techniques/DiffNormalSpec.xml",
+				"description": "Technique Techniques/DiffNormalSpec.xml",
+				"icon": "COLOR",
+				"number": "3497532"
+			},
+			{
+				"id": "Techniques/DiffNormalSpecAO.xml",
+				"name": "Techniques/DiffNormalSpecAO.xml",
+				"description": "Technique Techniques/DiffNormalSpecAO.xml",
+				"icon": "COLOR",
+				"number": "6683018"
+			},
+			{
+				"id": "Techniques/DiffNormalSpecAOAlpha.xml",
+				"name": "Techniques/DiffNormalSpecAOAlpha.xml",
+				"description": "Technique Techniques/DiffNormalSpecAOAlpha.xml",
+				"icon": "COLOR",
+				"number": "4100614"
+			},
+			{
+				"id": "Techniques/DiffNormalSpecAlpha.xml",
+				"name": "Techniques/DiffNormalSpecAlpha.xml",
+				"description": "Technique Techniques/DiffNormalSpecAlpha.xml",
+				"icon": "COLOR",
+				"number": "407508"
+			},
+			{
+				"id": "Techniques/DiffNormalSpecEmissive.xml",
+				"name": "Techniques/DiffNormalSpecEmissive.xml",
+				"description": "Technique Techniques/DiffNormalSpecEmissive.xml",
+				"icon": "COLOR",
+				"number": "5132435"
+			},
+			{
+				"id": "Techniques/DiffNormalSpecEmissiveAlpha.xml",
+				"name": "Techniques/DiffNormalSpecEmissiveAlpha.xml",
+				"description": "Technique Techniques/DiffNormalSpecEmissiveAlpha.xml",
+				"icon": "COLOR",
+				"number": "8959421"
+			},
+			{
+				"id": "Techniques/DiffOverlay.xml",
+				"name": "Techniques/DiffOverlay.xml",
+				"description": "Technique Techniques/DiffOverlay.xml",
+				"icon": "COLOR",
+				"number": "5008680"
+			},
+			{
+				"id": "Techniques/DiffSkybox.xml",
+				"name": "Techniques/DiffSkybox.xml",
+				"description": "Technique Techniques/DiffSkybox.xml",
+				"icon": "COLOR",
+				"number": "9339780"
+			},
+			{
+				"id": "Techniques/DiffSkyboxHDRScale.xml",
+				"name": "Techniques/DiffSkyboxHDRScale.xml",
+				"description": "Technique Techniques/DiffSkyboxHDRScale.xml",
+				"icon": "COLOR",
+				"number": "8802744"
+			},
+			{
+				"id": "Techniques/DiffSkydome.xml",
+				"name": "Techniques/DiffSkydome.xml",
+				"description": "Technique Techniques/DiffSkydome.xml",
+				"icon": "COLOR",
+				"number": "6350716"
+			},
+			{
+				"id": "Techniques/DiffSkyplane.xml",
+				"name": "Techniques/DiffSkyplane.xml",
+				"description": "Technique Techniques/DiffSkyplane.xml",
+				"icon": "COLOR",
+				"number": "9676597"
+			},
+			{
+				"id": "Techniques/DiffSpec.xml",
+				"name": "Techniques/DiffSpec.xml",
+				"description": "Technique Techniques/DiffSpec.xml",
+				"icon": "COLOR",
+				"number": "2302421"
+			},
+			{
+				"id": "Techniques/DiffSpecAlpha.xml",
+				"name": "Techniques/DiffSpecAlpha.xml",
+				"description": "Technique Techniques/DiffSpecAlpha.xml",
+				"icon": "COLOR",
+				"number": "1646331"
+			},
+			{
+				"id": "Techniques/DiffUnlit.xml",
+				"name": "Techniques/DiffUnlit.xml",
+				"description": "Technique Techniques/DiffUnlit.xml",
+				"icon": "COLOR",
+				"number": "9600950"
+			},
+			{
+				"id": "Techniques/DiffUnlitAlpha.xml",
+				"name": "Techniques/DiffUnlitAlpha.xml",
+				"description": "Technique Techniques/DiffUnlitAlpha.xml",
+				"icon": "COLOR",
+				"number": "9795674"
+			},
+			{
+				"id": "Techniques/DiffUnlitParticleAdd.xml",
+				"name": "Techniques/DiffUnlitParticleAdd.xml",
+				"description": "Technique Techniques/DiffUnlitParticleAdd.xml",
+				"icon": "COLOR",
+				"number": "687383"
+			},
+			{
+				"id": "Techniques/DiffUnlitParticleAddSoft.xml",
+				"name": "Techniques/DiffUnlitParticleAddSoft.xml",
+				"description": "Technique Techniques/DiffUnlitParticleAddSoft.xml",
+				"icon": "COLOR",
+				"number": "7766273"
+			},
+			{
+				"id": "Techniques/DiffUnlitParticleAddSoftExpand.xml",
+				"name": "Techniques/DiffUnlitParticleAddSoftExpand.xml",
+				"description": "Technique Techniques/DiffUnlitParticleAddSoftExpand.xml",
+				"icon": "COLOR",
+				"number": "7281243"
+			},
+			{
+				"id": "Techniques/DiffUnlitParticleAlpha.xml",
+				"name": "Techniques/DiffUnlitParticleAlpha.xml",
+				"description": "Technique Techniques/DiffUnlitParticleAlpha.xml",
+				"icon": "COLOR",
+				"number": "390548"
+			},
+			{
+				"id": "Techniques/DiffUnlitParticleAlphaSoft.xml",
+				"name": "Techniques/DiffUnlitParticleAlphaSoft.xml",
+				"description": "Technique Techniques/DiffUnlitParticleAlphaSoft.xml",
+				"icon": "COLOR",
+				"number": "5699966"
+			},
+			{
+				"id": "Techniques/DiffUnlitParticleAlphaSoftExpand.xml",
+				"name": "Techniques/DiffUnlitParticleAlphaSoftExpand.xml",
+				"description": "Technique Techniques/DiffUnlitParticleAlphaSoftExpand.xml",
+				"icon": "COLOR",
+				"number": "3675480"
+			},
+			{
+				"id": "Techniques/DiffVCol.xml",
+				"name": "Techniques/DiffVCol.xml",
+				"description": "Technique Techniques/DiffVCol.xml",
+				"icon": "COLOR",
+				"number": "3743588"
+			},
+			{
+				"id": "Techniques/DiffVColAdd.xml",
+				"name": "Techniques/DiffVColAdd.xml",
+				"description": "Technique Techniques/DiffVColAdd.xml",
+				"icon": "COLOR",
+				"number": "844847"
+			},
+			{
+				"id": "Techniques/DiffVColAddAlpha.xml",
+				"name": "Techniques/DiffVColAddAlpha.xml",
+				"description": "Technique Techniques/DiffVColAddAlpha.xml",
+				"icon": "COLOR",
+				"number": "5942305"
+			},
+			{
+				"id": "Techniques/DiffVColMultiply.xml",
+				"name": "Techniques/DiffVColMultiply.xml",
+				"description": "Technique Techniques/DiffVColMultiply.xml",
+				"icon": "COLOR",
+				"number": "6485928"
+			},
+			{
+				"id": "Techniques/DiffVColUnlitAlpha.xml",
+				"name": "Techniques/DiffVColUnlitAlpha.xml",
+				"description": "Technique Techniques/DiffVColUnlitAlpha.xml",
+				"icon": "COLOR",
+				"number": "3293956"
+			},
+			{
+				"id": "Techniques/NoTexture.xml",
+				"name": "Techniques/NoTexture.xml",
+				"description": "Technique Techniques/NoTexture.xml",
+				"icon": "COLOR",
+				"number": "3259959"
+			},
+			{
+				"id": "Techniques/NoTextureAO.xml",
+				"name": "Techniques/NoTextureAO.xml",
+				"description": "Technique Techniques/NoTextureAO.xml",
+				"icon": "COLOR",
+				"number": "8593797"
+			},
+			{
+				"id": "Techniques/NoTextureAOAlpha.xml",
+				"name": "Techniques/NoTextureAOAlpha.xml",
+				"description": "Technique Techniques/NoTextureAOAlpha.xml",
+				"icon": "COLOR",
+				"number": "1355339"
+			},
+			{
+				"id": "Techniques/NoTextureAdd.xml",
+				"name": "Techniques/NoTextureAdd.xml",
+				"description": "Technique Techniques/NoTextureAdd.xml",
+				"icon": "COLOR",
+				"number": "9172380"
+			},
+			{
+				"id": "Techniques/NoTextureAddAlpha.xml",
+				"name": "Techniques/NoTextureAddAlpha.xml",
+				"description": "Technique Techniques/NoTextureAddAlpha.xml",
+				"icon": "COLOR",
+				"number": "3565044"
+			},
+			{
+				"id": "Techniques/NoTextureAlpha.xml",
+				"name": "Techniques/NoTextureAlpha.xml",
+				"description": "Technique Techniques/NoTextureAlpha.xml",
+				"icon": "COLOR",
+				"number": "4038809"
+			},
+			{
+				"id": "Techniques/NoTextureEnvCube.xml",
+				"name": "Techniques/NoTextureEnvCube.xml",
+				"description": "Technique Techniques/NoTextureEnvCube.xml",
+				"icon": "COLOR",
+				"number": "7075869"
+			},
+			{
+				"id": "Techniques/NoTextureEnvCubeAO.xml",
+				"name": "Techniques/NoTextureEnvCubeAO.xml",
+				"description": "Technique Techniques/NoTextureEnvCubeAO.xml",
+				"icon": "COLOR",
+				"number": "543083"
+			},
+			{
+				"id": "Techniques/NoTextureEnvCubeAOAlpha.xml",
+				"name": "Techniques/NoTextureEnvCubeAOAlpha.xml",
+				"description": "Technique Techniques/NoTextureEnvCubeAOAlpha.xml",
+				"icon": "COLOR",
+				"number": "2706789"
+			},
+			{
+				"id": "Techniques/NoTextureEnvCubeAlpha.xml",
+				"name": "Techniques/NoTextureEnvCubeAlpha.xml",
+				"description": "Technique Techniques/NoTextureEnvCubeAlpha.xml",
+				"icon": "COLOR",
+				"number": "8664115"
+			},
+			{
+				"id": "Techniques/NoTextureMultiply.xml",
+				"name": "Techniques/NoTextureMultiply.xml",
+				"description": "Technique Techniques/NoTextureMultiply.xml",
+				"icon": "COLOR",
+				"number": "4108667"
+			},
+			{
+				"id": "Techniques/NoTextureNormal.xml",
+				"name": "Techniques/NoTextureNormal.xml",
+				"description": "Technique Techniques/NoTextureNormal.xml",
+				"icon": "COLOR",
+				"number": "9806750"
+			},
+			{
+				"id": "Techniques/NoTextureNormalAlpha.xml",
+				"name": "Techniques/NoTextureNormalAlpha.xml",
+				"description": "Technique Techniques/NoTextureNormalAlpha.xml",
+				"icon": "COLOR",
+				"number": "3316850"
+			},
+			{
+				"id": "Techniques/NoTextureOverlay.xml",
+				"name": "Techniques/NoTextureOverlay.xml",
+				"description": "Technique Techniques/NoTextureOverlay.xml",
+				"icon": "COLOR",
+				"number": "4992235"
+			},
+			{
+				"id": "Techniques/NoTextureUnlit.xml",
+				"name": "Techniques/NoTextureUnlit.xml",
+				"description": "Technique Techniques/NoTextureUnlit.xml",
+				"icon": "COLOR",
+				"number": "6121721"
+			},
+			{
+				"id": "Techniques/NoTextureUnlitAlpha.xml",
+				"name": "Techniques/NoTextureUnlitAlpha.xml",
+				"description": "Technique Techniques/NoTextureUnlitAlpha.xml",
+				"icon": "COLOR",
+				"number": "6285655"
+			},
+			{
+				"id": "Techniques/NoTextureUnlitVCol.xml",
+				"name": "Techniques/NoTextureUnlitVCol.xml",
+				"description": "Technique Techniques/NoTextureUnlitVCol.xml",
+				"icon": "COLOR",
+				"number": "7293091"
+			},
+			{
+				"id": "Techniques/NoTextureVCol.xml",
+				"name": "Techniques/NoTextureVCol.xml",
+				"description": "Technique Techniques/NoTextureVCol.xml",
+				"icon": "COLOR",
+				"number": "3885921"
+			},
+			{
+				"id": "Techniques/NoTextureVColAdd.xml",
+				"name": "Techniques/NoTextureVColAdd.xml",
+				"description": "Technique Techniques/NoTextureVColAdd.xml",
+				"icon": "COLOR",
+				"number": "828402"
+			},
+			{
+				"id": "Techniques/NoTextureVColAddAlpha.xml",
+				"name": "Techniques/NoTextureVColAddAlpha.xml",
+				"description": "Technique Techniques/NoTextureVColAddAlpha.xml",
+				"icon": "COLOR",
+				"number": "1636766"
+			},
+			{
+				"id": "Techniques/NoTextureVColMultiply.xml",
+				"name": "Techniques/NoTextureVColMultiply.xml",
+				"description": "Technique Techniques/NoTextureVColMultiply.xml",
+				"icon": "COLOR",
+				"number": "2180389"
+			},
+			{
+				"id": "Techniques/PBR/DiffNormalSpecEmissive.xml",
+				"name": "Techniques/PBR/DiffNormalSpecEmissive.xml",
+				"description": "Technique Techniques/PBR/DiffNormalSpecEmissive.xml",
+				"icon": "COLOR",
+				"number": "1480162"
+			},
+			{
+				"id": "Techniques/PBR/DiffNormalSpecEmissiveAlpha.xml",
+				"name": "Techniques/PBR/DiffNormalSpecEmissiveAlpha.xml",
+				"description": "Technique Techniques/PBR/DiffNormalSpecEmissiveAlpha.xml",
+				"icon": "COLOR",
+				"number": "3820462"
+			},
+			{
+				"id": "Techniques/PBR/PBRDiff.xml",
+				"name": "Techniques/PBR/PBRDiff.xml",
+				"description": "Technique Techniques/PBR/PBRDiff.xml",
+				"icon": "COLOR",
+				"number": "6899187"
+			},
+			{
+				"id": "Techniques/PBR/PBRDiffAlpha.xml",
+				"name": "Techniques/PBR/PBRDiffAlpha.xml",
+				"description": "Technique Techniques/PBR/PBRDiffAlpha.xml",
+				"icon": "COLOR",
+				"number": "5395805"
+			},
+			{
+				"id": "Techniques/PBR/PBRDiffNormal.xml",
+				"name": "Techniques/PBR/PBRDiffNormal.xml",
+				"description": "Technique Techniques/PBR/PBRDiffNormal.xml",
+				"icon": "COLOR",
+				"number": "7190362"
+			},
+			{
+				"id": "Techniques/PBR/PBRDiffNormalAlpha.xml",
+				"name": "Techniques/PBR/PBRDiffNormalAlpha.xml",
+				"description": "Technique Techniques/PBR/PBRDiffNormalAlpha.xml",
+				"icon": "COLOR",
+				"number": "4257590"
+			},
+			{
+				"id": "Techniques/PBR/PBRDiffNormalEmissive.xml",
+				"name": "Techniques/PBR/PBRDiffNormalEmissive.xml",
+				"description": "Technique Techniques/PBR/PBRDiffNormalEmissive.xml",
+				"icon": "COLOR",
+				"number": "9831729"
+			},
+			{
+				"id": "Techniques/PBR/PBRDiffNormalEmissiveAlpha.xml",
+				"name": "Techniques/PBR/PBRDiffNormalEmissiveAlpha.xml",
+				"description": "Technique Techniques/PBR/PBRDiffNormalEmissiveAlpha.xml",
+				"icon": "COLOR",
+				"number": "9520031"
+			},
+			{
+				"id": "Techniques/PBR/PBRMetallicRoughDiffNormalSpec.xml",
+				"name": "Techniques/PBR/PBRMetallicRoughDiffNormalSpec.xml",
+				"description": "Technique Techniques/PBR/PBRMetallicRoughDiffNormalSpec.xml",
+				"icon": "COLOR",
+				"number": "1489733"
+			},
+			{
+				"id": "Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissive.xml",
+				"name": "Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissive.xml",
+				"description": "Technique Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissive.xml",
+				"icon": "COLOR",
+				"number": "8297116"
+			},
+			{
+				"id": "Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissiveAlpha.xml",
+				"name": "Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissiveAlpha.xml",
+				"description": "Technique Techniques/PBR/PBRMetallicRoughDiffNormalSpecEmissiveAlpha.xml",
+				"icon": "COLOR",
+				"number": "5476596"
+			},
+			{
+				"id": "Techniques/PBR/PBRMetallicRoughDiffSpec.xml",
+				"name": "Techniques/PBR/PBRMetallicRoughDiffSpec.xml",
+				"description": "Technique Techniques/PBR/PBRMetallicRoughDiffSpec.xml",
+				"icon": "COLOR",
+				"number": "8133982"
+			},
+			{
+				"id": "Techniques/PBR/PBRMetallicRoughDiffSpecAlpha.xml",
+				"name": "Techniques/PBR/PBRMetallicRoughDiffSpecAlpha.xml",
+				"description": "Technique Techniques/PBR/PBRMetallicRoughDiffSpecAlpha.xml",
+				"icon": "COLOR",
+				"number": "4772530"
+			},
+			{
+				"id": "Techniques/PBR/PBRNoTexture.xml",
+				"name": "Techniques/PBR/PBRNoTexture.xml",
+				"description": "Technique Techniques/PBR/PBRNoTexture.xml",
+				"icon": "COLOR",
+				"number": "1137726"
+			},
+			{
+				"id": "Techniques/PBR/PBRNoTextureAlpha.xml",
+				"name": "Techniques/PBR/PBRNoTextureAlpha.xml",
+				"description": "Technique Techniques/PBR/PBRNoTextureAlpha.xml",
+				"icon": "COLOR",
+				"number": "1832274"
+			},
+			{
+				"id": "Techniques/TerrainBlend.xml",
+				"name": "Techniques/TerrainBlend.xml",
+				"description": "Technique Techniques/TerrainBlend.xml",
+				"icon": "COLOR",
+				"number": "3594161"
+			},
+			{
+				"id": "Techniques/VegetationDiff.xml",
+				"name": "Techniques/VegetationDiff.xml",
+				"description": "Technique Techniques/VegetationDiff.xml",
+				"icon": "COLOR",
+				"number": "280232"
+			},
+			{
+				"id": "Techniques/VegetationDiffUnlit.xml",
+				"name": "Techniques/VegetationDiffUnlit.xml",
+				"description": "Technique Techniques/VegetationDiffUnlit.xml",
+				"icon": "COLOR",
+				"number": "9697352"
+			},
+			{
+				"id": "Techniques/Water.xml",
+				"name": "Techniques/Water.xml",
+				"description": "Technique Techniques/Water.xml",
+				"icon": "COLOR",
+				"number": "8324852"
+			}
+		],
+		"textures": [
+			{
+				"id": "Textures/demon_NM (copy).jpg",
+				"name": "Textures/demon_NM (copy).jpg",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/demon_NM (copy).jpg",
+				"icon": "COLOR",
+				"number": "2042485"
+			},
+			{
+				"id": "Textures/mymo.jpg",
+				"name": "Textures/mymo.jpg",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/mymo.jpg",
+				"icon": "COLOR",
+				"number": "8494168"
+			},
+			{
+				"id": "Textures/aaaa (3rd copy).png",
+				"name": "Textures/aaaa (3rd copy).png",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/aaaa (3rd copy).png",
+				"icon": "COLOR",
+				"number": "9596533"
+			},
+			{
+				"id": "Textures/mymo2.png",
+				"name": "Textures/mymo2.png",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/mymo2.png",
+				"icon": "COLOR",
+				"number": "9289096"
+			},
+			{
+				"id": "Textures/spot.png",
+				"name": "Textures/spot.png",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/spot.png",
+				"icon": "COLOR",
+				"number": "6537300"
+			},
+			{
+				"id": "Textures/demon_NM.png",
+				"name": "Textures/demon_NM.png",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/Data/Textures/demon_NM.png",
+				"icon": "COLOR",
+				"number": "8433285"
+			},
+			{
+				"id": "Textures/RampExtreme.png",
+				"name": "Textures/RampExtreme.png",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/RampExtreme.png",
+				"icon": "COLOR",
+				"number": "9358078"
+			},
+			{
+				"id": "Textures/Spot.png",
+				"name": "Textures/Spot.png",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/Spot.png",
+				"icon": "COLOR",
+				"number": "8816884"
+			},
+			{
+				"id": "Textures/SpotWide.png",
+				"name": "Textures/SpotWide.png",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/SpotWide.png",
+				"icon": "COLOR",
+				"number": "9030087"
+			},
+			{
+				"id": "Textures/RampWide.png",
+				"name": "Textures/RampWide.png",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/RampWide.png",
+				"icon": "COLOR",
+				"number": "7183223"
+			},
+			{
+				"id": "Textures/Ramp.png",
+				"name": "Textures/Ramp.png",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/Ramp.png",
+				"icon": "COLOR",
+				"number": "8141988"
+			},
+			{
+				"id": "Textures/LUTIdentity.png",
+				"name": "Textures/LUTIdentity.png",
+				"description": "/home/ttrocha/_dev/projects/_build/bin/CoreData/Textures/LUTIdentity.png",
+				"icon": "COLOR",
+				"number": "6313101"
+			}
+		]
+	}
+}
