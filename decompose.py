@@ -1750,9 +1750,15 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         block.value = 0
     # Create a Mesh datablock with modifiers applied
     # (note: do not apply if not needed, it loses precision)
-    dgraph = bpy.context.depsgraph
+    #dgraph = bpy.context.depsgraph
+
+    dgraph = bpy.context.evaluated_depsgraph_get()
+
     # TODO2.8: not 100% sure about calc_undeformed- formerly you specified PREVIEW or RENDER
-    mesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
+#    mesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
+
+    mesh = meshObj.evaluated_get(dgraph).to_mesh()
+    #mesh = meshObj.to_mesh(preserve_all_data_layers=True,depsgraph=dgraph)
     log.info("Decomposing mesh: {:s} ({:d} vertices)".format(meshObj.name, len(mesh.vertices)) )
 
     # Compute local space unit length split normals vectors
@@ -2237,10 +2243,15 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             #Set the shape key to 100%
             block.value = 1
             #Make a tempory copy of the mesh at this shape.
-            dgraph = bpy.context.depsgraph
+            dgraph = bpy.context.evaluated_depsgraph_get()
+            #meshObj = bpy.context.object.evaluated_get(dgraph)
+
+            #eval_mesh = eval_obj.to_mesh()            
             #TODO2.8: not sure about calc_undeformed. formerly there was 'PREVIEW' or 'RENDER'
             #shapeMesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
-            shapeMesh = meshObj.to_mesh(dgraph, True, calc_undeformed=False)
+#            shapeMesh = meshObj.to_mesh(dgraph, True, calc_undeformed=False)
+            shapeMesh = meshObj.evaluated_get(dgraph).to_mesh(preserve_all_data_layers=True,depsgraph=dgraph)
+            #shapeMesh = meshObj.to_mesh(preserve_all_data_layers=True,depsgraph=dgraph)
             #Reset the shape key to 0%
             block.value = 0
 
@@ -2392,7 +2403,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                 log.warning('Empty shape {:s}.'.format(block.name))
 
             # Delete the temporary copy 
-            bpy.data.meshes.remove(shapeMesh)
+            #bpy.data.meshes.remove(shapeMesh)
 
         #Restore shape keys
         for j, block in enumerate(keyBlocks):
@@ -2400,7 +2411,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                 continue
             block.value = shapeKeysOldValues[j]
 
-    bpy.data.meshes.remove(mesh)    
+    #bpy.data.meshes.remove(mesh)    
 
     return
 
