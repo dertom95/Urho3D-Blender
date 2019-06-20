@@ -1542,6 +1542,7 @@ class UrhoExportStartRuntime(bpy.types.Operator):
         # launch game
         try:
             subp = subprocess.Popen(processParams,  shell=False)
+            print("\nLAUNCH RUNTIME: %s\n" % processParams)
             if settings.runtimeBlocking:
                 subp.communicate() #like wait() but without the risk of deadlock with verbose output
             returnv = subp.returncode
@@ -2323,7 +2324,8 @@ def selectVertices(context, objectName, indicesList, deselect):
         return
 
     # Set the object as current
-    objects.active = obj
+    #objects.active = obj
+    context.view_layer.objects.active=obj
     # Enter Edit mode (check poll() to avoid exception)
     if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
