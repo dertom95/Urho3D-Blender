@@ -453,7 +453,8 @@ def CreateNodeTreeXML(xmlroot,nodetree,nodeID,currentModel=None):
     # a node is in urho3d a component
     for node in exportNodeTree["nodes"]:
         bodyElem = ET.SubElement(xmlroot, "component")
-        bodyElem.set("type", node["name"])
+        #bodyElem.set("type", node["name"])
+        bodyElem.set("type", node["label"])
         nodeID += 1
         bodyElem.set("id", "{:d}".format(nodeID))
 
