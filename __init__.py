@@ -449,6 +449,7 @@ def OpCreateLodSet(self,context):
     lodset = bpy.data.worlds[0].lodsets.add()
     lodset.lodset_id = nextLodSetIDX()
     lodset.name="new-lodset "+str(lodset.lodset_id)
+    bpy.context.active_object.lodsetID=lodset.lodset_id
 
 BUTTON_MAPPING["create_lodset"]=OpCreateLodSet
 
