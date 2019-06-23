@@ -560,6 +560,8 @@ class UL_URHO_LIST_LOD(bpy.types.UIList):
             #layout.label(item.nodetreeName, icon = custom_icon)
             c.prop(item,"distance")
             c = split.column()
+            if (data.armatureObj):
+                c.enabled=False
             c.prop(item,"decimate")
 
 
@@ -2572,7 +2574,7 @@ def ExecuteUrhoExport(context):
                 arma_mod.object=lodset.armatureObj
             
             # add decimate-modifier if the decimate was < 1.0
-            if lod.decimate < 1.0:
+            if lod.decimate < 1.0 and not lodset.armatureObj:
                 decimate = new_obj.modifiers.new(name="__decimate",type="DECIMATE")
                 decimate.ratio = lod.decimate
 
