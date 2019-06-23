@@ -299,10 +299,15 @@ def IsJsonNodeAddonAvailable():
     jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.preferences.addons.keys()
     return jsonNodetreeAvailable
 
-def getLodSetWithID(id):
+def getLodSetWithID(id,returnIdx=False):
+    cnt=0
     for lodset in bpy.data.worlds[0].lodsets:
         if lodset.lodset_id == id: # good that I'm so consistent with my name *#%&
-            return lodset
+            if returnIdx:
+                return cnt
+            else:
+                return lodset
+        cnt=cnt+1
     print("COULD NOT FIND LODSET WITH ID:%s"%id)
     return None
 

@@ -452,6 +452,14 @@ def OpCreateLodSet(self,context):
 
 BUTTON_MAPPING["create_lodset"]=OpCreateLodSet
 
+# button-logic used within the generic-button
+def OpDeleteLodSet(self,context):
+    idx = getLodSetWithID(bpy.context.active_object.lodsetID,True)
+    lodset = bpy.data.worlds[0].lodsets.remove(idx)
+
+BUTTON_MAPPING["delete_lodset"]=OpDeleteLodSet
+
+
 ## make sure to keep the lodsetID to set selected object
 
 
@@ -1629,9 +1637,13 @@ class UrhoExportMeshPanel(bpy.types.Panel):
 
         row.prop_search(obj,"lodsetName",bpy.data.worlds[0],"lodsets")
         row = box.row()
-        row.operator("urho_button.generic",text="add").typeName="create_lodset"
-        
+        row.operator("urho_button.generic",text="new lodset").typeName="create_lodset"
+
         lodset = getLodSetWithID(obj.lodsetID)
+
+        if lodset:
+            row.operator("urho_button.generic",text="DELETE current").typeName="delete_lodset"
+        
 
         if lodset:
             row = box.row()
