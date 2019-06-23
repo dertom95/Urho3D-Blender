@@ -1,12 +1,22 @@
 Urho3D-Blender
 ==============
 
-Caution: This version is highly experimental. Consider it proof of concept. 
+[Blender](http://www.blender.org) to [Urho3D](https://urho3d.github.io) mesh exporter.
+
+Caution: This version is highly experimental. Consider it proof of concept and WIP.
  
 Also install and activate [addon_jsonnodetree](https://github.com/dertom95/addon_jsonnodetree) for support of setting components and adding materials 
- 
 
-[Blender](http://www.blender.org) to [Urho3D](https://urho3d.github.io) mesh exporter.
+Videos:
+- [Install](https://www.youtube.com/watch?v=o-1RMIwQZMY)
+- [Exporter Options](https://www.youtube.com/watch?v=VtZk6FipkdU)
+- [runtime and material-nodes](https://www.youtube.com/watch?v=utLNqfxZ_KE)
+- [materialnodes and textures](https://www.youtube.com/watch?v=13jslwWhUSk)
+- [component nodes ](https://www.youtube.com/watch?v=Ni3nD5687aQ)
+- [custom component workflow](https://www.youtube.com/watch?v=B37ZTa7mbpE)
+- [Collection Instances](https://www.youtube.com/watch?v=Ut0HJYpvuFc)
+- [Armature Animation](https://www.youtube.com/watch?v=h2NS348L8X0)
+
 
 Guide [here](https://github.com/reattiva/Urho3D-Blender/blob/master/guide.txt).
 
