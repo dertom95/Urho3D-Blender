@@ -2338,11 +2338,12 @@ def register():
                                 return autoNodetree
                             except:
                                 pass
-                    elif current_treetype=="urho3dmaterials" and current_obj.data.materialNodetree:
-                        print("auto material. currentName:%s" % current_obj.data.materialNodetree.name)
-                        if current_obj and current_obj.data and current_obj.data.materialNodetree:
+                    elif current_treetype=="urho3dmaterials" and len(current_obj.data.materialNodetrees)>0:
+                        if current_obj and current_obj.data and len(current_obj.data.materialNodetrees)>0:
                             try:
-                                autoNodetree = current_obj.data.materialNodetree
+                                slot = current_obj.data.materialNodetrees[bpy.context.object.active_material_index]                                  
+                                if slot.nodetreePointer:
+                                    autoNodetree = slot.nodetreePointer
                                 return autoNodetree
                             except:
                                 pass                            
