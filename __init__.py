@@ -2129,10 +2129,15 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
                 row = box.row()
                 row.operator('urho_material_nodetrees.new_item', text='NEW')
                 row.operator('urho_material_nodetrees.delete_item', text='REMOVE')
-                row.operator('urho_material_nodetrees.move_item', text='UP').direction = 'UP'
-                row.operator('urho_material_nodetrees.move_item', text='DOWN').direction = 'DOWN'
+                # no movement of the materialtree-slots, as I dont know how to stabely swap the change in the mesh
+                # maybe using blender's material operators: 
                 #row.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
                 #row.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'                
+
+
+                #row.operator('urho_material_nodetrees.move_item', text='UP').direction = 'UP'
+                #row.operator('urho_material_nodetrees.move_item', text='DOWN').direction = 'DOWN'
+                
                 #bpy.ops.wm.read_homefile('INVOKE_DEFAULT')                
 
                 if obj.mode == 'EDIT':

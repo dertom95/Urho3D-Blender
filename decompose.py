@@ -1732,7 +1732,12 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
     morphsList = tData.morphsList
     bonesMap = tData.bonesMap
     meshIndex = errorsMem.SecondIndex(meshObj.name)
-    
+
+    beforeSelectstate = meshObj.select_get()
+    beforeMode = meshObj.mode
+
+    meshObj.select_set(True)
+    bpy.ops.object.mode_set(mode="OBJECT")
 
     verticesMap = {}
     
@@ -1927,9 +1932,13 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         # Add the material if it is new
         #materialName = material and material.name
         materialName = "default_materialtree"
-        if hasattr(mesh,"materialNodetree") and mesh.materialNodetree:
-            materialName = mesh.materialNodetrees[materialIndex].name
-            print("USING %s" % materialName)
+        print("CHECK: %s %s idx:%s" % (hasattr(mesh,"materialNodetrees"), len(mesh.materialNodetrees),materialIndex))
+
+        if hasattr(mesh,"materialNodetrees") and len(mesh.materialNodetrees)>0:
+            ntSlot = mesh.materialNodetrees[materialIndex]
+            if ntSlot.nodetreePointer:
+                materialName = ntSlot.nodetreePointer.name
+                print("USING %s" % materialName)
             #materialName = mesh.materialNodetree.name
         
         # blender2.8: just set the material-tree-name in the dictionary so we know what material-tree to export
@@ -2419,6 +2428,8 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             block.value = shapeKeysOldValues[j]
 
     #bpy.data.meshes.remove(mesh)    
+    meshObj.select_set(beforeSelectstate)
+    bpy.ops.object.mode_set(mode=beforeMode)
 
     return
 
