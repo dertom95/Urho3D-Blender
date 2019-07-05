@@ -375,6 +375,7 @@ class UL_URHO_LIST_ITEM_NODETREE(bpy.types.Operator):
     bl_idname = "urho_nodetrees.new_item"
     bl_label = "Add a new item"
 
+
     def execute(self, context):
         context.active_object.nodetrees.add()
 
@@ -432,6 +433,104 @@ class UL_URHO_LIST_ITEM_MOVE_NODETREE(bpy.types.Operator):
         self.move_index()
 
         return{'FINISHED'}
+
+##############################################
+##              LIST - MATERIAL NODETREES
+##############################################
+##TODO: Try to unify the list handling (userdata,nodetree) 
+
+class MaterialNodetreeInfo(bpy.types.PropertyGroup):
+    nodetreePointer : bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_material_nodetree)
+
+## TODO: this is actually unnecessary (same as for logic nodetrees)
+class UL_URHO_LIST_MATERIAL_NODETREE(bpy.types.UIList):
+    """KeyValue UIList."""
+
+    def draw_item(self, context, layout, data, item, icon, active_data,active_propname, index):
+        custom_icon = 'NODETREE'
+        # Make sure your code supports all 3 layout types
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            c = layout.column()
+            row = c.row()
+            split = row.split(factor=0.05)
+            c = split.column()
+            c.label(text="")
+
+            split = split.split()
+            c= split.column()
+            #layout.label(item.nodetreeName, icon = custom_icon)
+            #c.prop_search(item,"nodetreeName",bpy.data,"node_groups",text="")
+            c.prop(item,"nodetreePointer")
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label(text="", icon = custom_icon)
+
+
+class UL_URHO_LIST_ITEM_MATERIAL_NODETREE(bpy.types.Operator):
+    """Add a new item to the list."""
+
+    bl_idname = "urho_material_nodetrees.new_item"
+    bl_label = "Add a new item"
+
+
+    def execute(self, context):
+        context.active_object.data.materialNodetrees.add()
+
+        return{'FINISHED'}
+
+
+class UL_URHO_LIST_ITEM_DEL_MATERIAL_NODETREE(bpy.types.Operator):
+    """Delete the selected item from the list."""
+
+    bl_idname = "urho_material_nodetrees.delete_item"
+    bl_label = "Deletes an item"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object.data.materialNodetrees
+
+    def execute(self, context):
+        currentlist = context.active_object.data.materialNodetrees
+        index = context.active_object.data.list_index_nodetrees
+
+        currentlist.remove(index)
+        context.active_object.data.list_index_nodetrees = min(max(0, index - 1), len(currentlist) - 1)
+
+        return{'FINISHED'}
+
+
+class UL_URHO_LIST_ITEM_MOVE_MATERIAL_NODETREE(bpy.types.Operator):
+    """Move an item in the list."""
+
+    bl_idname = "urho_material_nodetrees.move_item"
+    bl_label = "Move an item in the list"
+
+    direction : bpy.props.EnumProperty(items=(('UP', 'Up', ""),
+                                              ('DOWN', 'Down', ""),))
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object.data.materialNodetrees
+
+    def move_index(self):
+        """ Move  """
+
+        index = bpy.context.active_object.data.list_index_nodetrees
+        list_length = len(bpy.context.active_object.data.materialNodetrees) - 1  # (index starts at 0)
+        new_index = index + (-1 if self.direction == 'UP' else 1)
+
+        bpy.context.active_object.data.list_index_nodetrees = max(0, min(new_index, list_length))
+
+    def execute(self, context):
+        currentlist = context.active_object.data.materialNodetrees
+        index = context.active_object.data.list_index_nodetrees
+
+        neighbor = index + (-1 if self.direction == 'UP' else 1)
+        currentlist.move(neighbor, index)
+        self.move_index()
+
+        return{'FINISHED'}
+
 
 
 ##############################################
@@ -1999,7 +2098,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
 
             ## object's nodetree-managment
             box = box.box()
-            row = box.label(text="Object Nodetrees")
+            row = box.label(text="Component Nodetrees")
 
             row = layout.row()
             row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object's first nodetree")
@@ -2017,8 +2116,19 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
 
 
             if bpy.context.active_object.type=="MESH":
-                row = innerBox.row()
-                row.prop(bpy.context.active_object.data,"materialNodetree")
+                box = box.box()
+                row = box.row()
+                row.label(text="Material Nodetrees")
+                #row.prop(bpy.context.active_object.data,"materialNodetree")
+                row = box.row()
+                row.template_list("UL_URHO_LIST_MATERIAL_NODETREE", "The_material_List", obj.data,
+                "materialNodetrees", obj.data, "list_index_nodetrees")
+
+                row = box.row()
+                row.operator('urho_material_nodetrees.new_item', text='NEW')
+                row.operator('urho_material_nodetrees.delete_item', text='REMOVE')
+                row.operator('urho_material_nodetrees.move_item', text='UP').direction = 'UP'
+                row.operator('urho_material_nodetrees.move_item', text='DOWN').direction = 'DOWN'
 
 
 
@@ -2141,6 +2251,7 @@ def register():
     bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_USERDATA)
     bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_USERDATA)
     
+    
     bpy.utils.register_class(UL_URHO_LIST_CREATE_GENERIC)
 
     bpy.types.Scene.urho_exportsettings = bpy.props.PointerProperty(type=UrhoExportSettings)
@@ -2173,7 +2284,6 @@ def register():
     bpy.utils.register_class(UrhoExportMeshPanel)
 
     if IsJsonNodeAddonAvailable():
-        bpy.types.Mesh.materialNodetree=bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_material_nodetree)
         bpy.utils.register_class(UrhoExportNodetreePanel)
         bpy.utils.register_class(UrhoExportScenePanel)
 
@@ -2184,6 +2294,18 @@ def register():
         bpy.utils.register_class(NodetreeInfo)
         bpy.types.Object.nodetrees = bpy.props.CollectionProperty(type=NodetreeInfo)
         bpy.types.Object.list_index_nodetrees = IntProperty(name = "Index for nodetree list",default = 0)
+
+
+        bpy.utils.register_class(UL_URHO_LIST_MATERIAL_NODETREE)
+        bpy.utils.register_class(UL_URHO_LIST_ITEM_MATERIAL_NODETREE)
+        bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_MATERIAL_NODETREE)
+        bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_MATERIAL_NODETREE)
+        bpy.utils.register_class(MaterialNodetreeInfo)
+        bpy.types.Mesh.materialNodetrees = bpy.props.CollectionProperty(type=MaterialNodetreeInfo)
+        bpy.types.Mesh.list_index_nodetrees = IntProperty(name = "Index for nodetree list",default = 0)
+
+        #bpy.types.Mesh.materialNodetree=bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_material_nodetree)
+
 
         try:
             #print("Try to remove the default-nodetree-selector")
