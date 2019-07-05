@@ -1902,6 +1902,11 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         #   continue
 
         faceLoops = face.loops
+
+        ## TODO Multimaterial-Export:
+        ## use this:
+        materialIndex = face.material_index
+
         # Get face vertices UV, type: MeshTextureFace(bpy_struct)
         #faceUv = uvs and uvs[face.index]
         #faceUv2 = uvs2 and uvs2[face.index]
@@ -1923,7 +1928,9 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         #materialName = material and material.name
         materialName = "default_materialtree"
         if hasattr(mesh,"materialNodetree") and mesh.materialNodetree:
-            materialName = mesh.materialNodetree.name
+            materialName = mesh.materialNodetrees[materialIndex].name
+            print("USING %s" % materialName)
+            #materialName = mesh.materialNodetree.name
         
         # blender2.8: just set the material-tree-name in the dictionary so we know what material-tree to export
         if tOptions.doMaterials and materialName and (not materialName in materialsList):

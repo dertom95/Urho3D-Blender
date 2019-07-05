@@ -654,18 +654,19 @@ def HasTag(obj,tagName):
             return True
     return False
 
-def ProcessNodetreeMaterial(obj):
-    if not obj.materialNodetree:
-        print("No materialnodetree on obj:"+obj.name)
-        return None
+def ProcessNodetreeMaterials(mesh):
+    result = []
+    for nt in mesh.materialNodetrees:
+        if nt.nodetreePointer:
+            ntResult = ProcessNodetreeMaterial(mesh,nt.nodetreePointer)
+            result.append(ntResult)
+        else:
+            result.append(None)
+    return result
+        
 
-    print("MaterialNodeTree %s is used!" % obj.materialNodetree.name)
-
-    materialNT = obj.materialNodetree
-
-    if materialNT.id_data.bl_idname!="urho3dmaterials":
-        print("Using invalid material-nodetree:"+obj.materialNodetree.name+" on "+obj.name)
-        return None
+def ProcessNodetreeMaterial(mesh,materialNT):
+    print("MaterialNodeTree %s is used!" % materialNT.name)
 
     # search for predef-material-node and use the material it defines
     for node in materialNT.nodes:
@@ -677,7 +678,7 @@ def ProcessNodetreeMaterial(obj):
         usedMaterialTrees.append(materialNT)
 
     # no predef. use the material created by this nodetree
-    return "Materials/"+obj.materialNodetree.name+".xml"
+    return "Materials/"+materialNT.name+".xml"
 
 
 # get all tags of the direct collections and the collections in which it is nested in (postfix: _recursive )
@@ -891,10 +892,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
             # Gather materials
             materials = ""
-            if jsonNodetreeAvailable and obj.data.materialNodetree:
-                materialNT = ProcessNodetreeMaterial(obj.data)
-                if materialNT and materialNT!="": # could we get an urho3d-materialfile corresponding to the material-tree?
-                    materials = ";"+materialNT
+            if jsonNodetreeAvailable and obj.data.materialNodetrees:
+                # create materials
+                procMaterials = ProcessNodetreeMaterials(obj.data)
+                # interate over result-names
+                for pMat in procMaterials:
+                    if pMat:
+                        materials += ";"+pMat
+                    else:
+                        materials += ";Materials/DefaultGrey.xml"
             
             if materials == "": # not processed via materialnodes,yet? use the default way
                 for uSceneMaterial in uSceneModel.materialsList:

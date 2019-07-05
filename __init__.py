@@ -494,8 +494,9 @@ class UL_URHO_LIST_ITEM_DEL_MATERIAL_NODETREE(bpy.types.Operator):
         index = context.active_object.data.list_index_nodetrees
 
         currentlist.remove(index)
+        
         context.active_object.data.list_index_nodetrees = min(max(0, index - 1), len(currentlist) - 1)
-
+        bpy.context.active_object.active_material_index = context.active_object.data.list_index_nodetrees
         return{'FINISHED'}
 
 
@@ -520,6 +521,7 @@ class UL_URHO_LIST_ITEM_MOVE_MATERIAL_NODETREE(bpy.types.Operator):
         new_index = index + (-1 if self.direction == 'UP' else 1)
 
         bpy.context.active_object.data.list_index_nodetrees = max(0, min(new_index, list_length))
+        bpy.context.active_object.active_material_index = bpy.context.active_object.data.list_index_nodetrees        
 
     def execute(self, context):
         currentlist = context.active_object.data.materialNodetrees
@@ -2122,13 +2124,22 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
                 #row.prop(bpy.context.active_object.data,"materialNodetree")
                 row = box.row()
                 row.template_list("UL_URHO_LIST_MATERIAL_NODETREE", "The_material_List", obj.data,
-                "materialNodetrees", obj.data, "list_index_nodetrees")
+                "materialNodetrees", obj, "active_material_index")
 
                 row = box.row()
                 row.operator('urho_material_nodetrees.new_item', text='NEW')
                 row.operator('urho_material_nodetrees.delete_item', text='REMOVE')
                 row.operator('urho_material_nodetrees.move_item', text='UP').direction = 'UP'
                 row.operator('urho_material_nodetrees.move_item', text='DOWN').direction = 'DOWN'
+                #row.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
+                #row.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'                
+                #bpy.ops.wm.read_homefile('INVOKE_DEFAULT')                
+
+                if obj.mode == 'EDIT':
+                    row = box.row(align=True)
+                    row.operator("object.material_slot_assign", text="Assign")
+                    row.operator("object.material_slot_select", text="Select")
+                    row.operator("object.material_slot_deselect", text="Deselect")                
 
 
 
