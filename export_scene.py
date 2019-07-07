@@ -383,6 +383,22 @@ def UrhoWriteMaterialTrees(fOptions):
                 paramElement = ET.SubElement(materialElem, "depth")
                 paramElement.set("constant", node.prop_constant);
                 paramElement.set("slopescaled", node.prop_slopescaled);
+            elif node.bl_idname=="urho3dmaterials__advancedMaterial":
+                paramElement = ET.SubElement(materialElem, "alphatocoverage")
+                paramElement.set("value", str(node.prop_alphaToCoverage));
+                paramElement = ET.SubElement(materialElem, "lineantialias")
+                paramElement.set("value", str(node.prop_lineAntialias));
+                paramElement = ET.SubElement(materialElem, "renderorder")
+                paramElement.set("value", str(node.prop_renderOrder));                
+                paramElement = ET.SubElement(materialElem, "occlusion")
+                paramElement.set("value", str(node.prop_occlusion)); 
+                if (node.prop_vsdefines!="" or node.prop_vsdefines!=""):
+                    shaderElement = ET.SubElement(materialElem, "shader")
+                        
+                    paramElement = ET.SubElement(shaderElement, "vsdefines")
+                    paramElement.set("value", node.prop_vsdefines);  
+                    paramElement = ET.SubElement(shaderElement, "psdefines")
+                    paramElement.set("value", node.prop_psdefines);  
             else:
                 print("Unknown MaterialNode: %s" % node.bl_idname)
 
