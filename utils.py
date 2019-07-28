@@ -13,6 +13,9 @@ import array
 import logging
 import bpy
 import re
+from queue import Queue
+from threading import current_thread,main_thread
+from math import degrees
 
 log = logging.getLogger("ExportLogger")
 
@@ -293,11 +296,21 @@ def SDBMHash(key):
         hash = ord(key[i]) + (hash << 6) + (hash << 16) - hash
     return (hash & 0xFFFFFFFF)
 
+# -----------------------------------------
+# Check if json-nodetree-addon is available
+# -----------------------------------------
 def IsJsonNodeAddonAvailable():
     #jsonNodetreeAvailable = False
     #log = logging.getLogger("ExportLogger")
     jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.preferences.addons.keys()
     return jsonNodetreeAvailable
+
+# -------------------------------------------
+# Check if blender-connect-addon is available
+# -------------------------------------------
+def IsBConnectAddonAvailable():
+    bconnectAvailable = "addon_blender_connect" in  bpy.context.preferences.addons.keys()
+    return bconnectAvailable    
 
 def getLodSetWithID(id,returnIdx=False):
     cnt=0
@@ -318,3 +331,64 @@ def getObjectWithID(id):
         if obj.ID == id:
             return obj
     return None
+
+# ---------------
+# execution queue
+# ---------------
+class ExecutionQueue:
+    def __init__(self):
+        self.queue = Queue()
+
+    def queue_action(self,action):
+        print("added queue function(THREAD:%s)" % current_thread().getName())        
+        self.queue.put(action)
+
+    ## execute immediately if called from main-thread, otherwise queue it
+    def execute_or_queue_action(self,action):
+        if current_thread() is main_thread():
+            print("immediate call")
+            action()
+        else:
+            print("queued:%s"%current_thread().getName())
+            self.queue_action(action)
+
+    def has_actions(self):
+        return not self.queue.empty
+
+    def flush_actions(self):
+        while not self.queue.empty():
+            print("DO EXECUTION FUNCTION")
+            # get queued-action...
+            action = self.queue.get()
+            # ...and execute it
+            action()
+
+execution_queue = ExecutionQueue()
+
+# ----------------
+# conversion utils
+# ----------------
+def vec2dict(vec,convToDeg=False):
+    result={}
+    try:
+        if not convToDeg:
+            result["x"]=vec.x
+            result["y"]=vec.y
+            result["z"]=vec.z
+            result["w"]=vec.w
+        else:
+            result["x"]=degrees(vec.x)
+            result["y"]=degrees(vec.y)
+            result["z"]=degrees(vec.z)
+            result["w"]=degrees(vec.w)
+
+    except:
+        pass
+    return result
+
+def matrix2dict(matrix,convToDeg=False):
+    resultmatrix=[]
+    for vector in matrix:
+        resultmatrix.append(vec2dict(vector,convToDeg))
+    return resultmatrix
+

@@ -46,8 +46,10 @@ from .decompose import TOptions, Scan
 from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, UrhoWriteAnimation, \
                          UrhoWriteTriggers, UrhoExport
 from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterialTrees
-from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable,getLodSetWithID,getObjectWithID
+from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable,getLodSetWithID,getObjectWithID, execution_queue
 if DEBUG: from .testing import PrintUrhoData, PrintAll
+
+from .custom_render_engine import UrhoRenderEngine
 
 import os
 import time
@@ -2179,6 +2181,13 @@ def PostSave(dummy):
 
 addon_keymaps = []
 
+# timer callback
+def call_execution_queue():
+    # flush the actions
+    execution_queue.flush_actions()
+    # come back in 0.1s
+    return 1
+
 def register():
         # property hooks:
     def updateMaterialTreeName(self,ctx):
@@ -2247,6 +2256,7 @@ def register():
     #bpy.utils.register_module(__name__)
     
 
+    bpy.utils.register_class(UrhoRenderEngine)
 
     bpy.utils.register_class(UrhoAddonPreferences)
     bpy.utils.register_class(UrhoExportSettings)
@@ -2373,6 +2383,8 @@ def register():
     if not PostSave in bpy.app.handlers.save_post:
         bpy.app.handlers.save_post.append(PostSave)
 
+    bpy.app.timers.register(call_execution_queue,persistent=True)        
+
     # handle the shortcuts
     wm = bpy.context.window_manager
     
@@ -2397,6 +2409,8 @@ def unregister():
     if DEBUG: print("Urho export unregister")
     
     #bpy.utils.unregister_module(__name__)
+
+    bpy.utils.unregister_class(UrhoRenderEngine)
 
     bpy.utils.unregister_class(UrhoAddonPreferences)
     bpy.utils.unregister_class(UrhoExportSettings)
@@ -2449,6 +2463,8 @@ def unregister():
         del bpy.types.Scene.sceneTreeId
         del bpy.types.Collection.urhoExport
 
+
+    bpy.app.timers.unregister(call_execution_queue)        
 
     if PostLoad in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(PostLoad)
