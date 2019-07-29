@@ -1,6 +1,8 @@
 import bpy
 import bgl
 import json
+import ctypes
+import numpy as np
 from threading import current_thread
 
 # connect to blender connect if available
@@ -32,8 +34,6 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
     def NextID():
         UrhoRenderEngine.ID_COUNTER = UrhoRenderEngine.ID_COUNTER + 1
         return UrhoRenderEngine.ID_COUNTER
-
-
     # Init is called whenever a new render engine instance is created. Multiple
     # instances may exist at the same time, for example for a viewport and final
     # render.
@@ -57,17 +57,32 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         }
 
         if BCONNECT_AVAILABLE:
-            def exe():
-                print("FOUND BCONNECT2(THREAD:%s)" % current_thread().getName())
-                AddListener(b"runtime",self.BConnectListener)
-                print("1")
-            execution_queue.execute_or_queue_action(exe)
+            AddListener("runtime-%s" % self.ID,self.OnRuntimeMessage)
+            AddListener("runtime",self.BConnectListener)
             
     # When the render engine instance is destroy, this is called. Clean up any
     # render engine data here, for example stopping running render threads.
     def __del__(self):
         pass
 
+    # messages from the runtime to this
+    def OnRuntimeMessage(self,topic,subtype,data):
+        def QueuedExecution():
+            print("OnRuntimeMessage(%s): Topic:%s subtype:%s data-len:%s" % (self.ID,topic,subtype,len(data)))
+            if subtype == "draw":
+                if self.draw_data:
+                    self.draw_data.pixels = bgl.Buffer(bgl.GL_BYTE, len(data), data)
+                    self.draw_data.updateTextureOnDraw = True
+                    print("draw_data finished")
+                    self.tag_redraw()
+        execution_queue.execute_or_queue_action(QueuedExecution)
+
+    # dummy. remove soon
+    def BConnectListener(self,topic,subtype,data):
+        print("TOPIC2:%s subtype:%s" % (topic,subtype))
+        print("DATALEN %s" % len(data))     
+
+    # check the current blender-data and publish changes
     def update_data(self,region,space_view3d,scene):
         print("update-data")
         self.region = region
@@ -106,9 +121,6 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             print("no changes")
 
 
-    def BConnectListener(self,topic,subtype,data):
-        print("TOPIC2:%s subtype:%s" % (topic,subtype))
-        print("DATALEN %s" % len(data))
 
 
     # This is the method called by Blender for both final renders (F12) and
@@ -212,15 +224,16 @@ class CustomDrawData:
         self.dimensions = dimensions
         width, height = dimensions
 
-        pixels = [0.1, 0.2, 0.1, 1.0] * width * height
-        pixels = bgl.Buffer(bgl.GL_FLOAT, width * height * 4, pixels)
+        self.pixels = [255,255,0,255] * width * height
+        self.pixels = bgl.Buffer(bgl.GL_BYTE, width * height * 4, self.pixels)
 
         # Generate texture
+        self.updateTextureOnDraw = False
         self.texture = bgl.Buffer(bgl.GL_INT, 1)
         bgl.glGenTextures(1, self.texture)
         bgl.glActiveTexture(bgl.GL_TEXTURE0)
         bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.texture[0])
-        bgl.glTexImage2D(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA16F, width, height, 0, bgl.GL_RGBA, bgl.GL_FLOAT, pixels)
+        bgl.glTexImage2D(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, width, height, 0, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, self.pixels)
         bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
         bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
         bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
@@ -267,7 +280,23 @@ class CustomDrawData:
         bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
         bgl.glDeleteTextures(1, self.texture)
 
+    def updateTexture(self):
+        print("UPDATE TEXTURE")
+        bgl.glActiveTexture(bgl.GL_TEXTURE0)
+        bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.texture[0])
+        width, height = self.dimensions
+        bgl.glTexImage2D(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, width, height, 0, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, self.pixels)
+
+        #bgl.glTexImage2D(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA16F, self.dimensions.width, self.dimensions.height, 0, bgl.GL_RGBA, bgl.GL_FLOAT, self.pixels)
+        bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
+        bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
+        bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
+
     def draw(self):
+        if self.updateTextureOnDraw:
+            self.updateTexture()
+            self.updateTextureOnDraw = False
+
         bgl.glActiveTexture(bgl.GL_TEXTURE0)
         bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.texture[0])
         bgl.glBindVertexArray(self.vertex_array[0])
