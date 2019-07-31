@@ -103,6 +103,10 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         if (data["current_view_matrix"] != region3d.view_matrix):
             data["current_view_matrix"] = region3d.view_matrix.copy()
             changes["view_matrix"]=matrix2dict(region3d.view_matrix)
+            vm = region3d.view_matrix
+            changes["view_matrix_euler"] = vec2dict(vm.to_euler(),True)
+            changes["view_matrix_trans"] = vec2dict(vm.to_translation())
+            changes["view_matrix_scale"] = vec2dict(vm.to_scale())
 
         # check for scene-change
         if (data["current_scene_name"]!=scene.name):
