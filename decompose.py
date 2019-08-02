@@ -135,7 +135,7 @@ class TVertex:
             s += "\n tangent: {: .3f} {: .3f} {: .3f}".format(self.tangent.x, self.tangent.y, self.tangent.z)
         if self.weights:
             s += "\n weights: "
-            for w in self.weights:
+            for w in self.weights:f
                 s += "{:d} {:.3f}  ".format(w[0],w[1])
         return s
 
@@ -1932,7 +1932,9 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         # Add the material if it is new
         #materialName = material and material.name
         materialName = "default_materialtree"
-        print("CHECK: %s %s idx:%s" % (hasattr(mesh,"materialNodetrees"), len(mesh.materialNodetrees),materialIndex))
+
+	if hasattr(mesh,"materialNodetrees"):
+            print("CHECK: %s idx:%s" % (len(mesh.materialNodetrees),materialIndex))
 
         if hasattr(mesh,"materialNodetrees") and len(mesh.materialNodetrees)>0:
             ntSlot = mesh.materialNodetrees[materialIndex]
