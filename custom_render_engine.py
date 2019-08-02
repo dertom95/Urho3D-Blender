@@ -107,7 +107,11 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             changes["view_matrix_euler"] = vec2dict(vm.to_euler(),True)
             changes["view_matrix_trans"] = vec2dict(vm.to_translation())
             changes["view_matrix_scale"] = vec2dict(vm.to_scale())
-
+            changes["view_location"]=vec2dict(region3d.view_location)
+            changes["view_rotation"]=vec2dict(region3d.view_rotation)
+            changes["view_perspective_type"]=str(region3d.view_perspective)
+            changes["perspective_matrix"]=matrix2dict(region3d.view_matrix);
+            
         # check for scene-change
         if (data["current_scene_name"]!=scene.name):
             data["current_scene_name"]=scene.name
@@ -261,7 +265,7 @@ class CustomDrawData:
         # Generate geometry buffers for drawing textured quad
         position = [0.0, 0.0, width, 0.0, width, height, 0.0, height]
         position = bgl.Buffer(bgl.GL_FLOAT, len(position), position)
-        texcoord = [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0]
+        texcoord = [0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
         texcoord = bgl.Buffer(bgl.GL_FLOAT, len(texcoord), texcoord)
 
         self.vertex_buffer = bgl.Buffer(bgl.GL_INT, 2)
