@@ -2,7 +2,8 @@ import bpy
 import bgl
 import json
 import ctypes
-import numpy as np
+import math
+from bpy_extras import view3d_utils
 from threading import current_thread
 
 # connect to blender connect if available
@@ -63,12 +64,18 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
     # When the render engine instance is destroy, this is called. Clean up any
     # render engine data here, for example stopping running render threads.
     def __del__(self):
-        pass
+        changes = {"viewId" : self.ID,
+                   "action" : "destroy"}
+        changesJson = json.dumps(changes, indent=4)
+        print("changesJson: %s" % changesJson)
+        netData = str.encode(changesJson)
+
+        Publish("blender","data_change","json",netData)            
 
     # messages from the runtime to this
-    def OnRuntimeMessage(self,topic,subtype,data):
+    def OnRuntimeMessage(self,topic,subtype,meta,data):
         def QueuedExecution():
-            print("OnRuntimeMessage(%s): Topic:%s subtype:%s data-len:%s" % (self.ID,topic,subtype,len(data)))
+            print("OnRuntimeMessage(%s): Topic:%s subtype:%s meta:'%s' data-len:%s" % (self.ID,topic,subtype,meta,len(data)))
             if subtype == "draw":
                 if self.draw_data:
                     self.draw_data.pixels = bgl.Buffer(bgl.GL_BYTE, len(data), data)
@@ -78,7 +85,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         execution_queue.execute_or_queue_action(QueuedExecution)
 
     # dummy. remove soon
-    def BConnectListener(self,topic,subtype,data):
+    def BConnectListener(self,topic,subtype,meta,data):
         print("TOPIC2:%s subtype:%s" % (topic,subtype))
         print("DATALEN %s" % len(data))     
 
@@ -92,15 +99,33 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         data = self.renderViewData
         changes = {}
 
+        
+        forceMatrix = False
+
         # check screen resolution
         if data["width"]!=region.width or data["height"]!=region.height:
             data["width"] = region.width
             data["height"] = region.height
             changes["resolution"]={ 'width' : region.width, 'height' : region.height }
+            forceMatrix = True
 
         # check view matrix
         region3d = space_view3d.region_3d
-        if (data["current_view_matrix"] != region3d.view_matrix):
+
+        ray_vector = view3d_utils.region_2d_to_vector_3d(region, region3d, (0, 0))
+        view_camera_loc = region3d.view_matrix.inverted().translation
+        look_at = region3d.view_location
+        view_local_z = look_at - view_camera_loc
+        fov2 = math.degrees(view_local_z.angle(ray_vector))
+
+
+        vmat_inv = region3d.view_matrix.inverted()
+        pmat = region3d.perspective_matrix @ vmat_inv
+        fov = 2.0*math.atan(1.0/pmat[1][1])*180.0/math.pi; 
+
+        #aspect = pmat[1][1]/prj[0][0]
+
+        if (forceMatrix or data["current_view_matrix"] != region3d.view_matrix):
             data["current_view_matrix"] = region3d.view_matrix.copy()
             changes["view_matrix"]=matrix2dict(region3d.view_matrix)
             vm = region3d.view_matrix
@@ -110,7 +135,12 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             changes["view_location"]=vec2dict(region3d.view_location)
             changes["view_rotation"]=vec2dict(region3d.view_rotation)
             changes["view_perspective_type"]=str(region3d.view_perspective)
-            changes["perspective_matrix"]=matrix2dict(region3d.view_matrix);
+            changes["perspective_matrix"]=matrix2dict(region3d.perspective_matrix);
+            changes["fov"]=fov
+            changes["fov2"]=fov2
+
+
+
             
         # check for scene-change
         if (data["current_scene_name"]!=scene.name):
@@ -212,6 +242,8 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         # Get viewport dimensions
         dimensions = region.width, region.height
 
+        
+
         # Bind shader that converts from scene linear to display space,
         bgl.glEnable(bgl.GL_BLEND)
         bgl.glBlendFunc(bgl.GL_ONE, bgl.GL_ONE_MINUS_SRC_ALPHA);
@@ -231,6 +263,8 @@ class CustomDrawData:
         # Generate dummy float image buffer
         self.dimensions = dimensions
         width, height = dimensions
+
+        print("NEW CUSTOMDRAWDATA with resolution %s:%s" %( width,height ))
 
         self.pixels = [255,255,0,255] * width * height
         self.pixels = bgl.Buffer(bgl.GL_BYTE, width * height * 4, self.pixels)
