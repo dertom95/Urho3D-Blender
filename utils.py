@@ -16,6 +16,7 @@ import re
 from queue import Queue
 from threading import current_thread,main_thread
 from math import degrees
+import traceback
 
 log = logging.getLogger("ExportLogger")
 
@@ -342,6 +343,7 @@ class ExecutionQueue:
     def queue_action(self,action):
         print("added queue function(THREAD:%s)" % current_thread().getName())        
         self.queue.put(action)
+        print("..done..")
 
     ## execute immediately if called from main-thread, otherwise queue it
     def execute_or_queue_action(self,action):
@@ -361,7 +363,14 @@ class ExecutionQueue:
             # get queued-action...
             action = self.queue.get()
             # ...and execute it
-            action()
+            try:
+                action()
+            except ReferenceError:
+                print("!!Referror!! %s" % str(action));
+            except Exception:
+                print("Listener error for ")
+                print(traceback.format_exc())
+
 
 execution_queue = ExecutionQueue()
 

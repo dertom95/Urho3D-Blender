@@ -5,6 +5,7 @@ import ctypes
 import math
 from bpy_extras import view3d_utils
 from threading import current_thread
+import weakref
 
 # connect to blender connect if available
 from .utils import IsBConnectAddonAvailable, execution_queue, vec2dict, matrix2dict
@@ -20,6 +21,33 @@ else:
     print("BCONNECT UNAVAILABLE")
 
 
+class ViewRenderer:
+    def __init__(self,id,topic,renderengine):
+        self.view_id = id
+        self.renderEngine = weakref.ref(renderengine)
+        self.topic = topic
+        AddListener(self.topic,self.OnRuntimeMessage)
+
+    def set_renderengine(self,renderengine):
+        self.renderEngine = weakref.ref(renderengine)
+
+    def OnRuntimeMessage(self,topic,subtype,meta,data):
+        def QueuedExecution():
+            if not self.renderEngine or self.renderEngine() is None:
+                self.renderEngine = None
+                return
+
+            print("MESSAGE START")
+            print("OnRuntimeMessage(%s): Topic:%s subtype:%s meta:'%s' data-len:%s" % (self.view_id,topic,subtype,meta,len(data)))
+            if subtype == "draw":
+                if self.renderEngine().draw_data:
+                    self.renderEngine().draw_data.pixels = bgl.Buffer(bgl.GL_BYTE, len(data), data)
+                    self.renderEngine().draw_data.updateTextureOnDraw = True
+                    print("draw_data finished")
+                    self.renderEngine().tag_redraw()
+        execution_queue.execute_or_queue_action(QueuedExecution)        
+    
+
 class UrhoRenderEngine(bpy.types.RenderEngine):
 
     # These three members are used by blender to set up the
@@ -28,73 +56,96 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
     bl_label = "Urho3D"
     bl_use_preview = True
 
+    
     ID_COUNTER = 0
-    RENDERVIEWS = {}
+    RENDERVIEWS_IDS = {}
 
     @staticmethod
     def NextID():
-        UrhoRenderEngine.ID_COUNTER = UrhoRenderEngine.ID_COUNTER + 1
+        UrhoRenderEngine.ID_COUNTER = UrhoRenderEngine.ID_COUNTER+1
         return UrhoRenderEngine.ID_COUNTER
+
     # Init is called whenever a new render engine instance is created. Multiple
     # instances may exist at the same time, for example for a viewport and final
     # render.
     def __init__(self):
         self.scene_data = None
         self.draw_data = None
-        self.ID = UrhoRenderEngine.NextID()
+        #self.view_id = UrhoRenderEngine.NextID()
+        self.view_id = 0
         self.region = None
         self.space_view3d = None
         self.scene = None
+        self.viewRenderer = None
+        
 
-        UrhoRenderEngine.RENDERVIEWS[self.ID] = self
+        print("##########-############-###########-###########")
+        print("##########-############-###########-###########")
+        print("##########-############-###########-###########")
+        print("CREATED RenderEngine %s " % (type(self)))
 
         # the current data, sent to the renderer. use this to detect changes
         self.renderViewData = {
-            "viewId" : self.ID,
+            "view_id" : 0,
             "width" : 0,
             "height" : 0,
             "current_view_matrix" : None,
             "current_scene_name" : None
         }
 
-        if BCONNECT_AVAILABLE:
-            AddListener("runtime-%s" % self.ID,self.OnRuntimeMessage)
-            AddListener("runtime",self.BConnectListener)
             
     # When the render engine instance is destroy, this is called. Clean up any
     # render engine data here, for example stopping running render threads.
     def __del__(self):
-        changes = {"viewId" : self.ID,
-                   "action" : "destroy"}
-        changesJson = json.dumps(changes, indent=4)
-        print("changesJson: %s" % changesJson)
-        netData = str.encode(changesJson)
+        print("###############################################################")
+        print("###############################################################")
+        print("###############################################################")
+        print("###############################################################")
+        print("###############################################################")
+        print("###############################################################")
+        print("DELETEDELETE %s" % type(self))
+        # changes = {"viewId" : self.view_id,
+        #            "action" : "destroy"}
+        # changesJson = json.dumps(changes, indent=4)
+        # print("changesJson: %s" % changesJson)
+        # netData = str.encode(changesJson)
 
-        Publish("blender","data_change","json",netData)            
+        # Publish("blender","data_change","json",netData)            
 
     # messages from the runtime to this
-    def OnRuntimeMessage(self,topic,subtype,meta,data):
-        def QueuedExecution():
-            print("OnRuntimeMessage(%s): Topic:%s subtype:%s meta:'%s' data-len:%s" % (self.ID,topic,subtype,meta,len(data)))
-            if subtype == "draw":
-                if self.draw_data:
-                    self.draw_data.pixels = bgl.Buffer(bgl.GL_BYTE, len(data), data)
-                    self.draw_data.updateTextureOnDraw = True
-                    print("draw_data finished")
-                    self.tag_redraw()
-        execution_queue.execute_or_queue_action(QueuedExecution)
 
-    # dummy. remove soon
-    def BConnectListener(self,topic,subtype,meta,data):
-        print("TOPIC2:%s subtype:%s" % (topic,subtype))
-        print("DATALEN %s" % len(data))     
+
+ 
 
     # check the current blender-data and publish changes
     def update_data(self,region,space_view3d,scene):
-        print("update-data")
+        print("update-data %s" % self.view_id)
         self.region = region
         self.space_view3d = space_view3d
         self.scene = scene
+
+    #    print("pointers region:%s space_view:%s" % (region.as_pointer(),space_view3d.as_pointer()))
+
+        if self.view_id == 0:
+     #       print("SV3D TYPE %s" % type(self.space_view3d.region_3d))
+
+            if region in UrhoRenderEngine.RENDERVIEWS_IDS:
+                viewRenderer = UrhoRenderEngine.RENDERVIEWS_IDS[region]
+                self.view_id = viewRenderer.view_id
+                viewRenderer.set_renderengine(self)
+      #          print("REVIVED")
+            else:
+       #         print("NEW")
+                self.view_id = UrhoRenderEngine.NextID()
+                newRenderer = ViewRenderer(self.view_id,"runtime-%s"%self.view_id,self)
+                UrhoRenderEngine.RENDERVIEWS_IDS[region]=newRenderer
+
+        #    print("### GOT AN ID:%s ###" % self.view_id)
+
+            self.renderViewData["view_id"]=self.view_id
+
+                #AddListener("runtime",self.BConnectListener)
+
 
         data = self.renderViewData
         changes = {}
@@ -112,6 +163,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         # check view matrix
         region3d = space_view3d.region_3d
 
+        # TODO: tidy up
         ray_vector = view3d_utils.region_2d_to_vector_3d(region, region3d, (0, 0))
         view_camera_loc = region3d.view_matrix.inverted().translation
         look_at = region3d.view_location
@@ -148,10 +200,10 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             changes["scene_name"]=scene.name
 
         if len(changes)>0:
-            changes["view_id"] = data["viewId"]
+            changes["view_id"] = data["view_id"]
 
             changesJson = json.dumps(changes, indent=4)
-            print("changesJson: %s" % changesJson)
+            #print("changesJson: %s" % changesJson)
             data = str.encode(changesJson)
 
             Publish("blender","data_change","json",data)
@@ -195,7 +247,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         view3d = context.space_data
         scene = depsgraph.scene
 
-        print("VIEWUPDATE(%s): region:%s view3d:%s scene:%s"%(self.ID,type(region),type(view3d),scene.name))
+        print("VIEWUPDATE(%s): region:%s view3d:%s scene:%s"%(self.view_id,type(region),type(view3d),scene.name))
 
 
         # Get viewport dimensions
@@ -236,7 +288,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         view3d = context.space_data
 
 
-        print("view_draw(%s): region:%s view3d:%s scene:%s"%(self.ID,type(region),type(view3d),scene.name))
+        print("view_draw(%s): region:%s view3d:%s scene:%s"%(self.view_id,type(region),type(view3d),scene.name))
         self.update_data(region,view3d,scene)
 
         # Get viewport dimensions
