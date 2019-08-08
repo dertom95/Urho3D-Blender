@@ -16,6 +16,7 @@ import re
 from queue import Queue
 from threading import current_thread,main_thread
 from math import degrees
+from mathutils import Vector
 import traceback
 
 log = logging.getLogger("ExportLogger")

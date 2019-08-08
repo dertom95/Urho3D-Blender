@@ -6,6 +6,7 @@ import math
 from bpy_extras import view3d_utils
 from threading import current_thread
 import weakref
+from mathutils import Vector
 
 # connect to blender connect if available
 from .utils import IsBConnectAddonAvailable, execution_queue, vec2dict, matrix2dict
@@ -90,7 +91,8 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             "width" : 0,
             "height" : 0,
             "current_view_matrix" : None,
-            "current_scene_name" : None
+            "current_scene_name" : None,
+            "current_view_distance" : None
         }
 
             
@@ -163,33 +165,39 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         # check view matrix
         region3d = space_view3d.region_3d
 
-        # TODO: tidy up
-        ray_vector = view3d_utils.region_2d_to_vector_3d(region, region3d, (0, 0))
-        view_camera_loc = region3d.view_matrix.inverted().translation
-        look_at = region3d.view_location
-        view_local_z = look_at - view_camera_loc
-        fov2 = math.degrees(view_local_z.angle(ray_vector))
-
-
         vmat_inv = region3d.view_matrix.inverted()
         pmat = region3d.perspective_matrix @ vmat_inv
         fov = 2.0*math.atan(1.0/pmat[1][1])*180.0/math.pi; 
 
         #aspect = pmat[1][1]/prj[0][0]
 
-        if (forceMatrix or data["current_view_matrix"] != region3d.view_matrix):
+        if (forceMatrix 
+                or data["current_view_matrix"] != region3d.view_matrix 
+                or (region3d.view_perspective=="ORTHO" and data["current_view_distance"]!=region3d.view_distance)):
             data["current_view_matrix"] = region3d.view_matrix.copy()
+            data["current_view_distance"] = region3d.view_distance
             changes["view_matrix"]=matrix2dict(region3d.view_matrix)
             vm = region3d.view_matrix
-            changes["view_matrix_euler"] = vec2dict(vm.to_euler(),True)
-            changes["view_matrix_trans"] = vec2dict(vm.to_translation())
-            changes["view_matrix_scale"] = vec2dict(vm.to_scale())
-            changes["view_location"]=vec2dict(region3d.view_location)
-            changes["view_rotation"]=vec2dict(region3d.view_rotation)
+            #changes["view_matrix_euler"] = vec2dict(vm.to_euler(),True)
+            #changes["view_matrix_trans"] = vec2dict(vm.to_translation())
+            #changes["view_matrix_scale"] = vec2dict(vm.to_scale())
+            #changes["view_location"]=vec2dict(region3d.view_location)
+            #changes["view_rotation"]=vec2dict(region3d.view_rotation)
             changes["view_perspective_type"]=str(region3d.view_perspective)
             changes["perspective_matrix"]=matrix2dict(region3d.perspective_matrix);
             changes["fov"]=fov
-            changes["fov2"]=fov2
+            changes["view_distance"]=region3d.view_distance
+
+            direction = region3d.view_rotation @ Vector((0.0, 0.0, -1.0))
+            top = region3d.view_rotation @ Vector((0.0, 1.0, 0.0))
+            pos = view3d_utils.region_2d_to_origin_3d(region, region3d, (region.width/2.0, region.height/2.0))
+
+            changes["view_direction"]=vec2dict(direction)
+            changes["view_up"]=vec2dict(top)
+            changes["view_position"]=vec2dict(pos)
+
+            print("pos:%s type:%s dir:%s top:%s" %(str(pos),type(pos),direction,top))
+            
 
 
 
@@ -203,7 +211,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             changes["view_id"] = data["view_id"]
 
             changesJson = json.dumps(changes, indent=4)
-            #print("changesJson: %s" % changesJson)
+            print("changesJson: %s" % changesJson)
             data = str.encode(changesJson)
 
             Publish("blender","data_change","json",data)
