@@ -57,6 +57,7 @@ import sys
 import shutil
 import logging
 import subprocess
+from .networking import BCONNECT_AVAILABLE
 
 # object-array to keep track of temporary objects created just for the export-process(like for the lodsets)
 tempObjects = []
@@ -1833,7 +1834,10 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row = box.row()
             row.prop(settings,"runtimeFlags")            
             row = box.row()
-            row.prop(settings,"runtimeExportComponents")  
+            if IsJsonNodeAddonAvailable:
+                row.prop(bpy.data.worlds[0].jsonNodes,"path")  
+            else:
+                row.prop(settings,"runtimeExportComponents",text="components path")  
             row = box.row()
             row.prop(settings,"runtimeBlocking")
             row = box.row()

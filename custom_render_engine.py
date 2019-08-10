@@ -16,11 +16,6 @@ BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
 if BCONNECT_AVAILABLE:
     import addon_blender_connect
     from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener
-    print("BCONNECT AVAILABLE! Starting network")
-    StartNetwork()
-else:
-    print("BCONNECT UNAVAILABLE")
-
 
 class ViewRenderer:
     def __init__(self,id,topic,renderengine):
