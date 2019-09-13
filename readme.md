@@ -4,6 +4,8 @@ Urho3D-Blender
 [Blender](http://www.blender.org) to [Urho3D](https://urho3d.github.io) mesh exporter.
 
 Caution: This version is highly experimental. Consider it proof of concept and WIP.
+
+[WANT to use the urho3d-custom-renderer(PREVIEW)?](https://github.com/dertom95/Urho3D-Blender/wiki)
  
 Also install and activate [addon_jsonnodetree](https://github.com/dertom95/addon_jsonnodetree) for support of setting components and adding materials 
 
