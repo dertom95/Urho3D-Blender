@@ -49,7 +49,7 @@ from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMateria
 from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable,IsBConnectAddonAvailable, getLodSetWithID,getObjectWithID, execution_queue
 if DEBUG: from .testing import PrintUrhoData, PrintAll
 
-from .custom_render_engine import UrhoRenderEngine
+from .custom_render_engine import UrhoRenderEngine,register as reRegister,unregister as reUnregister
 
 import os
 import time
@@ -2281,7 +2281,7 @@ def register():
     
 
     bpy.utils.register_class(UrhoRenderEngine)
-
+    reRegister()
     bpy.utils.register_class(UrhoAddonPreferences)
     bpy.utils.register_class(UrhoExportSettings)
     bpy.utils.register_class(UrhoExportOperator)
@@ -2436,12 +2436,12 @@ def unregister():
     #bpy.utils.unregister_module(__name__)
 
     bpy.utils.unregister_class(UrhoRenderEngine)
-
+    reUnregister()
     bpy.utils.unregister_class(UrhoAddonPreferences)
     bpy.utils.unregister_class(UrhoExportSettings)
     bpy.utils.unregister_class(UrhoExportSelectLodMesh)
     bpy.utils.unregister_class(UrhoExportOperator)
-    bpy.uitls.unregister_class(UrhoExportMaterialsOnlyOperator)
+    bpy.utils.unregister_class(UrhoExportMaterialsOnlyOperator)
     bpy.utils.unregister_class(UrhoExportCommandOperator)
     bpy.utils.unregister_class(UrhoExportResetOperator)
     bpy.utils.unregister_class(UrhoExportResetPathsOperator)  

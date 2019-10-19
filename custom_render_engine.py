@@ -414,22 +414,24 @@ def get_panels():
 
     panels = []
     for panel in bpy.types.Panel.__subclasses__():
-        if hasattr(panel, 'COMPAT_ENGINES') and 'BLENDER_RENDER' in panel.COMPAT_ENGINES:
+        if hasattr(panel, 'COMPAT_ENGINES') and 'CYCLES' in panel.COMPAT_ENGINES:
             if panel.__name__ not in exclude_panels:
                 panels.append(panel)
 
     return panels
 
-def register():
-    # Register the RenderEngine
-    bpy.utils.register_class(CustomRenderEngine)
+def register():    # Register the RenderEngine
+    #bpy.utils.register_class(CustomRenderEngine)
 
+    print("REGISTER PANEL")
     for panel in get_panels():
-        panel.COMPAT_ENGINES.add('CUSTOM')
+        print("p:%s" % panel)
+        panel.COMPAT_ENGINES.add('URHO3D')
+    print("---done---")
 
 def unregister():
-    bpy.utils.unregister_class(CustomRenderEngine)
+    #bpy.utils.unregister_class(CustomRenderEngine)
 
     for panel in get_panels():
-        if 'CUSTOM' in panel.COMPAT_ENGINES:
-            panel.COMPAT_ENGINES.remove('CUSTOM')
+        if 'URHO3D' in panel.COMPAT_ENGINES:
+            panel.COMPAT_ENGINES.remove('URHO3D')
