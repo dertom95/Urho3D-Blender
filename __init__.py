@@ -1584,6 +1584,19 @@ class UrhoExportOperator(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
+class UrhoExportMaterialsOnlyOperator(bpy.types.Operator):
+    """ Start exporting """
+    
+    bl_idname = "urho.exportmaterials"
+    bl_label = "Export Materials only"
+  
+    def execute(self, context):
+        ExecuteUrhoExportMaterialsOnly(context)
+        return {'FINISHED'}
+ 
+    def invoke(self, context, event):
+        return self.execute(context)
+
 # Export without report window
 class UrhoExportCommandOperator(bpy.types.Operator):
     """ Start exporting """
@@ -1642,10 +1655,15 @@ class UrhoExportStartRuntime(bpy.types.Operator):
             processParams.append("--workingdir")
             processParams.append(workingdir)
 
+
         exportComponentPath = settings.runtimeExportComponents
+        if IsJsonNodeAddonAvailable:
+            exportComponentPath = bpy.data.worlds[0].jsonNodes.path
+        
         if exportComponentPath != "":
             processParams.append("--componentexport")
             processParams.append(exportComponentPath)
+
 
         processParams.append("--scenename")
         processParams.append(bpy.context.scene.name+".xml")
@@ -1817,32 +1835,13 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         if settings.minimize:
             return
 
+        row = layout.row()
+        row.operator("urho.exportmaterials", icon='EXPORT')
         
         row = layout.row()
         row.separator()
         row.separator()
         row.prop(settings,"showLog")    
-
-        row = layout.row()
-        row.prop(settings,"useRuntime")
-        if (settings.useRuntime):
-            box = layout.box()
-            row = box.row()
-            row.prop(settings,"runtimeFile")
-            row = box.row()
-            row.prop(settings,"runtimeWorkingDir",text="additional resource-dir")
-            row = box.row()
-            row.prop(settings,"runtimeFlags")            
-            row = box.row()
-            if IsJsonNodeAddonAvailable:
-                row.prop(bpy.data.worlds[0].jsonNodes,"path")  
-            else:
-                row.prop(settings,"runtimeExportComponents",text="components path")  
-            row = box.row()
-            row.prop(settings,"runtimeBlocking")
-            row = box.row()
-            row.operator("urho.start_runtime",icon="GHOST_ENABLED")
-
 
 
         row = layout.row()
@@ -1880,6 +1879,27 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             dbox.prop(settings, "texturesPath")
             dbox.prop(settings, "objectsPath")
             dbox.prop(settings, "scenesPath")
+
+        row = layout.row()
+        row.prop(settings,"useRuntime")
+        if (settings.useRuntime):
+            box = layout.box()
+            row = box.row()
+            row.prop(settings,"runtimeFile")
+            row = box.row()
+            row.prop(settings,"runtimeWorkingDir",text="additional resource-dir")
+            row = box.row()
+            row.prop(settings,"runtimeFlags")            
+            row = box.row()
+            if IsJsonNodeAddonAvailable:
+                row.prop(bpy.data.worlds[0].jsonNodes,"path")  
+            else:
+                row.prop(settings,"runtimeExportComponents",text="components path")  
+            row = box.row()
+            row.prop(settings,"runtimeBlocking")
+            row = box.row()
+            row.operator("urho.start_runtime",icon="GHOST_ENABLED")
+
 
         row = layout.row()
         row.label(text="Settings:")
@@ -2266,6 +2286,7 @@ def register():
     bpy.utils.register_class(UrhoExportSettings)
     bpy.utils.register_class(UrhoExportOperator)
     bpy.utils.register_class(UrhoExportSelectLodMesh)
+    bpy.utils.register_class(UrhoExportMaterialsOnlyOperator)
     bpy.utils.register_class(UrhoExportCommandOperator)
     bpy.utils.register_class(UrhoExportResetOperator)
     bpy.utils.register_class(UrhoExportResetPathsOperator)
@@ -2420,6 +2441,7 @@ def unregister():
     bpy.utils.unregister_class(UrhoExportSettings)
     bpy.utils.unregister_class(UrhoExportSelectLodMesh)
     bpy.utils.unregister_class(UrhoExportOperator)
+    bpy.uitls.unregister_class(UrhoExportMaterialsOnlyOperator)
     bpy.utils.unregister_class(UrhoExportCommandOperator)
     bpy.utils.unregister_class(UrhoExportResetOperator)
     bpy.utils.unregister_class(UrhoExportResetPathsOperator)  
@@ -2549,6 +2571,41 @@ def selectErrors(context, errorsMem, errorName):
                 log.info( "Selecting {:d} vertices on {:s} with '{:s}' errors".format(count, objectName, name) )
                 selectVertices(context, objectName, indicesSet, i == 0)
 
+#-------------------------------------------------------------------------
+# Export materials only
+#-------------------------------------------------------------------------
+def ExecuteUrhoExportMaterialsOnly(context):
+    global logList
+
+    # Check Blender version
+    if bpy.app.version < (2, 80, 0):
+        log.error( "Blender version 2.70 or later is required" )
+        return False
+
+    # Clear log list
+    logList[:] = []
+    
+    # Get exporter UI settings
+    settings = context.scene.urho_exportsettings
+
+    # File utils options
+    fOptions = FOptions()
+
+    fOptions.useSubDirs = settings.useSubDirs
+    fOptions.fileOverwrite = settings.fileOverwrite
+    fOptions.paths[PathType.ROOT] = settings.outputPath
+    fOptions.paths[PathType.MODELS] = settings.modelsPath
+    fOptions.paths[PathType.ANIMATIONS] = settings.animationsPath
+    fOptions.paths[PathType.TRIGGERS] = settings.animationsPath
+    fOptions.paths[PathType.MATERIALS] = settings.materialsPath
+    fOptions.paths[PathType.TECHNIQUES] = settings.techniquesPath
+    fOptions.paths[PathType.TEXTURES] = settings.texturesPath
+    fOptions.paths[PathType.MATLIST] = settings.modelsPath
+    fOptions.paths[PathType.OBJECTS] = settings.objectsPath
+    fOptions.paths[PathType.SCENES] = settings.scenesPath
+
+    UrhoWriteMaterialTrees(fOptions,True)
+
 
 #-------------------------------------------------------------------------
 # Export main
@@ -2558,7 +2615,7 @@ def ExecuteUrhoExport(context):
     global logList
 
     # Check Blender version
-    if bpy.app.version < (2, 70, 0):
+    if bpy.app.version < (2, 80, 0):
         log.error( "Blender version 2.70 or later is required" )
         return False
 

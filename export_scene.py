@@ -310,8 +310,14 @@ def UrhoWriteMaterial(uScene, uMaterial, filepath, fOptions):
 
     WriteXmlFile(materialElem, directroy, fOptions)
 
-def UrhoWriteMaterialTrees(fOptions):
+def UrhoWriteMaterialTrees(fOptions,getUsedMaterials=False):
     print ("EXPORT MATERIAL-NODETREES")
+
+    if getUsedMaterials:
+        ## if the function is triggered without the export-process, the usedMaterials-array needs to be
+        ## created manually
+        SetUsedMaterials()
+
     for materialTree in usedMaterialTrees:
         fileFullPath = GetFilepath(PathType.MATERIALS, materialTree.name, fOptions)
         print("Try to export material-nodetree %s" % fileFullPath[0])        
@@ -679,7 +685,6 @@ def ProcessNodetreeMaterials(mesh):
         else:
             result.append(None)
     return result
-        
 
 def ProcessNodetreeMaterial(mesh,materialNT):
     print("MaterialNodeTree %s is used!" % materialNT.name)
@@ -695,6 +700,13 @@ def ProcessNodetreeMaterial(mesh,materialNT):
 
     # no predef. use the material created by this nodetree
     return "Materials/"+materialNT.name+".xml"
+
+## this functions is used to fill the usedMaterialTrees-array without the whole export-process
+## and is needed for "Export Materials only"
+def SetUsedMaterials():
+    for mesh in bpy.data.meshes:
+        ProcessNodetreeMaterials(mesh)
+    print("UsedMaterials:%s" % usedMaterialTrees)
 
 
 # get all tags of the direct collections and the collections in which it is nested in (postfix: _recursive )
