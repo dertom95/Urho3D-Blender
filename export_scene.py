@@ -480,19 +480,6 @@ def CreateNodeTreeXML(xmlroot,nodetree,nodeID,currentModel=None,currentMaterial=
         nodeID += 1
         bodyElem.set("id", "{:d}".format(nodeID))
 
-        if node["label"]=="StaticModel" or node["label"]=="AnimatedModel":
-            print("q1")
-            modelElem = ET.SubElement(bodyElem, "attribute")
-            modelElem.set("name", "Material")
-            modelElem.set("value", currentMaterial)            
-
-            print("q2")
-
-            
-
-            if xmlCurrentModel:
-                xmlroot.remove(xmlCurrentModel)
-
         # node-properties are the component-attributes
         for prop in node["props"]:
             modelElem = ET.SubElement(bodyElem, "attribute")
@@ -509,6 +496,14 @@ def CreateNodeTreeXML(xmlroot,nodetree,nodeID,currentModel=None,currentMaterial=
                 value = currentModel
 
             modelElem.set("value", value)
+
+        if node["label"]=="StaticModel" or node["label"]=="AnimatedModel":
+            modelElem = ET.SubElement(bodyElem, "attribute")
+            modelElem.set("name", "Material")
+            modelElem.set("value", currentMaterial)            
+
+            if xmlCurrentModel:
+                xmlroot.remove(xmlCurrentModel)
 
     return nodeID
 
