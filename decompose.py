@@ -1592,7 +1592,7 @@ def DecomposeActions(scene, armatureObj, tData, tOptions):
                         if tOptions.orientation:
                             # Remove the orientation from the object, apply the animation then orient again
                             om = tOptions.orientation.to_matrix().to_4x4()
-                            poseMatrix = om * poseMatrix @ om.inverted()
+                            poseMatrix = om @ poseMatrix @ om.inverted()
 
                 if tOptions.scale != 1.0:
                     poseMatrix.translation *= tOptions.scale
