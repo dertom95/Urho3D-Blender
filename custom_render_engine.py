@@ -414,7 +414,7 @@ def get_panels():
 
     panels = []
     for panel in bpy.types.Panel.__subclasses__():
-        if hasattr(panel, 'COMPAT_ENGINES') and 'CYCLES' in panel.COMPAT_ENGINES:
+        if hasattr(panel, 'COMPAT_ENGINES') and ('BLENDER_EEVEE' in panel.COMPAT_ENGINES or 'CYCLES' in panel.COMPAT_ENGINES):
             if panel.__name__ not in exclude_panels:
                 panels.append(panel)
 

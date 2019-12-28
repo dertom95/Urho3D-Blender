@@ -1840,9 +1840,14 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
     # # If still we don't have UV1, try the current UV map selected
     # if not uvs and mesh.tessface_uv_textures.active:
     #     uvs = mesh.tessface_uv_textures.active.data
-    if not uvs and len(mesh.uv_layers)>0:
-        uvs = mesh.uv_layers[0].data
+    print("MESH:%s" % type(mesh))
+    uv1_idx = mesh.urho_export.get_export_uv1()
+    if uv1_idx != -1:
+        uvs = mesh.uv_layers[uv1_idx].data
     
+    uv2_idx = mesh.urho_export.get_export_uv2()
+    if uv2_idx != -1:
+        uvs2 = mesh.uv_layers[uv2_idx].data
     
     # # If still we don't have UV1, try the first UV map in Blender
     # if not uvs and mesh.tessface_uv_textures:
@@ -2057,15 +2062,15 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             tVertex.blenderIndex = (meshIndex, vertexIndex)
 
             # Set Vertex position
-            if tOptions.doGeometryPos:
+            if mesh.urho_export.export_pos:
                 tVertex.pos = Vector((position.x, position.z, position.y))
 
             # Set Vertex normal
-            if tOptions.doGeometryNor:
+            if mesh.urho_export.export_norm:
                 tVertex.normal = Vector((normal.x, normal.z, normal.y))
                 
             # Set Vertex UV coordinates
-            if tOptions.doGeometryUV and uvs:
+            if mesh.urho_export.export_uv and uvs:
                 if uvs:
                     idx = faceLoops[i]
                     uvResult = uvs[idx]
@@ -2074,8 +2079,8 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             elif tOptions.doForceElements:
                 tVertex.uv = Vector((0.0, 0.0))
 
-            #blender2.8: todo uv2 (untested). uv2s not set at all
-            if tOptions.doGeometryUV2:
+            #blender2.8: todo uv2 (untested).
+            if mesh.urho_export.export_uv and uvs2:
                 if uvs2:
                     uv2 = uvs2[faceLoops[i]]
                     tVertex.uv2 = Vector((uv2[0], 1.0 - uv2[1]))
@@ -2102,7 +2107,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             #         tVertex.color = tuple(color)
 
             # Set vertex color 2.8
-            if tOptions.doGeometryCol or tOptions.doGeometryColAlpha:
+            if mesh.urho_export.export_vcol:
                 color = [0,0,0,255]
                 if colorsRgb:
                     rgb = colorsRgb[faceLoops[i]]
@@ -2206,14 +2211,14 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             log.warning("These parent bones will override the deforms: {:s}".format( ", ".join(overrideBones) ))
         if missingBones:
             log.warning("These parent bones are missing in the armature: {:s}".format( ", ".join(missingBones) ))
-        if tOptions.doGeometryWei:
+        if mesh.urho_export.export_weight:
             if hasWeight[0] == 0:
                 log.warning("Object {:s} is not affected by any bone".format(meshObj.name))
             elif hasWeight[0] != hasWeight[1]:
                 print("Object {:s} is only {:.1f}% skinned".format(meshObj.name, 100.0 * hasWeight[0] / hasWeight[1]))
         
         # Generate tangents for the last LOD of every geometry with new vertices
-        if tOptions.doGeometryTan:
+        if mesh.urho_export.export_tan:
             lodLevels = []
             for geometryIndex in updatedGeometryIndices:
                 geometry = geometriesList[geometryIndex]
@@ -2237,7 +2242,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         # Check if we need and can work on shape keys (morphs)
         shapeKeys = meshObj.data.shape_keys
         keyBlocks = []
-        if tOptions.doMorphs:
+        if mesh.urho_export.export_morph:
             if not shapeKeys or len(shapeKeys.key_blocks) < 1:
                 log.warning("Object {:s} has no shape keys".format(meshObj.name))
             else:

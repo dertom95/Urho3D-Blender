@@ -323,7 +323,7 @@ def getLodSetWithID(id,returnIdx=False):
             else:
                 return lodset
         cnt=cnt+1
-    print("COULD NOT FIND LODSET WITH ID:%s"%id)
+    #print("COULD NOT FIND LODSET WITH ID:%s"%id)
     return None
 
 def getObjectWithID(id):

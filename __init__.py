@@ -769,6 +769,55 @@ class UL_URHO_LIST_ITEM_MOVE_LOD(bpy.types.Operator):
 ##################################################
 
 
+class UrhoExportMeshSettings(bpy.types.PropertyGroup):
+    def get_uvs(self,context):
+        uvs_result=[('-1',"none","none",-1)]
+        idx = 0
+        for uv in self.id_data.uv_layers:
+            uvs_result.append((str(idx),uv.name,uv.name,idx))
+            idx = idx + 1
+        return uvs_result
+
+    def get_uv1(self):
+        if self.active_uv_as_uv1:
+            return self.id_data.uv_layers.active_index
+        return self.uv1_idx
+
+    def get_export_uv1(self):
+        if self.active_uv_as_uv1:
+            return int(self.auto_uv1_idx)
+        else:
+            return int(self.manual_uv1_idx)
+
+    def get_export_uv2(self):
+        if self.use_uv2:
+            return int(self.manual_uv2_idx)
+        else:
+            return -1
+
+    def update(self,context):
+        if self.export_tan:
+            if not self.export_pos or not self.export_norm or not self.export_uv:
+                self.export_tan=False
+
+    export_pos : bpy.props.BoolProperty(default=True,update=update)
+    export_norm: bpy.props.BoolProperty(default=False,update=update)
+    export_tan: bpy.props.BoolProperty(default=False,update=update)
+    export_uv : bpy.props.BoolProperty(default=True,update=update)
+    export_vcol : bpy.props.BoolProperty(default=False,update=update)
+    export_morph: bpy.props.BoolProperty(default=False,update=update)
+    export_weight: bpy.props.BoolProperty(default=False,update=update)
+    #export_weight: bpy.props.BoolProperty(default=False,update=update)
+
+    active_uv_as_uv1 : bpy.props.BoolProperty(default=True) # export the active uv as uv1
+    auto_uv1_idx : bpy.props.EnumProperty(items=get_uvs,get=get_uv1) 
+    manual_uv1_idx : bpy.props.EnumProperty(items=get_uvs)
+    use_uv2 : bpy.props.BoolProperty(default=False) 
+    manual_uv2_idx : bpy.props.EnumProperty(items=get_uvs) 
+
+
+        
+
 # Here we define all the UI objects to be added in the export panel
 class UrhoExportSettings(bpy.types.PropertyGroup):
 
@@ -1753,11 +1802,46 @@ class UrhoExportMeshPanel(bpy.types.Panel):
         obj = context.object
         mesh = obj.data
 
+        scene = context.scene
+        settings = scene.urho_exportsettings
+
+
+        row = layout.row()
+        row.label(text="Export Vertex-Data:")
+        row = layout.row()
+        row.prop(mesh.urho_export,"export_pos",text="Position")
+        row.prop(mesh.urho_export,"export_norm",text="Normals")
+        row = layout.row()
+        col = row.column()
+        col.prop(mesh.urho_export,"export_tan",text="Tangent")
+        col.enabled = mesh.urho_export.export_uv and mesh.urho_export.export_norm and mesh.urho_export.export_pos
+        row.prop(mesh.urho_export,"export_vcol",text="Vertex Color")
+        row = layout.row()
+        row.prop(mesh.urho_export,"export_weight",text="Weights")
+        row.prop(mesh.urho_export,"export_morph",text="Morphs")
+        
+        row = layout.row()
+        row.prop(mesh.urho_export,"export_uv",text="UV")
+        if mesh.urho_export.export_uv:
+
+            box = layout.box()
+
+            row = box.row()
+            row.prop(mesh.urho_export,"active_uv_as_uv1",text="use active uvmap as uv1")
+
+            row = box.row()
+            if mesh.urho_export.active_uv_as_uv1:
+                row.prop(mesh.urho_export,"auto_uv1_idx",text="uv1")
+            else:
+                row.prop(mesh.urho_export,"manual_uv1_idx",text="uv1")
+
+            row = box.row()
+            row.prop(mesh.urho_export,"use_uv2",text="use uv2")
+            if mesh.urho_export.use_uv2:
+                row.prop(mesh.urho_export,"manual_uv2_idx",text="")
 
         box = layout.box()
         row = box.row()
-
-
         row.prop_search(obj,"lodsetName",bpy.data.worlds[0],"lodsets")
         row = box.row()
         row.operator("urho_button.generic",text="new lodset").typeName="create_lodset"
@@ -2001,28 +2085,30 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         row.label(text="", icon='MESH_DATA')
         if settings.geometries:
             row = box.row()
-            row.separator()
-            row.prop(settings, "geometryPos")
-            row.prop(settings, "geometryNor")
+            row.label(text="hint: vertex data set on mesh-panel")
+            row.enabled=False
+        #     row.separator()
+        #     row.prop(settings, "geometryPos")
+        #     row.prop(settings, "geometryNor")
             
-            row = box.row()
-            row.separator()
-            row.prop(settings, "geometryUV")
-            row.prop(settings, "geometryUV2")
+        #     row = box.row()
+        #     row.separator()
+        #     row.prop(settings, "geometryUV")
+        #     row.prop(settings, "geometryUV2")
 
-            row = box.row()
-            row.separator()
-            col = row.column()
-            col.enabled = settings.geometryPos and settings.geometryNor and settings.geometryUV
-            col.prop(settings, "geometryTan")
-            col = row.column()
-            col.enabled = settings.skeletons
-            col.prop(settings, "geometryWei")
+        #     row = box.row()
+        #     row.separator()
+        #     col = row.column()
+        #     col.enabled = settings.geometryPos and settings.geometryNor and settings.geometryUV
+        #     col.prop(settings, "geometryTan")
+        #     col = row.column()
+        #     col.enabled = settings.skeletons
+        #     col.prop(settings, "geometryWei")
             
-            row = box.row()
-            row.separator()
-            row.prop(settings, "geometryCol")
-            row.prop(settings, "geometryColAlpha")
+        #     row = box.row()
+        #     row.separator()
+        #     row.prop(settings, "geometryCol")
+        #     row.prop(settings, "geometryColAlpha")
         
         row = box.row()
         row.enabled = settings.geometries
@@ -2284,6 +2370,7 @@ def register():
     reRegister()
     bpy.utils.register_class(UrhoAddonPreferences)
     bpy.utils.register_class(UrhoExportSettings)
+    bpy.utils.register_class(UrhoExportMeshSettings)
     bpy.utils.register_class(UrhoExportOperator)
     bpy.utils.register_class(UrhoExportSelectLodMesh)
     bpy.utils.register_class(UrhoExportMaterialsOnlyOperator)
@@ -2312,6 +2399,7 @@ def register():
     bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
     
     bpy.types.Mesh.ID = bpy.props.IntProperty(default=-1)
+    bpy.types.Mesh.urho_export = bpy.props.PointerProperty(type=UrhoExportMeshSettings)
     #bpy.types.Mesh.IDNAME=bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)
 
     # lod
@@ -2327,6 +2415,7 @@ def register():
     bpy.types.World.objid_counter=bpy.props.IntProperty()
     bpy.types.Collection.urhoExport = bpy.props.BoolProperty(description="export as urho3d object")
 
+    
     
     bpy.utils.register_class(UL_URHO_LIST_LOD)
     bpy.utils.register_class(UL_URHO_LIST_ITEM_LOD)
@@ -2435,8 +2524,8 @@ def unregister():
     
     #bpy.utils.unregister_module(__name__)
 
-    bpy.utils.unregister_class(UrhoRenderEngine)
     reUnregister()
+    bpy.utils.unregister_class(UrhoRenderEngine)
     bpy.utils.unregister_class(UrhoAddonPreferences)
     bpy.utils.unregister_class(UrhoExportSettings)
     bpy.utils.unregister_class(UrhoExportSelectLodMesh)
@@ -2446,6 +2535,8 @@ def unregister():
     bpy.utils.unregister_class(UrhoExportResetOperator)
     bpy.utils.unregister_class(UrhoExportResetPathsOperator)  
     bpy.utils.unregister_class(UrhoExportStartRuntime)  
+    bpy.utils.unregister_class(UrhoExportMeshSettings)
+
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)
     except:
