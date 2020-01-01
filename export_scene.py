@@ -623,7 +623,9 @@ def AddGroupInstanceComponent(a,m,groupFilename,offset,modelNode):
     
     a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "attribute")
     a["{:d}".format(m)].set("name", "groupOffset")
-    a["{:d}".format(m)].set("value", Vector3ToString(Vector( (offset.y,offset.z,offset.x) )))
+    off = Vector3ToString(Vector( (offset.y,offset.z,offset.x) ))
+    print("EXPORT-OFFSET: %s : %s" % ( groupFilename,off ))
+    a["{:d}".format(m)].set("value", off )
     
     return m
 
@@ -992,14 +994,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         # apply group offset
                         #offset = group.dupli_offset
                         
-                        offset = Vector((0,0,0)) # no offset in blender 2.8 anymore
+                        offset = group.instance_offset # Vector((0,0,0)) # no offset in blender 2.8 anymore
                         modelPos = uSceneModel.position
                         ## CAUTION/TODO: this only works for default front-view (I guess)
                         print("POSITION %s : offset %s" % ( modelPos,offset ))
-                        newPos = Vector( (modelPos.x - offset.y, modelPos.y - offset.z, modelPos.z - offset.x) )
+                        newPos = Vector( (modelPos.x + offset.y, modelPos.y - offset.z, modelPos.z - offset.x) )
+                        print("NEW POSITION %s: " % ( newPos ))
                         uSceneModel.position = newPos
-
-
                     
                     # create root for the group object
                     a[groupName].append(a[modelNode])
