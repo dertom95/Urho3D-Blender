@@ -795,6 +795,19 @@ class UrhoExportMeshSettings(bpy.types.PropertyGroup):
         else:
             return -1
 
+    def copyInto(self, obj_vertex):
+        obj_vertex.export_pos = self.export_pos
+        obj_vertex.export_tan = self.export_tan
+        obj_vertex.export_uv = self.export_uv
+        obj_vertex.export_vcol = self.export_vcol
+        obj_vertex.export_morph = self.export_morph
+        obj_vertex.export_weight = self.export_weight
+        obj_vertex.active_uv_as_uv1 = self.active_uv_as_uv1
+        #obj_vertex.auto_uv1_idx = self.auto_uv1_idx
+        obj_vertex.manual_uv1_idx = self.manual_uv1_idx
+        obj_vertex.use_uv2 = self.use_uv2
+        obj_vertex.manual_uv2_idx = self.manual_uv2_idx        
+
     def update(self,context):
         if self.export_tan:
             if not self.export_pos or not self.export_norm or not self.export_uv:
@@ -1683,6 +1696,42 @@ class UrhoExportSelectLodMesh(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)    
 
+
+class UrhoApplyVertexData(bpy.types.Operator):
+    ''' Start runtime '''
+    bl_idname = "urho.apply_vertexdata"
+    bl_label = "Apply"
+    
+
+    apply_to_selected : bpy.props.BoolProperty()
+
+    @classmethod
+    def poll(self, context):
+        return context.object.type=="MESH"
+
+    def execute(self,context):
+        objs = None
+
+
+        me = context.object
+
+        if self.apply_to_selected:
+            objs = bpy.context.selected_objects
+        else:
+            objs = bpy.data.objects
+
+        for obj in objs:
+            if obj == me or obj.type!="MESH":
+                continue
+            # set values
+            me.data.urho_export.copyInto(obj.data.urho_export) 
+
+        return {'FINISHED'}
+
+
+
+
+
 # Start runtime
 class UrhoExportStartRuntime(bpy.types.Operator):
     ''' Start runtime '''
@@ -1834,6 +1883,12 @@ class UrhoExportMeshPanel(bpy.types.Panel):
         
         row = layout.row()
         row.prop(mesh.urho_export,"export_uv",text="UV")
+        box = row.box()
+        if len(bpy.context.selected_objects)>0:
+            box.operator("urho.apply_vertexdata",text="Apply to selected").apply_to_selected=True
+        else:
+            box.operator("urho.apply_vertexdata",text="Apply to all").apply_to_selected=False
+
         if mesh.urho_export.export_uv:
 
             box = layout.box()
@@ -2397,6 +2452,8 @@ def register():
     bpy.utils.register_class(UrhoExportRenderPanel)
     bpy.utils.register_class(UrhoExportObjectPanel)
     bpy.utils.register_class(UrhoExportStartRuntime)
+    bpy.utils.register_class(UrhoApplyVertexData)
+
     
     bpy.utils.register_class(UrhoReportDialog)
     bpy.utils.register_class(KeyValue)
@@ -2553,6 +2610,7 @@ def unregister():
     bpy.utils.unregister_class(UrhoExportResetPathsOperator)  
     bpy.utils.unregister_class(UrhoExportStartRuntime)  
     bpy.utils.unregister_class(UrhoExportMeshSettings)
+    bpy.utils.unregister_class(UrhoApplyVertexData)
 
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)

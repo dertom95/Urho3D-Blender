@@ -1206,7 +1206,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             if obj.type == "LIGHT": #simple shadow-settings-export. For more control use LightNode
                 if not HasComponent(a[modelNode],"RotationFix"):
                     add_component(a[modelNode],"RotationFix")
-                    
+
                 # check if
                 if not HasComponent(a[modelNode],"Light"):
                     ldata = obj.data
