@@ -729,6 +729,13 @@ def GetCollectionTags(obj):
             result.append(col.name+"_recursive")
     return result
 
+def GetXMLComponent(a,name):
+    for comp in a:
+        print(comp.tag)
+        if comp.tag=="component" and comp.get("type")==name:
+            return comp
+    return None
+
 # Export scene and nodes
 def UrhoExportScene(context, uScene, sOptions, fOptions):
     usedMaterialTrees.clear();
@@ -912,7 +919,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         obj = None
         try:
             obj = bpy.data.objects[modelNode]
-            isEmpty = obj.type=="EMPTY" or (sOptions.wiredAsEmpty and obj.display_type=="WIRE") 
+            isEmpty = obj.type=="EMPTY" or obj.type=="CAMERA" or obj.type=="LIGHT" or (sOptions.wiredAsEmpty and obj.display_type=="WIRE") 
         except:
             pass
 
@@ -1157,6 +1164,50 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     else:
                         # we already added this nodetree! nothing more to do
                         pass
+
+            if obj.type == "CAMERA":
+                camera_fix = GetXMLComponent(a[modelNode],"CameraFix")
+                if not camera_fix:
+                    compID = m
+                    a["{:d}".format(compID)] = ET.SubElement(a[modelNode], "component")
+                    xmlCurrentModelNode = a["{:d}".format(compID)]
+                    a["{:d}".format(compID)].set("type", "CameraFix")
+                    a["{:d}".format(compID)].set("id", "{:d}".format(compoID))
+                    m += 1   
+                    compoID += 1                 
+
+                # check if there is a camera-component already (created by nodetree)
+                camera_comp = GetXMLComponent(a[modelNode],"Camera")
+                if camera_comp:
+                    print("There is a camera-node => ignore camera-object-data")
+                else:                    
+                    blender_cam = obj.data
+
+                    compID = m
+                    a["{:d}".format(compID)] = ET.SubElement(a[modelNode], "component")
+                    xmlCurrentModelNode = a["{:d}".format(compID)]
+                    a["{:d}".format(compID)].set("type", "Camera")
+                    a["{:d}".format(compID)].set("id", "{:d}".format(compoID))
+                    m += 1
+
+                    camera_data = {}
+                    if blender_cam.type=="PERSP":
+                        camera_data["Orthographic"]="false"
+                        camera_data["FOV"]=math.degrees(blender_cam.angle)
+                    else:
+                        camera_data["Orthographic"]="true"
+                        camera_data["Orthographic Size"]=blender_cam.ortho_scale
+
+                    camera_data["Near Clip"]=blender_cam.clip_start
+                    camera_data["Far Clip"]=blender_cam.clip_end
+
+                    for key in camera_data:
+                        a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
+                        a["{:d}".format(m)].set("name", str(key))
+                        a["{:d}".format(m)].set("value", str(camera_data[key]))
+                        m += 1
+                    compoID += 1
+
 
         # Write individual prefabs
         if sOptions.doIndividualPrefab and not sOptions.individualPrefab_onlyRootObject:

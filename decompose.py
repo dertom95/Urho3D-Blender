@@ -2462,7 +2462,7 @@ def Scan(context, tDataList, errorsMem, tOptions):
     meshes = []
     for obj in objs:
         # Only meshes
-        if obj.type != 'MESH' and obj.type != 'EMPTY' :
+        if obj.type != 'MESH' and obj.type != 'EMPTY' and obj.type=="CAMERA" and obj.type=="LIGHT" :
             continue
 
       
@@ -2572,7 +2572,7 @@ def Scan(context, tDataList, errorsMem, tOptions):
             tDataList.append(tData)
             tOptions.lodUpdatedGeometryIndices.clear() # request new LOD
             tOptions.lodDistance = 0.0
-            if obj.type == "EMPTY":
+            if obj.type == "EMPTY" or obj.type=="CAMERA" or obj.type=="LIGHT":
                 print("F95: FOUND EMPTY")
                 continue
         
