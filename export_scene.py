@@ -33,6 +33,7 @@ class SOptions:
         self.doIndividualPrefab = False
         self.doCollectivePrefab = False
         self.doScenePrefab = False
+        self.SceneCreateZone = False
         self.noPhysics = False
         self.individualPhysics = False
         self.individualPrefab_onlyRootObject = True
@@ -736,6 +737,9 @@ def GetXMLComponent(a,name):
             return comp
     return None
 
+def HasComponent(a,name):
+    return GetXMLComponent(a,name) != None    
+
 # Export scene and nodes
 def UrhoExportScene(context, uScene, sOptions, fOptions):
     usedMaterialTrees.clear();
@@ -758,6 +762,24 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     compoID = k     # component ID
     m = 0           # internal counter
 
+    def add_component(parent,componentType,attributes=[]):
+        nonlocal compoID
+        nonlocal m
+        
+        a["{:d}".format(compoID)] = ET.SubElement(parent, "component")
+        a["{:d}".format(compoID)]
+        a["{:d}".format(compoID)].set("type", componentType)
+        a["{:d}".format(compoID)].set("id", "{:d}".format(compoID))
+        m += 1
+
+        for key in attributes:
+            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compoID)], "attribute")
+            a["{:d}".format(m)].set("name", str(key))
+            a["{:d}".format(m)].set("value", str(attributes[key]))
+            m += 1
+        compoID += 1
+
+
     # Create scene components
     if sOptions.doScenePrefab:
         sceneRoot = ET.Element('scene')
@@ -777,15 +799,21 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             pass
 
         if not foundSceneNodeTree:
-            a["{:d}".format(m)] = ET.SubElement(sceneRoot, "component")
-            a["{:d}".format(m)].set("type", "Octree")
-            a["{:d}".format(m)].set("id", "1")
+            add_component(sceneRoot,"Octree")
+            add_component(sceneRoot,"DebugRenderer")
 
-            a["{:d}".format(m+1)] = ET.SubElement(sceneRoot, "component")
-            a["{:d}".format(m+1)].set("type", "DebugRenderer")
-            a["{:d}".format(m+1)].set("id", "2")
+            # a["{:d}".format(m)] = ET.SubElement(sceneRoot, "component")
+            # a["{:d}".format(m)].set("type", "Octree")
+            # a["{:d}".format(m)].set("id", "1")
 
-            m += 2
+            # a["{:d}".format(m+1)] = ET.SubElement(sceneRoot, "component")
+            # a["{:d}".format(m+1)].set("type", "DebugRenderer")
+            # a["{:d}".format(m+1)].set("id", "2")
+
+            # m += 2
+
+
+
 
             if not sOptions.noPhysics:
                 a["{:d}".format(m)] = ET.SubElement(sceneRoot, "component")
@@ -803,6 +831,17 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     a["{:d}".format(m)] = ET.SubElement(root, "attribute")
     a["{:d}".format(m)].set("name", "Name")
     a["{:d}".format(m)].set("value", uScene.blenderSceneName)
+
+    if sOptions.SceneCreateZone:
+            zone_attrs = {}
+            zone_attrs["Bounding Box Min"]="-2000 -2000 -2000"
+            zone_attrs["Bounding Box Max"]="2000 2000 2000"
+            zone_attrs["Ambient Color"]="0.15 0.15 0.15 1"
+            zone_attrs["Fog Color"]="0.5 0.5 0.7 1"
+            zone_attrs["Fog Start"]=300
+            zone_attrs["Fog End"]=500
+            add_component(root,"Zone",zone_attrs)
+
 
   #  a["lightnode"] = ET.SubElement(root, "node")
 
@@ -1164,31 +1203,60 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     else:
                         # we already added this nodetree! nothing more to do
                         pass
+            if obj.type == "LIGHT": #simple shadow-settings-export. For more control use LightNode
+                if not HasComponent(a[modelNode],"RotationFix"):
+                    add_component(a[modelNode],"RotationFix")
+                    
+                # check if
+                if not HasComponent(a[modelNode],"Light"):
+                    ldata = obj.data
+                    light_attrs={}
+                    light_attrs["Is Enabled"]="true"
+                    if ldata.type=="POINT":
+                        light_attrs["Light Type"] = "Point";
+                        light_attrs["Range"] = ldata.shadow_soft_size
+                        light_attrs["Specular Intensity"]=ldata.specular_factor
+                        light_attrs["Temperature"]=ldata.energy
+                    elif ldata.type=="SUN" or ldata.type=="AREA":                
+                        light_attrs["Light Type"] = "Directional";
+                        light_attrs["Specular Intensity"]=ldata.specular_factor
+                        light_attrs["Temperature"]=ldata.energy
+                    elif ldata.type=="SPOT":                
+                        light_attrs["Light Type"] = "Spot";
+                        light_attrs["Temperature"]=ldata.energy
+                        light_attrs["Range"] = ldata.shadow_soft_size
+                        light_attrs["Specular Intensity"]=ldata.specular_factor
+                        light_attrs["Spot FOV"]=math.degrees(obj.spot_size)
+                        
+                    col = ldata.color
+                    light_attrs["Color"]="%s %s %s 1" % (col.r,col.g,col.b)
 
+                    if ldata.use_shadow:
+                        light_attrs["Cast Shadows"]="true"
+                    else:
+                        light_attrs["Cast Shadows"]="false"
+
+                    add_component(a[modelNode],"Light",light_attrs)
+
+
+                    
+            # export camera
             if obj.type == "CAMERA":
-                camera_fix = GetXMLComponent(a[modelNode],"CameraFix")
-                if not camera_fix:
-                    compID = m
-                    a["{:d}".format(compID)] = ET.SubElement(a[modelNode], "component")
-                    xmlCurrentModelNode = a["{:d}".format(compID)]
-                    a["{:d}".format(compID)].set("type", "CameraFix")
-                    a["{:d}".format(compID)].set("id", "{:d}".format(compoID))
-                    m += 1   
-                    compoID += 1                 
+                if not HasComponent(a[modelNode],"RotationFix"):
+                    add_component(a[modelNode],"RotationFix")
 
                 # check if there is a camera-component already (created by nodetree)
-                camera_comp = GetXMLComponent(a[modelNode],"Camera")
-                if camera_comp:
+                if HasComponent(a[modelNode],"Camera"):
                     print("There is a camera-node => ignore camera-object-data")
                 else:                    
                     blender_cam = obj.data
 
-                    compID = m
-                    a["{:d}".format(compID)] = ET.SubElement(a[modelNode], "component")
-                    xmlCurrentModelNode = a["{:d}".format(compID)]
-                    a["{:d}".format(compID)].set("type", "Camera")
-                    a["{:d}".format(compID)].set("id", "{:d}".format(compoID))
-                    m += 1
+                    # compID = m
+                    # a["{:d}".format(compID)] = ET.SubElement(a[modelNode], "component")
+                    # xmlCurrentModelNode = a["{:d}".format(compID)]
+                    # a["{:d}".format(compID)].set("type", "Camera")
+                    # a["{:d}".format(compID)].set("id", "{:d}".format(compoID))
+                    # m += 1
 
                     camera_data = {}
                     if blender_cam.type=="PERSP":
@@ -1201,12 +1269,18 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     camera_data["Near Clip"]=blender_cam.clip_start
                     camera_data["Far Clip"]=blender_cam.clip_end
 
-                    for key in camera_data:
-                        a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
-                        a["{:d}".format(m)].set("name", str(key))
-                        a["{:d}".format(m)].set("value", str(camera_data[key]))
-                        m += 1
-                    compoID += 1
+
+                    add_component(a[modelNode],"Camera",camera_data);
+
+
+                    # for key in camera_data:
+                    #     a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
+                    #     a["{:d}".format(m)].set("name", str(key))
+                    #     a["{:d}".format(m)].set("value", str(camera_data[key]))
+                    #     m += 1
+
+
+                    # compoID += 1
 
 
         # Write individual prefabs

@@ -1015,6 +1015,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         self.individualPrefab = False
         self.collectivePrefab = False
         self.scenePrefab = False
+        self.sceneCreateZone = False
         self.trasfObjects = False
         self.physics = 'INDIVIDUAL'
         self.shape = 'TRIANGLEMESH'
@@ -1509,6 +1510,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = False,
             update = update_func)
 
+    sceneCreateZone : BoolProperty(
+            name = "Create a default Zone",
+            description = "Create DefaultZone-Node with -2000|-2000|-2000 2000|2000|2000",
+            default = True,
+            update = update_func)
+
     trasfObjects : BoolProperty(
             name = "Transform objects",
             description = "Save objects position/rotation/scale, works only with 'Front View = Back'",
@@ -1796,6 +1803,11 @@ class UrhoExportMeshPanel(bpy.types.Panel):
     bl_context = "data"
     #bl_options = {'DEFAULT_CLOSED'}
     
+    @classmethod
+    def poll(self, context):
+        return context.object.type=="MESH"
+
+
     # Draw the export panel
     def draw(self, context):
         layout = self.layout
@@ -2166,6 +2178,11 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.prop(settings, "scenePrefab")
             row.label(text="", icon='WORLD')
 
+            if settings.scenePrefab:
+                row = box.row()
+                row.separator()
+                row.separator()
+                row.prop(settings,"sceneCreateZone")
 
 
             specialBox = box.box()
@@ -2810,6 +2827,7 @@ def ExecuteUrhoExport(context):
     sOptions.individualPrefab_onlyRootObject = settings.individualPrefab_onlyRootObject
     sOptions.doCollectivePrefab = settings.collectivePrefab
     sOptions.doScenePrefab = settings.scenePrefab
+    sOptions.SceneCreateZone = settings.sceneCreateZone
     sOptions.noPhysics = (settings.physics == 'DISABLE')
     sOptions.individualPhysics = (settings.physics == 'INDIVIDUAL')
     sOptions.wiredAsEmpty = settings.wiredAsEmpty
