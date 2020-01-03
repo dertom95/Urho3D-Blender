@@ -1741,6 +1741,8 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
 
     verticesMap = {}
     
+    print("decompose mesh:%s" %meshObj.name)
+
     #Save existing shape key values, and set them to zero
     shapeKeys = meshObj.data.shape_keys
     if shapeKeys and len(shapeKeys.key_blocks) > 0:
@@ -2572,7 +2574,7 @@ def Scan(context, tDataList, errorsMem, tOptions):
             tDataList.append(tData)
             tOptions.lodUpdatedGeometryIndices.clear() # request new LOD
             tOptions.lodDistance = 0.0
-            if obj.type == "EMPTY" or obj.type=="CAMERA" or obj.type=="LIGHT":
+            if obj.type != "MESH":
                 print("F95: FOUND EMPTY")
                 continue
         

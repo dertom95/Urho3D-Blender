@@ -958,6 +958,10 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         obj = None
         try:
             obj = bpy.data.objects[modelNode]
+
+            if obj.type=="ARMATURE":
+                continue
+
             isEmpty = obj.type=="EMPTY" or obj.type=="CAMERA" or obj.type=="LIGHT" or (sOptions.wiredAsEmpty and obj.display_type=="WIRE") 
         except:
             pass
@@ -1226,7 +1230,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         light_attrs["Temperature"]=ldata.energy
                         light_attrs["Range"] = ldata.shadow_soft_size
                         light_attrs["Specular Intensity"]=ldata.specular_factor
-                        light_attrs["Spot FOV"]=math.degrees(obj.spot_size)
+                        light_attrs["Spot FOV"]=math.degrees(ldata.spot_size)
                         
                     col = ldata.color
                     light_attrs["Color"]="%s %s %s 1" % (col.r,col.g,col.b)

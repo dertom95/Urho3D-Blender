@@ -51,12 +51,22 @@ if DEBUG: from .testing import PrintUrhoData, PrintAll
 
 from .custom_render_engine import UrhoRenderEngine,register as reRegister,unregister as reUnregister
 
+# connect to blender connect if available
+from .utils import vec2dict, matrix2dict
+
+BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
+
+if BCONNECT_AVAILABLE:
+    import addon_blender_connect
+    from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener
+
 import os
 import time
 import sys
 import shutil
 import logging
 import subprocess
+import json
 from .networking import BCONNECT_AVAILABLE
 
 # object-array to keep track of temporary objects created just for the export-process(like for the lodsets)
@@ -133,6 +143,17 @@ consoleHandler = logging.StreamHandler()
 consoleHandler.addFilter(consoleFilter)
 log.addHandler(consoleHandler)
 
+
+# publish runtime-settings (show_physics...) to runtime
+def PublishRuntimeSettings(self,context):
+    settings={}
+    settings["show_physics"]=self.runtimeShowPhysics
+    settings["show_physics_depth"]=self.runtimeShowPhysicsDepth
+    setJson = json.dumps(settings, indent=4)
+    print("settingsJson: %s" % setJson)
+    data = str.encode(setJson)
+
+    Publish("blender","settings","json",data)
 
 
 #--------------------
@@ -1101,7 +1122,21 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     runtimeBlocking : BoolProperty(
             name = "Block Blender while running",
             description = "Block Blender while running",
-            default = False)            
+            default = False)  
+
+    runtimeShowPhysics : BoolProperty(
+            name = "Show Physics",
+            description = "Show Urho3D-Physics",
+            default = False,
+            update=PublishRuntimeSettings)  
+
+
+    runtimeShowPhysicsDepth : BoolProperty(
+            name = "Show Physics Depth",
+            description = "Use depth-test on drawing physics",
+            default = False,
+            update=PublishRuntimeSettings)              
+                  
 
     runtimeFile : bpy.props.StringProperty(
                     name="Runtime",
@@ -1718,7 +1753,7 @@ class UrhoApplyVertexData(bpy.types.Operator):
         if self.apply_to_selected:
             objs = bpy.context.selected_objects
         else:
-            objs = bpy.data.objects
+            objs = bpy.context.scene.objects
 
         for obj in objs:
             if obj == me or obj.type!="MESH":
@@ -2049,6 +2084,9 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row = box.row()
             row.prop(settings,"runtimeBlocking")
             row = box.row()
+            row.prop(settings,"runtimeShowPhysics",text="show physics")
+            row.prop(settings,"runtimeShowPhysicsDepth",text="depth")
+            row = box.row()            
             row.operator("urho.start_runtime",icon="GHOST_ENABLED")
 
 
@@ -2673,6 +2711,7 @@ def unregister():
 #--------------------
 # Blender UI utility
 #--------------------
+
 
 # Select vertices on a object
 def selectVertices(context, objectName, indicesList, deselect):
