@@ -149,6 +149,8 @@ def PublishRuntimeSettings(self,context):
     settings={}
     settings["show_physics"]=self.runtimeShowPhysics
     settings["show_physics_depth"]=self.runtimeShowPhysicsDepth
+    settings["activate_physics"]=self.runtimeActivatePhysics
+
     setJson = json.dumps(settings, indent=4)
     print("settingsJson: %s" % setJson)
     data = str.encode(setJson)
@@ -1130,6 +1132,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = False,
             update=PublishRuntimeSettings)  
 
+    runtimeActivatePhysics : BoolProperty(
+            name = "Activate Physics",
+            description = "Activate Urho3D-Physics",
+            default = False,
+            update=PublishRuntimeSettings)  
+
 
     runtimeShowPhysicsDepth : BoolProperty(
             name = "Show Physics Depth",
@@ -2081,11 +2089,16 @@ class UrhoExportRenderPanel(bpy.types.Panel):
                 row.prop(bpy.data.worlds[0].jsonNodes,"path")  
             else:
                 row.prop(settings,"runtimeExportComponents",text="components path")  
-            row = box.row()
+            
+            innerbox = box.box()
+            row = innerbox.row()
             row.prop(settings,"runtimeBlocking")
-            row = box.row()
+            row = innerbox.row()
             row.prop(settings,"runtimeShowPhysics",text="show physics")
             row.prop(settings,"runtimeShowPhysicsDepth",text="depth")
+            #row = innerbox.row()
+            #row.prop(settings,"runtimeActivatePhysics",text="activate physics")
+            
             row = box.row()            
             row.operator("urho.start_runtime",icon="GHOST_ENABLED")
 

@@ -82,6 +82,8 @@ class UrhoSceneModel:
         self.boundingBox = None
         # Model position
         self.position = Vector()
+        # Position with collection offset applied
+        self.colInstPosition = Vector()
         # Model rotation
         self.rotation = Quaternion((1.0, 0.0, 0.0, 0.0))
         # Model scale
@@ -1039,7 +1041,14 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     
                     # get or create node for the group
                     if  groupName not in a:
+                        offset = group.instance_offset # Vector((0,0,0)) # no offset in blender 2.8 anymore
+
                         a[groupName] = ET.Element('node')
+                        a["{:d}".format(m)] = ET.SubElement(a[groupName], "attribute")
+                        a["{:d}".format(m)].set("name", "Position")
+                        a["{:d}".format(m)].set("value", "%s %s %s" % ( offset.y,-offset.z, -offset.x ) )
+                        m += 1
+
                         groups.append({'xml':a[groupName],'obj':obj,'group':group })
                         # apply group offset
                         #offset = group.dupli_offset
@@ -1048,9 +1057,10 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         modelPos = uSceneModel.position
                         ## CAUTION/TODO: this only works for default front-view (I guess)
                         print("POSITION %s : offset %s" % ( modelPos,offset ))
-                        newPos = Vector( (modelPos.x + offset.y, modelPos.y - offset.z, modelPos.z - offset.x) )
-                        print("NEW POSITION %s: " % ( newPos ))
-                        uSceneModel.position = newPos
+                        colInstPos = Vector( (modelPos.x + offset.y, modelPos.y - offset.z, modelPos.z - offset.x) )
+                        print("NEW Collection Instance POS %s: " % ( colInstPos ))
+                        uSceneModel.colInstPosition = colInstPos
+                        
                     
                     # create root for the group object
                     a[groupName].append(a[modelNode])
