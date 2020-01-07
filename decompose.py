@@ -1942,6 +1942,11 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         print("CHECK: %s %s idx:%s" % (hasattr(mesh,"materialNodetrees"), len(mesh.materialNodetrees),materialIndex))
 
         if hasattr(mesh,"materialNodetrees") and len(mesh.materialNodetrees)>0:
+            ## TODO: What strategie to use for multimaterial-meshes
+            ## Now: if for materialIndex no corresponding materialNode exists take the first material-node. that would be also find for baked-materials
+            if materialIndex >= len(mesh.materialNodetrees):
+                materialIndex = 0
+
             ntSlot = mesh.materialNodetrees[materialIndex]
             if ntSlot.nodetreePointer:
                 materialName = ntSlot.nodetreePointer.name
