@@ -1867,6 +1867,14 @@ class UrhoExportObjectPanel(bpy.types.Panel):
             row.prop(currentCollection,"urhoExport",text="export as urho object")
 
 
+        if obj.type=="MESH":
+            box = layout.box()
+            row = box.row()
+            row.label(text="Shadow Settings")
+            row = box.row()
+            row.prop(obj,"cast_shadow")
+        # row = box.row()
+        # row.prop(obj,"receive_shadow")
 
         box = layout.box()
         row = box.label(text="Object Userdata")
@@ -2315,6 +2323,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_label = "Urho3d-Nodetree"
+    bl_category = "Urho3D"
 #    bl_options = {'HIDE_HEADER'}
 
     @classmethod
@@ -2522,7 +2531,9 @@ def register():
 
     bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
     bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
-    
+    bpy.types.Object.cast_shadow = bpy.props.BoolProperty(default=True)
+    bpy.types.Object.receive_shadow = bpy.props.BoolProperty(default=True)
+
     bpy.types.Mesh.ID = bpy.props.IntProperty(default=-1)
     bpy.types.Mesh.urho_export = bpy.props.PointerProperty(type=UrhoExportMeshSettings)
     #bpy.types.Mesh.IDNAME=bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)

@@ -473,10 +473,12 @@ def UrhoWriteMaterialsList(uScene, uModel, filepath):
 # Export scene and nodes
 #------------------------
 
-def CreateNodeTreeXML(xmlroot,nodetree,nodeID,currentModel=None,currentMaterial=None,xmlCurrentModel=None):
+def CreateNodeTreeXML(xmlroot,nodetree,nodeID,currentModel=None,currentMaterial=None,xmlCurrentModel=None,nodeName=None):
+    print("CreateNodeTreeXML:%s" % nodetree.name)
     exportNodeTree = JSONNodetree.exportNodes(nodetree,True)
     # a node is in urho3d a component
     for node in exportNodeTree["nodes"]:
+        print("NODE: %s" % node["label"])
         bodyElem = ET.SubElement(xmlroot, "component")
         #bodyElem.set("type", node["name"])
         bodyElem.set("type", node["label"])
@@ -497,6 +499,12 @@ def CreateNodeTreeXML(xmlroot,nodetree,nodeID,currentModel=None,currentMaterial=
                 print("V-Result:%s" % value)
             elif prop["type"]=="enum" and value=="__Node-Mesh": # not happy with this condtion, but must work for now
                 value = currentModel
+            elif prop["type"]=="enum" and value=="__Node-Col-Mesh": # not happy with this condtion, but must work for now  
+                if nodeName:
+                    value = "Models;Models/col_%s.mdl" % nodeName
+                else:
+                    print("ERROR ERROR: TRIED TO SET NODE_COL_MESH for %s" % nodetree.name)
+                    value = "Models;Models/ERROR.mdl"
 
             modelElem.set("value", value)
 
@@ -768,6 +776,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         nonlocal compoID
         nonlocal m
         
+        compoID += 1 
+
         a["{:d}".format(compoID)] = ET.SubElement(parent, "component")
         a["{:d}".format(compoID)]
         a["{:d}".format(compoID)].set("type", componentType)
@@ -979,7 +989,6 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         if not isEmpty:
             # Get model file relative path
             modelFile = uScene.FindFile(PathType.MODELS, modelNode)
-
             # Gather materials
             materials = ""
             if jsonNodetreeAvailable and obj.data.materialNodetrees:
@@ -1108,6 +1117,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
             a["{:d}".format(m)].set("name", "Model")
             currentModel = "Model;" + modelFile
+            
             a["{:d}".format(m)].set("value", currentModel)
             m += 1
 
@@ -1116,6 +1126,25 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             currentMaterialValue = "Material" + materials
             a["{:d}".format(m)].set("value", currentMaterialValue)
             m += 1
+
+            if obj.type=="MESH":
+                if obj.cast_shadow:
+                    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
+                    a["{:d}".format(m)].set("name", "Cast Shadows")
+                    a["{:d}".format(m)].set("value", "true")
+                    m += 1    
+
+                # if obj.receive_shadow:
+                #     a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
+                #     a["{:d}".format(m)].set("name", "Shadow Mask")
+                #     a["{:d}".format(m)].set("value", "1")
+                #     m += 1                           
+                # else:
+                #     a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
+                #     a["{:d}".format(m)].set("name", "Shadow Mask")
+                #     a["{:d}".format(m)].set("value", "0")
+                #     m += 1                           
+
             compoID += 1
 
             finishedNodeTree = False
@@ -1128,7 +1157,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     for nodetreeSlot in obj.nodetrees:
                         nt = nodetreeSlot.nodetreePointer
                         if (nt not in handledNodetrees):
-                            compoID = CreateNodeTreeXML(a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode)
+                            compoID = CreateNodeTreeXML(a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode)
                             handledNodetrees.append(nt)
                         else:
                             # we already added this nodetree! nothing more to do
@@ -1211,7 +1240,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 
                 for nodetreeSlot in obj.nodetrees:
                     nt = nodetreeSlot.nodetreePointer
-                    if (nt not in handledNodetrees):
+                    if (nt and nt not in handledNodetrees):
                         compoID = CreateNodeTreeXML(a[modelNode],nt,compoID)
                         handledNodetrees.append(id)
                     else:
