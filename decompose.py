@@ -1765,6 +1765,8 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
 #    mesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
 
     mesh = meshObj.evaluated_get(dgraph).to_mesh()
+    print("MeshObj-Type:%s" % type(meshObj))
+    meshObj.data.urho_export.copyInto(mesh.urho_export)
     #mesh = meshObj.to_mesh(preserve_all_data_layers=True,depsgraph=dgraph)
     log.info("Decomposing mesh: {:s} ({:d} vertices)".format(meshObj.name, len(mesh.vertices)) )
 

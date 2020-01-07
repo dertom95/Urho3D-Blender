@@ -820,6 +820,7 @@ class UrhoExportMeshSettings(bpy.types.PropertyGroup):
 
     def copyInto(self, obj_vertex):
         obj_vertex.export_pos = self.export_pos
+        obj_vertex.export_norm = self.export_norm
         obj_vertex.export_tan = self.export_tan
         obj_vertex.export_uv = self.export_uv
         obj_vertex.export_vcol = self.export_vcol
@@ -837,7 +838,7 @@ class UrhoExportMeshSettings(bpy.types.PropertyGroup):
                 self.export_tan=False
 
     export_pos : bpy.props.BoolProperty(default=True,update=update)
-    export_norm: bpy.props.BoolProperty(default=False,update=update)
+    export_norm: bpy.props.BoolProperty(default=True,update=update)
     export_tan: bpy.props.BoolProperty(default=False,update=update)
     export_uv : bpy.props.BoolProperty(default=True,update=update)
     export_vcol : bpy.props.BoolProperty(default=False,update=update)
