@@ -96,6 +96,11 @@ log.setLevel(logging.DEBUG)
 FORMAT = '%(levelname)s:%(message)s'
 formatter = logging.Formatter(FORMAT)
 
+before_export_selection = None
+before_export_mode = ""
+before_export_active_obj = None
+
+
 # Console filter: no more than 3 identical messages 
 consoleFilterMsg = None
 consoleFilterCount = 0
@@ -2840,7 +2845,8 @@ def ExecuteUrhoExportMaterialsOnly(context):
 #-------------------------------------------------------------------------
 # Export main
 #-------------------------------------------------------------------------
-    
+
+
 def ExecuteUrhoExport(context):
     global logList
 
@@ -3083,16 +3089,12 @@ def ExecuteUrhoExport(context):
                     uModel.meshName=obj.name
                 else:
                     if obj.lodsetID>0:
-                        print("0")
                         lodset = getLodSetWithID(obj.lodsetID)
                         uModel.meshName=lodset.name
                     elif tOptions.meshNameDerivedBy == 'Object':
-                        print("1")
                         uModel.meshName=uModel.name
                     else:
-                        print("2")
                         uModel.meshName=obj.data.name
-                    print("SET MESHNAME:%s" % uModel.meshName)
                 
             except:
                 uModel.meshName=uModel.name
@@ -3190,14 +3192,20 @@ def ExecuteUrhoExport(context):
     # Export scene and nodes
     UrhoExportScene(context, uScene, sOptions, fOptions)
 
+
+    # reset data from before....
     return True
 
 
 def ExecuteAddon(context, silent=False):
+    before_export_selection = bpy.context.selected_objects
+    before_export_mode = bpy.context.active_object.mode
+    before_export_active_obj = bpy.context.active_object
 
     startTime = time.time()
     print("----------------------Urho export start----------------------")    
     ExecuteUrhoExport(context)
+
     log.setLevel(logging.DEBUG)
 
     print ("TRY TO REMOVE TEMPOBJECTS:")
@@ -3206,6 +3214,13 @@ def ExecuteAddon(context, silent=False):
         bpy.data.objects.remove(tempObj, do_unlink=True)
         pass
     tempObjects.clear()
+
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    bpy.ops.object.select_all(action='DESELECT')
+    for select_obj in before_export_selection:
+        select_obj.select_set(True)
+    bpy.context.view_layer.objects.active = before_export_active_obj
+    bpy.ops.object.mode_set(mode=before_export_mode, toggle=False)
 
 
     log.info("Export ended in {:.4f} sec".format(time.time() - startTime) )

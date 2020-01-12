@@ -109,11 +109,13 @@ class UrhoSceneModel:
                 objMatrix = om @ objMatrix @ om.inverted()
 
             # Get pos/rot/scale
-            pos = objMatrix.to_translation()
+
+            pos = objMatrix.to_translation()   ## keep this. this actually worked well. only the positions weren't right :)
             rot = objMatrix.to_quaternion()
             scale = objMatrix.to_scale()
 
             self.position = Vector((pos.x, pos.z, pos.y))
+            
             self.rotation = Quaternion((rot.w, -rot.x, -rot.z, -rot.y))
             self.scale = Vector((scale.x, scale.z, scale.y))
 
@@ -328,32 +330,26 @@ def UrhoWriteMaterialTrees(fOptions,getUsedMaterials=False):
             log.error( "File already exists {:s}".format(fileFullPath[0]) )
             continue
 
-        print("n1")
         materialElem = ET.Element('material')
 
         techniques = []
 
         for node in materialTree.nodes:
-            print("n2")
             if node.bl_idname=="urho3dmaterials__techniqueNode":
                 techniques.append(node);
-                print("n3")
             elif node.bl_idname=="urho3dmaterials__textureNode":
                 textureElem = ET.SubElement(materialElem, "texture")
                 textureElem.set("unit", node.prop_unit)
                 textureElem.set("name", node.prop_Texture)            
-                print("n4")
             elif node.bl_idname=="urho3dmaterials__customParameterNode":
                 customParamElem = ET.SubElement(materialElem, "parameter")
                 customParamElem.set("name", node.prop_key)
                 customParamElem.set("value", node.prop_value )           
-                print("n5")
             elif node.bl_idname=="urho3dmaterials__parameterNode":
                 customParamElem = ET.SubElement(materialElem, "parameter")
                 customParamElem.set("name", node.prop_name)
                 customParamElem.set("value", node.prop_value )           
             elif node.bl_idname=="urho3dmaterials__standardParams" or node.bl_idname=="urho3dmaterials__pbsParams":
-                print("n6")
                 paramElement = ET.SubElement(materialElem, "parameter")
                 paramElement.set("name", "MatDiffColor")
                 paramElement.set("value", Vector4ToString(node.prop_MatDiffColor) )            
@@ -369,7 +365,6 @@ def UrhoWriteMaterialTrees(fOptions,getUsedMaterials=False):
                 paramElement = ET.SubElement(materialElem, "parameter")
                 paramElement.set("name", "VOffset")
                 paramElement.set("value", "0 %s 0 0" % node.prop_VOffset) 
-                print("n7")
 
                 if node.bl_idname=="urho3dmaterials__pbsParams":
                     paramElement = ET.SubElement(materialElem, "parameter")

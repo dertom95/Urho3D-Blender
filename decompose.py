@@ -1941,7 +1941,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         # Add the material if it is new
         #materialName = material and material.name
         materialName = "default_materialtree"
-        print("CHECK: %s %s idx:%s" % (hasattr(mesh,"materialNodetrees"), len(mesh.materialNodetrees),materialIndex))
+        #print("CHECK: %s %s idx:%s" % (hasattr(mesh,"materialNodetrees"), len(mesh.materialNodetrees),materialIndex))
 
         if hasattr(mesh,"materialNodetrees") and len(mesh.materialNodetrees)>0:
             ## TODO: What strategie to use for multimaterial-meshes
@@ -2582,7 +2582,6 @@ def Scan(context, tDataList, errorsMem, tOptions):
             tOptions.lodUpdatedGeometryIndices.clear() # request new LOD
             tOptions.lodDistance = 0.0
             if obj.type != "MESH":
-                print("F95: FOUND EMPTY")
                 continue
         
         # First we need to populate the skeleton, then animations and then geometries

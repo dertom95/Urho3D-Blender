@@ -425,7 +425,7 @@ def register():    # Register the RenderEngine
 
     print("REGISTER PANEL")
     for panel in get_panels():
-        print("p:%s" % panel)
+        #print("p:%s" % panel)
         panel.COMPAT_ENGINES.add('URHO3D')
     print("---done---")
 
