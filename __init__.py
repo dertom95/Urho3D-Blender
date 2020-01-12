@@ -2135,10 +2135,11 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         box.prop(settings, "scale")
         
         box.prop(settings, "modifiers")
-        if settings.modifiers:
-            row = box.row()
-            row.separator()
-            row.prop(settings, "modifiersRes", expand=True)
+        
+        # if settings.modifiers:
+        #     row = box.row()
+        #     row.separator()
+        #     row.prop(settings, "modifiersRes", expand=True)
 
         box.prop(settings, "merge")
         if settings.merge:

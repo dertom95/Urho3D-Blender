@@ -1764,10 +1764,16 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
     # TODO2.8: not 100% sure about calc_undeformed- formerly you specified PREVIEW or RENDER
 #    mesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
 
-    mesh = meshObj.evaluated_get(dgraph).to_mesh()
-    print("MeshObj-Type:%s" % type(meshObj))
-    meshObj.data.urho_export.copyInto(mesh.urho_export)
-    #mesh = meshObj.to_mesh(preserve_all_data_layers=True,depsgraph=dgraph)
+    if tOptions.applyModifiers:
+        # apply modifiers
+        mesh = meshObj.evaluated_get(dgraph).to_mesh()
+        print("MeshObj-Type:%s" % type(meshObj))
+        meshObj.data.urho_export.copyInto(mesh.urho_export)
+        #mesh = meshObj.to_mesh(preserve_all_data_layers=True,depsgraph=dgraph)
+    else:
+        # do not apply modifiers just use the current meshdata
+        mesh = meshObj.data
+
     log.info("Decomposing mesh: {:s} ({:d} vertices)".format(meshObj.name, len(mesh.vertices)) )
 
     # Compute local space unit length split normals vectors
