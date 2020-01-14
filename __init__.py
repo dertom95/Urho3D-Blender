@@ -1849,9 +1849,28 @@ class UrhoExportStartRuntime(bpy.types.Operator):
         return self.execute(context)
 
 
+def ObjectUserData(obj,layout):
+    box = layout.box()
+    box.label(text="Userdata / Tags")
+    if len(obj.user_data)>0:
+        row = box.label(text="Object Userdata")
+        row = box.row()
+        row.template_list("UL_URHO_LIST_USERDATA", "The_List", obj,
+                        "user_data", obj, "list_index_userdata")            
+    else:
+        row = box.box().row()
+        row.label(text="none")
+
+
+    row = box.row()
+    row.operator('urho_keyvalue.new_item', text='NEW')
+    row.operator('urho_keyvalue.delete_item', text='REMOVE')
+    row.operator('urho_keyvalue.move_item', icon="TRIA_UP",text='').direction = 'UP'
+    row.operator('urho_keyvalue.move_item', icon="TRIA_DOWN",text='').direction = 'DOWN'
+
+
 # The export panel, here we draw the panel using properties we have created earlier
 class UrhoExportObjectPanel(bpy.types.Panel):
-    
     bl_idname = "urho.exportobjectpanel"
     bl_label = "Urho export"
     bl_space_type = 'PROPERTIES'
@@ -1875,6 +1894,7 @@ class UrhoExportObjectPanel(bpy.types.Panel):
 
         if obj.type=="MESH":
             box = layout.box()
+            
             row = box.row()
             row.label(text="Shadow Settings")
             row = box.row()
@@ -1882,18 +1902,10 @@ class UrhoExportObjectPanel(bpy.types.Panel):
         # row = box.row()
         # row.prop(obj,"receive_shadow")
 
-        box = layout.box()
-        row = box.label(text="Object Userdata")
-        row = box.row()
-        row.template_list("UL_URHO_LIST_USERDATA", "The_List", obj,
-                          "user_data", obj, "list_index_userdata")
 
-        row = box.row()
-        row.operator('urho_keyvalue.new_item', text='NEW')
-        row.operator('urho_keyvalue.delete_item', text='REMOVE')
-        row.operator('urho_keyvalue.move_item', text='UP').direction = 'UP'
-        row.operator('urho_keyvalue.move_item', text='DOWN').direction = 'DOWN'
+        ObjectComponentSubpanel(obj,layout,layout,False)
 
+        ObjectUserData(obj,layout)
         #row.prop(object,"exportNoMesh",text="NO mesh-export for object")
 
 
@@ -2326,6 +2338,68 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             # row.prop(settings, "shape")
             # row.label(text="", icon='GROUP')
 
+
+def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
+    if not layout: 
+        return
+    
+    if not currentLayout:
+        currentLayout = layout
+
+    ## object's nodetree-managment
+    box = currentLayout.box()
+    row = box.label(text="Component Nodetrees")
+
+    row = box.row()
+
+    if len(obj.nodetrees)>0:
+        row = box.row()
+        row.template_list("UL_URHO_LIST_NODETREE", "The_List", obj,
+                        "nodetrees", obj, "list_index_nodetrees")
+    else:
+        row = box.box()
+        row.label(text="none")
+
+    row = box.row()
+    row.operator('urho_nodetrees.new_item', text='Add')
+    row.operator('urho_nodetrees.delete_item', text='Del')
+    row.operator('urho_nodetrees.move_item', icon="TRIA_UP",text='').direction = 'UP'
+    row.operator('urho_nodetrees.move_item', icon="TRIA_DOWN",text='').direction = 'DOWN'
+    if showAutoSelect:
+        row = box.row()
+        row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object-nodetree")
+
+def ObjectMaterialNodetree(obj,box):
+    box = box.box()
+    row = box.row()
+    row.label(text="Material Nodetrees")
+    #row.prop(bpy.context.active_object.data,"materialNodetree")
+    row = box.row()
+    row.template_list("UL_URHO_LIST_MATERIAL_NODETREE", "The_material_List", obj.data,
+    "materialNodetrees", obj, "active_material_index")
+
+    row = box.row()
+    row.operator('urho_material_nodetrees.new_item', text='NEW')
+    row.operator('urho_material_nodetrees.delete_item', text='REMOVE')
+    # no movement of the materialtree-slots, as I dont know how to stabely swap the change in the mesh
+    # maybe using blender's material operators: 
+    #row.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
+    #row.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'                
+
+
+    #row.operator('urho_material_nodetrees.move_item', text='UP').direction = 'UP'
+    #row.operator('urho_material_nodetrees.move_item', text='DOWN').direction = 'DOWN'
+
+    #bpy.ops.wm.read_homefile('INVOKE_DEFAULT')                
+
+    if obj.mode == 'EDIT':
+        row = box.row(align=True)
+        row.operator("object.material_slot_assign", text="Assign")
+        row.operator("object.material_slot_select", text="Select")
+        row.operator("object.material_slot_deselect", text="Deselect")                
+
+
+
 class UrhoExportNodetreePanel(bpy.types.Panel):
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
@@ -2341,6 +2415,10 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
         if bpy.context.active_object:
             obj = bpy.context.active_object
 
+            space_treetype = bpy.context.space_data.tree_type
+
+            print("TreeType:%s" % space_treetype )
+
             layout = self.layout
             box = layout.box()
             row = box.label(text="Nodetrees:")
@@ -2349,54 +2427,11 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             row = innerBox.row()
             row.prop(bpy.context.scene,"nodetree",text="Scene-Logic")
 
-            ## object's nodetree-managment
-            box = box.box()
-            row = box.label(text="Component Nodetrees")
+            if space_treetype=="urho3dcomponents":
+                ObjectComponentSubpanel(obj,layout,box)
 
-            row = layout.row()
-            row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object's first nodetree")
-
-            row = box.row()
-            row.template_list("UL_URHO_LIST_NODETREE", "The_List", obj,
-                            "nodetrees", obj, "list_index_nodetrees")
-
-            row = box.row()
-            row.operator('urho_nodetrees.new_item', text='NEW')
-            row.operator('urho_nodetrees.delete_item', text='REMOVE')
-            row.operator('urho_nodetrees.move_item', text='UP').direction = 'UP'
-            row.operator('urho_nodetrees.move_item', text='DOWN').direction = 'DOWN'
-            ####
-
-
-            if bpy.context.active_object.type=="MESH":
-                box = box.box()
-                row = box.row()
-                row.label(text="Material Nodetrees")
-                #row.prop(bpy.context.active_object.data,"materialNodetree")
-                row = box.row()
-                row.template_list("UL_URHO_LIST_MATERIAL_NODETREE", "The_material_List", obj.data,
-                "materialNodetrees", obj, "active_material_index")
-
-                row = box.row()
-                row.operator('urho_material_nodetrees.new_item', text='NEW')
-                row.operator('urho_material_nodetrees.delete_item', text='REMOVE')
-                # no movement of the materialtree-slots, as I dont know how to stabely swap the change in the mesh
-                # maybe using blender's material operators: 
-                #row.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
-                #row.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'                
-
-
-                #row.operator('urho_material_nodetrees.move_item', text='UP').direction = 'UP'
-                #row.operator('urho_material_nodetrees.move_item', text='DOWN').direction = 'DOWN'
-                
-                #bpy.ops.wm.read_homefile('INVOKE_DEFAULT')                
-
-                if obj.mode == 'EDIT':
-                    row = box.row(align=True)
-                    row.operator("object.material_slot_assign", text="Assign")
-                    row.operator("object.material_slot_select", text="Select")
-                    row.operator("object.material_slot_deselect", text="Deselect")                
-
+            if space_treetype=="urho3dmaterials" and bpy.context.active_object.type=="MESH":
+                ObjectMaterialNodetree(obj,box)
 
 
 #--------------------
@@ -2429,6 +2464,9 @@ def PostSave(dummy):
 # used by Python scripts.
 
 addon_keymaps = []
+
+ntSelectedObject = None
+
 
 # timer callback
 def call_execution_queue():
@@ -2594,28 +2632,42 @@ def register():
             #print("Try to remove the default-nodetree-selector")
             import addon_jsonnodetree
             
+
             def customAutoSelection(current_obj,current_treetype,current_tree):
-                # aprint("CUSTOM CHECK:%s %s %s" % (current_obj.name,current_treetype,current_tree))
-                # check if we have at least one nodetree for this object
-                if bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree:
-                    if current_treetype=="urho3dcomponents":
-                        if current_obj and len(current_obj.nodetrees)>0 and current_obj.nodetrees[0].nodetreePointer:
+                global ntSelectedObject;
+                def chooseRighTreeForObject(current_obj,current_treetype,current_tree):
+                    global ntSelectedObject;
+
+                    if current_treetype=="urho3dcomponents" and current_obj:
+                        selectNT = current_obj.list_index_nodetrees
+                        if current_obj and len(current_obj.nodetrees)>0 and current_obj.nodetrees[selectNT].nodetreePointer:
                             try:
-                                autoNodetree = current_obj.nodetrees[0].nodetreePointer
+                                autoNodetree = current_obj.nodetrees[selectNT].nodetreePointer
+                                ntSelectedObject = current_obj                                
                                 return autoNodetree
                             except:
                                 pass
-                    elif current_treetype=="urho3dmaterials" and len(current_obj.data.materialNodetrees)>0:
+                    elif current_treetype=="urho3dmaterials" and current_obj.type=="MESH" and len(current_obj.data.materialNodetrees)>0:
                         if current_obj and current_obj.data and len(current_obj.data.materialNodetrees)>0:
+                            selectNT = current_obj.data.list_index_nodetrees
                             try:
                                 slot = current_obj.data.materialNodetrees[bpy.context.object.active_material_index]                                  
                                 if slot.nodetreePointer:
                                     autoNodetree = slot.nodetreePointer
+                                ntSelectedObject = current_obj
                                 return autoNodetree
                             except:
-                                pass                            
+                                return "NOTREE"
+                # aprint("CUSTOM CHECK:%s %s %s" % (current_obj.name,current_treetype,current_tree))
+                # check if we have at least one nodetree for this object
+                if bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree:
+                    return chooseRighTreeForObject(current_obj,current_treetype,current_tree)     
                     # dont show anything if in auto mode and no nodetree found
-                    return "NOTREE"
+                else:
+                    # when a different treetype is chosen than seen, change this. once
+                    if (current_treetype and current_tree and current_treetype!=current_tree.bl_idname):
+                        return chooseRighTreeForObject(current_obj,current_treetype,current_tree)     
+
                 return None
 
 
