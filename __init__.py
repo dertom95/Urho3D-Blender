@@ -1852,11 +1852,12 @@ class UrhoExportStartRuntime(bpy.types.Operator):
 def ObjectUserData(obj,layout):
     box = layout.box()
     box.label(text="Userdata / Tags")
-    if len(obj.user_data)>0:
+    userDataAmount = len(obj.user_data)
+    if userDataAmount>0:
         row = box.label(text="Object Userdata")
         row = box.row()
         row.template_list("UL_URHO_LIST_USERDATA", "The_List", obj,
-                        "user_data", obj, "list_index_userdata")            
+                        "user_data", obj, "list_index_userdata",rows=userDataAmount+1,maxrows=6)            
     else:
         row = box.box().row()
         row.label(text="none")
@@ -1995,7 +1996,7 @@ class UrhoExportMeshPanel(bpy.types.Panel):
             row = box.label(text="Lods")
             row = box.row()
             row.template_list("UL_URHO_LIST_LOD", "The_List", lodset,
-                            "lods", lodset, "lods_idx")
+                            "lods", lodset, "lods_idx",rows=len(lodset.lods))
 
             row = box.row()
             row.prop(lodset,"armatureObj")
@@ -2355,7 +2356,7 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     if len(obj.nodetrees)>0:
         row = box.row()
         row.template_list("UL_URHO_LIST_NODETREE", "The_List", obj,
-                        "nodetrees", obj, "list_index_nodetrees")
+                        "nodetrees", obj, "list_index_nodetrees",rows=len(obj.nodetrees))
     else:
         row = box.box()
         row.label(text="none")
@@ -2376,7 +2377,7 @@ def ObjectMaterialNodetree(obj,box):
     #row.prop(bpy.context.active_object.data,"materialNodetree")
     row = box.row()
     row.template_list("UL_URHO_LIST_MATERIAL_NODETREE", "The_material_List", obj.data,
-    "materialNodetrees", obj, "active_material_index")
+    "materialNodetrees", obj, "active_material_index",rows=len(obj.data.materialNodetrees))
 
     row = box.row()
     row.operator('urho_material_nodetrees.new_item', text='NEW')
