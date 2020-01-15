@@ -407,16 +407,23 @@ class CustomDrawData:
 # exclude any panels that are replaced by custom panels registered by the
 # render engine, or that are not supported.
 def get_panels():
-    exclude_panels = {
-        'VIEWLAYER_PT_filter',
-        'VIEWLAYER_PT_layer_passes',
-    }
+    # exclude_panels = {
+    #     'VIEWLAYER_PT_filter',
+    #     'VIEWLAYER_PT_layer_passes',
+    # }
 
-    panels = []
-    for panel in bpy.types.Panel.__subclasses__():
-        if hasattr(panel, 'COMPAT_ENGINES') and ('BLENDER_EEVEE' in panel.COMPAT_ENGINES or 'CYCLES' in panel.COMPAT_ENGINES):
-            if panel.__name__ not in exclude_panels:
-                panels.append(panel)
+    # panels = []
+    # for panel in bpy.types.Panel.__subclasses__():
+    #     if hasattr(panel, 'COMPAT_ENGINES') and ('BLENDER_EEVEE' in panel.COMPAT_ENGINES or 'CYCLES' in panel.COMPAT_ENGINES):
+    #         if panel.__name__ not in exclude_panels:
+    #             panels.append(panel)
+
+    panels = [
+              bpy.types.DATA_PT_vertex_groups,
+              bpy.types.DATA_PT_shape_keys,
+              bpy.types.DATA_PT_uv_texture,
+              bpy.types.DATA_PT_vertex_colors
+              ]
 
     return panels
 

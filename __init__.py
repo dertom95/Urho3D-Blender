@@ -1899,6 +1899,25 @@ def ObjectUserData(obj,layout):
     row.operator('urho_keyvalue.move_item', icon="TRIA_DOWN",text='').direction = 'DOWN'
 
 
+class UrhoExportMaterialPanel(bpy.types.Panel):
+    bl_idname = "urho.exportmaterialpanel"
+    bl_label = "Urho export"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "material"
+
+        
+    # Draw the export panel
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+
+        if obj and obj.type=="MESH":
+            ObjectMaterialNodetree(obj, layout)
+            
+
+
+
 # The export panel, here we draw the panel using properties we have created earlier
 class UrhoExportObjectPanel(bpy.types.Panel):
     bl_idname = "urho.exportobjectpanel"
@@ -2600,6 +2619,7 @@ def register():
     bpy.utils.register_class(UrhoExportResetPathsOperator)
     bpy.utils.register_class(UrhoExportRenderPanel)
     bpy.utils.register_class(UrhoExportObjectPanel)
+    bpy.utils.register_class(UrhoExportMaterialPanel)
     bpy.utils.register_class(UrhoExportStartRuntime)
     bpy.utils.register_class(UrhoApplyVertexData)
 
@@ -2778,6 +2798,7 @@ def unregister():
     bpy.utils.unregister_class(UrhoExportStartRuntime)  
     bpy.utils.unregister_class(UrhoExportMeshSettings)
     bpy.utils.unregister_class(UrhoApplyVertexData)
+    bpy.utils.unregister_class(UrhoExportMaterialPanel)
 
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)
