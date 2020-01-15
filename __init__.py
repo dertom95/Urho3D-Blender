@@ -1905,6 +1905,10 @@ class UrhoExportMaterialPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "material"
+    
+    @classmethod
+    def poll(self, context):
+        return  bpy.context.scene.render.engine=="URHO3D"
 
         
     # Draw the export panel
