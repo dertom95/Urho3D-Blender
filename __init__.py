@@ -47,7 +47,10 @@ from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, Urho
                          UrhoWriteTriggers, UrhoExport
 from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterialTrees
 from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable,IsBConnectAddonAvailable, getLodSetWithID,getObjectWithID, execution_queue
+
+
 if DEBUG: from .testing import PrintUrhoData, PrintAll
+
 
 from .custom_render_engine import UrhoRenderEngine,register as reRegister,unregister as reUnregister
 
@@ -78,7 +81,7 @@ if IsJsonNodeAddonAvailable():
 import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
 from bpy.app.handlers import persistent
-from mathutils import Quaternion
+from mathutils import Quaternion,Vector
 from math import radians
 
 #--------------------
@@ -1531,6 +1534,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = False,
             update = update_func)
 
+    create_default_material_nodetree : BoolProperty(
+        name="Create Default Material-Nodetree",
+        default=True,
+        description="Create Default Material-Nodetree"
+    )
+
     materialsList : BoolProperty(
             name = "Materials text list",
             description = "Write a txt file with the list of materials filenames",
@@ -1613,6 +1622,8 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         items=(('Object', "Object-Name", "The object's mesh gets the name of the node, which can result in duplicated meshes saved as different mesh-files"),
                 ('Mesh', "Mesh-Name", "The object's mesh gets its name by the mesh preventing duplicated mesh-files")),
         default='Mesh')
+
+    
         
 
     bonesGlobalOrigin : BoolProperty(name = "Bones global origin", default = False)
@@ -1701,6 +1712,24 @@ class UrhoExportOperator(bpy.types.Operator):
  
     def invoke(self, context, event):
         return self.execute(context)
+
+def CreateInitialMaterialTree(nodetree):
+    if bpy.context.scene.urho_exportsettings.create_default_material_nodetree and nodetree and not nodetree.initialized and len(nodetree.nodes)==0:
+        matNode = nodetree.nodes.new("urho3dmaterials__materialNode")
+        matNode.location = Vector((0,200))
+
+        techniqueNode = nodetree.nodes.new("urho3dmaterials__techniqueNode")
+        techniqueNode.location = Vector((250,350))
+        techniqueNode.prop_Technique = 'Techniques/NoTexture.xml'
+        techniqueNode.width = 300
+
+        standardNode = nodetree.nodes.new("urho3dmaterials__standardParams")
+        standardNode.location = Vector((250,100))
+
+        nodetree.links.new(matNode.outputs[0],techniqueNode.inputs[0])
+        nodetree.links.new(matNode.outputs[0],standardNode.inputs[0])
+
+        nodetree.initialized=True
 
 class UrhoExportMaterialsOnlyOperator(bpy.types.Operator):
     """ Start exporting """
@@ -2356,7 +2385,7 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     if len(obj.nodetrees)>0:
         row = box.row()
         row.template_list("UL_URHO_LIST_NODETREE", "The_List", obj,
-                        "nodetrees", obj, "list_index_nodetrees",rows=len(obj.nodetrees))
+                        "nodetrees", obj, "list_index_nodetrees",rows=len(obj.nodetrees)+1)
     else:
         row = box.box()
         row.label(text="none")
@@ -2377,7 +2406,7 @@ def ObjectMaterialNodetree(obj,box):
     #row.prop(bpy.context.active_object.data,"materialNodetree")
     row = box.row()
     row.template_list("UL_URHO_LIST_MATERIAL_NODETREE", "The_material_List", obj.data,
-    "materialNodetrees", obj, "active_material_index",rows=len(obj.data.materialNodetrees))
+    "materialNodetrees", obj, "active_material_index",rows=len(obj.data.materialNodetrees)+1)
 
     row = box.row()
     row.operator('urho_material_nodetrees.new_item', text='NEW')
@@ -2417,6 +2446,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             obj = bpy.context.active_object
 
             space_treetype = bpy.context.space_data.tree_type
+            nodetree = bpy.context.space_data.node_tree
 
             print("TreeType:%s" % space_treetype )
 
@@ -2428,11 +2458,24 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             row = innerBox.row()
             row.prop(bpy.context.scene,"nodetree",text="Scene-Logic")
 
+            innerBox = box.box()
+            row = innerBox.row() 
+            row.prop(bpy.context.scene.urho_exportsettings,"create_default_material_nodetree",text="auto-create nodetree for empty nodetrees")
+
             if space_treetype=="urho3dcomponents":
                 ObjectComponentSubpanel(obj,layout,box)
 
             if space_treetype=="urho3dmaterials" and bpy.context.active_object.type=="MESH":
                 ObjectMaterialNodetree(obj,box)
+
+                if nodetree and not nodetree.initialized:
+                    print("TRY TO INIT")
+
+                    def QueuedExecution():
+                        CreateInitialMaterialTree(nodetree)
+                        return
+
+                    execution_queue.execute_or_queue_action(QueuedExecution)        
 
 
 #--------------------
@@ -2574,6 +2617,7 @@ def register():
 
     bpy.types.Scene.urho_exportsettings = bpy.props.PointerProperty(type=UrhoExportSettings)
     bpy.types.Scene.nodetree = bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_component_nodetree);
+    bpy.types.NodeTree.initialized = bpy.props.BoolProperty(default=False)
 
     bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
     bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
@@ -2582,6 +2626,7 @@ def register():
 
     bpy.types.Mesh.ID = bpy.props.IntProperty(default=-1)
     bpy.types.Mesh.urho_export = bpy.props.PointerProperty(type=UrhoExportMeshSettings)
+
     #bpy.types.Mesh.IDNAME=bpy.props.StringProperty(get=getMeshName,set=setMeshName,update=updateMeshName)
 
     # lod
