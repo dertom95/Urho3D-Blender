@@ -175,6 +175,13 @@ def PublishRuntimeSettings(self,context):
 class UrhoAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
 
+    runtimeFile : bpy.props.StringProperty(
+                name="Runtime",
+                description="Path of the urho3d runtime",
+                maxlen = 512,
+                default = "",
+                subtype='FILE_PATH')
+
     outputPath : StringProperty(
             name = "Default export path",
             description = "Default path where to export",
@@ -231,9 +238,29 @@ class UrhoAddonPreferences(bpy.types.AddonPreferences):
             name = "Max number of messages",
             description = "Max number of messages in the report window",
             default = 500)
+
+    def check_blender_connect(self):
+        return 'addon_blender_connect' in  bpy.context.preferences.addons.keys()
+
+    def check_json_nodetree(self):
+        return 'addon_jsonnodetree' in  bpy.context.preferences.addons.keys()
+
+
+    blender_connect_installed : BoolProperty(get=check_blender_connect)
+    json_nodetree_installed : BoolProperty(get=check_json_nodetree)
             
     def draw(self, context):
+
+        
         layout = self.layout
+
+        box = layout.box()
+        box.label(text="Requirements:")
+        box.prop(self, "blender_connect_installed",text="Addon: Blender Connect installed?")
+        box.prop(self, "json_nodetree_installed", text="Addon: JSON Nodetree installed?")
+        
+
+        layout.prop(self, "runtimeFile")
         layout.prop(self, "outputPath")
         layout.prop(self, "modelsPath")
         layout.prop(self, "animationsPath")
@@ -861,7 +888,10 @@ class UrhoExportMeshSettings(bpy.types.PropertyGroup):
     manual_uv2_idx : bpy.props.EnumProperty(items=get_uvs) 
 
 
-        
+class UrhoExportGlobalSettings(bpy.types.PropertyGroup):
+    pass
+
+    
 
 # Here we define all the UI objects to be added in the export panel
 class UrhoExportSettings(bpy.types.PropertyGroup):
@@ -1125,16 +1155,6 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             update = update_subfolders)
 
     # --- RUNTIME SETTINGS ---
-    useRuntime : BoolProperty(
-            name = "Use Urho3d runtime",
-            description = "Start an external urho3d runtime. e.g. your game",
-            default = False)
-
-    runtimeBlocking : BoolProperty(
-            name = "Block Blender while running",
-            description = "Block Blender while running",
-            default = False)  
-
     runtimeShowPhysics : BoolProperty(
             name = "Show Physics",
             description = "Show Urho3D-Physics",
@@ -1155,12 +1175,6 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             update=PublishRuntimeSettings)              
                   
 
-    runtimeFile : bpy.props.StringProperty(
-                    name="Runtime",
-                    description="Path of the urho3d runtime",
-                    maxlen = 512,
-                    default = "",
-                    subtype='FILE_PATH')
     runtimeWorkingDir : bpy.props.StringProperty(
                     name="Runtime WorkingDir",
                     description="WorkingDir",
@@ -2094,6 +2108,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
         settings = scene.urho_exportsettings
+        global_settings = bpy.data.worlds[0].urho_global
 
         row = layout.row()
         #row=layout.row(align=True)
@@ -2153,25 +2168,24 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             dbox.prop(settings, "objectsPath")
             dbox.prop(settings, "scenesPath")
 
-        row = layout.row()
-        row.prop(settings,"useRuntime")
-        if (settings.useRuntime):
+        if (True):
             box = layout.box()
             row = box.row()
-            row.prop(settings,"runtimeFile")
+
+            addonPrefs = bpy.context.preferences.addons[__name__].preferences
+
+            row.prop(addonPrefs,"runtimeFile")
             row = box.row()
             row.prop(settings,"runtimeWorkingDir",text="additional resource-dir")
             row = box.row()
             row.prop(settings,"runtimeFlags")            
             row = box.row()
             if IsJsonNodeAddonAvailable:
-                row.prop(bpy.data.worlds[0].jsonNodes,"path")  
+                row.prop(bpy.data.worlds[0].jsonNodes,"path",text="material-json path")  
             else:
-                row.prop(settings,"runtimeExportComponents",text="components path")  
+                row.prop(settings,"runtimeExportComponents",text="material-json path")  
             
             innerbox = box.box()
-            row = innerbox.row()
-            row.prop(settings,"runtimeBlocking")
             row = innerbox.row()
             row.prop(settings,"runtimeShowPhysics",text="show physics")
             row.prop(settings,"runtimeShowPhysicsDepth",text="depth")
@@ -2614,6 +2628,7 @@ def register():
     reRegister()
     bpy.utils.register_class(UrhoAddonPreferences)
     bpy.utils.register_class(UrhoExportSettings)
+    bpy.utils.register_class(UrhoExportGlobalSettings)
     bpy.utils.register_class(UrhoExportMeshSettings)
     bpy.utils.register_class(UrhoExportOperator)
     bpy.utils.register_class(UrhoExportSelectLodMesh)
@@ -2663,6 +2678,7 @@ def register():
     bpy.types.World.lodsets=bpy.props.CollectionProperty(type=LODSet)
     bpy.types.World.lodset_counter=bpy.props.IntProperty()
     bpy.types.World.meshid_counter=bpy.props.IntProperty()
+    bpy.types.World.urho_global=bpy.props.PointerProperty(type=UrhoExportGlobalSettings)
     bpy.types.World.objid_counter=bpy.props.IntProperty()
     bpy.types.Collection.urhoExport = bpy.props.BoolProperty(description="export as urho3d object")
 
@@ -2803,6 +2819,7 @@ def unregister():
     bpy.utils.unregister_class(UrhoExportMeshSettings)
     bpy.utils.unregister_class(UrhoApplyVertexData)
     bpy.utils.unregister_class(UrhoExportMaterialPanel)
+    bpy.utils.unregister_class(UrhoExportGlobalSettings)
 
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)
@@ -2832,6 +2849,8 @@ def unregister():
     
     del bpy.types.Scene.urho_exportsettings
     del bpy.types.Object.user_data
+    del bpy.types.World.urho_global
+    del bpy.types.NodeTree.initialized
     
     if IsJsonNodeAddonAvailable():
         bpy.utils.unregister_class(UL_URHO_LIST_NODETREE)
