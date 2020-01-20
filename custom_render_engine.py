@@ -15,7 +15,7 @@ BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
 
 if BCONNECT_AVAILABLE:
     import addon_blender_connect
-    from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener
+    from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener, GetSessionId
 
 class ViewRenderer:
     def __init__(self,id,topic,renderengine):
@@ -87,7 +87,8 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             "height" : 0,
             "current_view_matrix" : None,
             "current_scene_name" : None,
-            "current_view_distance" : None
+            "current_view_distance" : None,
+            "export_path" : None
         }
 
             
@@ -134,7 +135,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             else:
        #         print("NEW")
                 self.view_id = UrhoRenderEngine.NextID()
-                newRenderer = ViewRenderer(self.view_id,"runtime-%s"%self.view_id,self)
+                newRenderer = ViewRenderer(self.view_id,"runtime-%s-%s"%(GetSessionId(),self.view_id),self)
                 UrhoRenderEngine.RENDERVIEWS_IDS[region]=newRenderer
 
         #    print("### GOT AN ID:%s ###" % self.view_id)
@@ -151,11 +152,11 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         forceMatrix = False
 
         # check screen resolution
-        if data["width"]!=region.width or data["height"]!=region.height:
-            data["width"] = region.width
-            data["height"] = region.height
-            changes["resolution"]={ 'width' : region.width, 'height' : region.height }
-            forceMatrix = True
+        # if data["width"]!=region.width or data["height"]!=region.height:
+        #     data["width"] = region.width
+        #     data["height"] = region.height
+        #     changes["resolution"]={ 'width' : region.width, 'height' : region.height }
+        #     forceMatrix = True
 
         # check view matrix
         region3d = space_view3d.region_3d
@@ -198,16 +199,34 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
             
         # check for scene-change
-        if (data["current_scene_name"]!=scene.name):
-            data["current_scene_name"]=scene.name
-            changes["scene_name"]=scene.name
+        #if (data["current_scene_name"]!=scene.name):
+
+
+        urho_settings = scene.urho_exportsettings
+
+#        if (data["export_path"] != export_path):
 
         if len(changes)>0:
             changes["view_id"] = data["view_id"]
+            changes["session_id"] = GetSessionId()
+
+
+            export_path = urho_settings.outputPath
+            changes["export_path"] = export_path
+            data["export_path"] = export_path
+
+            data["current_scene_name"]=scene.name
+            changes["scene_name"]=scene.name
+
+            data["width"] = region.width
+            data["height"] = region.height
+            changes["resolution"]={ 'width' : region.width, 'height' : region.height }
+
 
             changesJson = json.dumps(changes, indent=4)
             print("changesJson: %s" % changesJson)
             data = str.encode(changesJson)
+
 
             Publish("blender","data_change","json",data)
         else:
@@ -422,7 +441,9 @@ def get_panels():
               bpy.types.DATA_PT_vertex_groups,
               bpy.types.DATA_PT_shape_keys,
               bpy.types.DATA_PT_uv_texture,
-              bpy.types.DATA_PT_vertex_colors
+              bpy.types.DATA_PT_vertex_colors,
+              bpy.types.DATA_PT_context_mesh,
+              bpy.types.CYCLES_LIGHT_PT_light
               ]
 
     return panels

@@ -1844,7 +1844,8 @@ class UrhoExportStartRuntime(bpy.types.Operator):
             pwd = os.path.dirname(bpy.app.binary_path)
             execpath = pwd + os.sep + execpath
 
-        workingdir = bpy.path.abspath(settings.runtimeWorkingDir)
+        workingdir = bpy.path.abspath(settings.outputPath)
+        # workingdir = bpy.path.abspath(settings.runtimeWorkingDir)
 
         processParams = []
         processParams.append(execpath)
@@ -2175,10 +2176,10 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             addonPrefs = bpy.context.preferences.addons[__name__].preferences
 
             row.prop(addonPrefs,"runtimeFile")
-            row = box.row()
-            row.prop(settings,"runtimeWorkingDir",text="additional resource-dir")
-            row = box.row()
-            row.prop(settings,"runtimeFlags")            
+            # row = box.row()
+            # row.prop(settings,"runtimeWorkingDir",text="additional resource-dir")
+            # row = box.row()
+            # row.prop(settings,"runtimeFlags")            
             row = box.row()
             if IsJsonNodeAddonAvailable:
                 row.prop(bpy.data.worlds[0].jsonNodes,"path",text="material-json path")  
