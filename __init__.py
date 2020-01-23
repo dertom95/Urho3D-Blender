@@ -61,7 +61,7 @@ BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
 
 if BCONNECT_AVAILABLE:
     import addon_blender_connect
-    from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener
+    from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener,GetSessionId
 
 import os
 import time
@@ -2577,7 +2577,9 @@ def call_execution_queue():
     if ping_runtime_timer <= 0:
         ping_runtime_timer = ping_runtime_interval
 
-        setJson = json.dumps({}, indent=4)
+        _data = {}
+        _data["session_id"]=GetSessionId()
+        setJson = json.dumps(_data, indent=4)
         data = str.encode(setJson)
         Publish("blender","ping","json",data)
         ping_count += 1
@@ -2599,7 +2601,7 @@ def register():
         # property hooks:
     def updateMaterialTreeName(self,ctx):
         if self.materialTreeId!=-1:
-            ctx.space_data.node_tree = JSONNodetreeUtils.getNodetreeById(self.materialTreeId)
+            ctx.space_data.node_tree = JSONNodetreeUtiBConnectNetwork.pyls.getNodetreeById(self.materialTreeId)
         else:
             ctx.space_data.node_tree = None
 
