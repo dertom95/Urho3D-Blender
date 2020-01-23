@@ -2601,7 +2601,7 @@ def register():
         # property hooks:
     def updateMaterialTreeName(self,ctx):
         if self.materialTreeId!=-1:
-            ctx.space_data.node_tree = JSONNodetreeUtiBConnectNetwork.pyls.getNodetreeById(self.materialTreeId)
+            ctx.space_data.node_tree = JSONNodetreeUtils.getNodetreeById(self.materialTreeId)
         else:
             ctx.space_data.node_tree = None
 
