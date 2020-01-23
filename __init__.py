@@ -70,7 +70,7 @@ import shutil
 import logging
 import subprocess
 import json
-from .networking import BCONNECT_AVAILABLE, FOUND_RUNTIME
+from .networking import BCONNECT_AVAILABLE, found_blender_runtime, set_found_blender_runtime
 
 # object-array to keep track of temporary objects created just for the export-process(like for the lodsets)
 tempObjects = []
@@ -2570,7 +2570,6 @@ def call_execution_queue():
     global ping_runtime_interval
     global ping_runtime_timer
     global ping_count
-    global FOUND_RUNTIME
 
     # flush the actions
     execution_queue.flush_actions()
@@ -2585,13 +2584,13 @@ def call_execution_queue():
     else:
         ping_runtime_timer -= 1
 
-    if ping_count > 1 and not FOUND_RUNTIME:
+    if ping_count > 2 and not found_blender_runtime():
         print("auto start runtime")
         try:
             bpy.ops.urho.start_runtime()
         except:
             pass
-        FOUND_RUNTIME = True
+        set_found_blender_runtime(True)
 
     return 1
         

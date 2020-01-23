@@ -6,6 +6,16 @@ BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
 
 FOUND_RUNTIME = False
 
+def found_blender_runtime():
+    global FOUND_RUNTIME
+
+    return FOUND_RUNTIME
+
+def set_found_blender_runtime(found=True):
+    global FOUND_RUNTIME
+    
+    FOUND_RUNTIME=found
+
 if BCONNECT_AVAILABLE:
     import addon_blender_connect
     from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener,GetSessionId
