@@ -70,7 +70,7 @@ import shutil
 import logging
 import subprocess
 import json
-from .networking import BCONNECT_AVAILABLE
+from .networking import BCONNECT_AVAILABLE, FOUND_RUNTIME
 
 # object-array to keep track of temporary objects created just for the export-process(like for the lodsets)
 tempObjects = []
@@ -906,8 +906,18 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
         # Save preferred output path
         addonPrefs = context.preferences.addons[__name__].preferences
+        
+        print("UPDATE")
+        
         if self.outputPath:
+            # REMOVE THIS?
+            print("OUTPUT")
             addonPrefs.outputPath = self.outputPath
+
+            bpy.data.worlds[0].jsonNodes.path = "%s__blender_material.json" % self.outputPath
+            print("--")
+
+
         # Skeleton implies weights    
         if self.skeletons:
             self.geometryWei = True
@@ -1838,44 +1848,45 @@ class UrhoExportStartRuntime(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         settings = scene.urho_exportsettings
+        addonPrefs = bpy.context.preferences.addons[__name__].preferences
 
-        execpath = bpy.path.abspath(settings.runtimeFile)
+        execpath = bpy.path.abspath(addonPrefs.runtimeFile)
         if execpath[0:2] in { "./", ".\\" }:
             pwd = os.path.dirname(bpy.app.binary_path)
             execpath = pwd + os.sep + execpath
 
-        workingdir = bpy.path.abspath(settings.outputPath)
-        # workingdir = bpy.path.abspath(settings.runtimeWorkingDir)
+        # workingdir = bpy.path.abspath(settings.outputPath)
+        # # workingdir = bpy.path.abspath(settings.runtimeWorkingDir)
 
         processParams = []
         processParams.append(execpath)
-        if workingdir != "":
-            processParams.append("--workingdir")
-            processParams.append(workingdir)
+        # if workingdir != "":
+        #     processParams.append("--workingdir")
+        #     processParams.append(workingdir)
 
 
-        exportComponentPath = settings.runtimeExportComponents
-        if IsJsonNodeAddonAvailable:
-            exportComponentPath = bpy.data.worlds[0].jsonNodes.path
+        # exportComponentPath = settings.runtimeExportComponents
+        # if IsJsonNodeAddonAvailable:
+        #     exportComponentPath = bpy.data.worlds[0].jsonNodes.path
         
-        if exportComponentPath != "":
-            processParams.append("--componentexport")
-            processParams.append(exportComponentPath)
+        # if exportComponentPath != "":
+        #     processParams.append("--componentexport")
+        #     processParams.append(exportComponentPath)
 
 
-        processParams.append("--scenename")
-        processParams.append(bpy.context.scene.name+".xml")
+        # processParams.append("--scenename")
+        # processParams.append(bpy.context.scene.name+".xml")
         
 ##        parameters = " --workdir "+workingdir
         print("EXEC-DIR: %s" % execpath)
-        print("WORKING-DIR: %s" % workingdir)
-        print("PARAMS:%s" % processParams)
+        # print("WORKING-DIR: %s" % workingdir)
+        # print("PARAMS:%s" % processParams)
         # launch game
         try:
             subp = subprocess.Popen(processParams,  shell=False)
             print("\nLAUNCH RUNTIME: %s\n" % processParams)
-            if settings.runtimeBlocking:
-                subp.communicate() #like wait() but without the risk of deadlock with verbose output
+            # if settings.runtimeBlocking:
+            #     subp.communicate() #like wait() but without the risk of deadlock with verbose output
             returnv = subp.returncode
 
             if returnv != 0:
@@ -1884,7 +1895,7 @@ class UrhoExportStartRuntime(bpy.types.Operator):
 
             self.report({'INFO'},"runtime exited normally.")
         except OSError as er:
-            self.report({'ERROR'}, "Could not launch: " + execpath + ". In directory:" + workingdir+ ". Error: " + str(er))
+            self.report({'ERROR'}, "Could not launch: " + execpath + " Error: " + str(er))
             return {'CANCELLED'}
 
         return {'FINISHED'}
@@ -2549,13 +2560,41 @@ addon_keymaps = []
 
 ntSelectedObject = None
 
+ping_runtime_timer = 0
+ping_runtime_interval = 2
+ping_count = 0
 
 # timer callback
+#if 'call_execution_queue' not in globals():
 def call_execution_queue():
+    global ping_runtime_interval
+    global ping_runtime_timer
+    global ping_count
+    global FOUND_RUNTIME
+
     # flush the actions
     execution_queue.flush_actions()
     # come back in 0.1s
+    if ping_runtime_timer <= 0:
+        ping_runtime_timer = ping_runtime_interval
+
+        setJson = json.dumps({}, indent=4)
+        data = str.encode(setJson)
+        Publish("blender","ping","json",data)
+        ping_count += 1
+    else:
+        ping_runtime_timer -= 1
+
+    if ping_count > 1 and not FOUND_RUNTIME:
+        print("auto start runtime")
+        try:
+            bpy.ops.urho.start_runtime()
+        except:
+            pass
+        FOUND_RUNTIME = True
+
     return 1
+        
 
 def register():
         # property hooks:

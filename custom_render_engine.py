@@ -28,7 +28,9 @@ class ViewRenderer:
         self.renderEngine = weakref.ref(renderengine)
 
     def OnRuntimeMessage(self,topic,subtype,meta,data):
+        print("##DRAW MESSAGE %s" % topic)
         def QueuedExecution():
+            print("--1")
             if not self.renderEngine or self.renderEngine() is None:
                 self.renderEngine = None
                 return

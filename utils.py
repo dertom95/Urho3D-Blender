@@ -359,6 +359,7 @@ class ExecutionQueue:
         return not self.queue.empty
 
     def flush_actions(self):
+        print("TRY TO FLUSH EXECUTION ACTIONS: empty?: %s" % self.queue.empty())
         while not self.queue.empty():
             print("DO EXECUTION FUNCTION")
             # get queued-action...
