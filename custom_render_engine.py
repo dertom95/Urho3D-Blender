@@ -75,6 +75,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         self.space_view3d = None
         self.scene = None
         self.viewRenderer = None
+        self.forceUpdate = False
         
         print("##########-############-###########-###########")
         print("##########-############-###########-###########")
@@ -92,8 +93,21 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             "export_path" : None
         }
 
-        execution_queue.execute_or_queue_action(PingForRuntime)     
+        execution_queue.execute_or_queue_action(PingForRuntime)
+        AddListener("runtime",self.OnRuntimeMessage)     
 
+    def OnRuntimeMessage(self,topic,subtype,meta,data):
+        print("##runtime mesg %s/%s" % (topic,subtype) )
+        def QueuedExecution():
+            print("FORTY:")
+            print("##runtime mesg %s/%s" % (topic,subtype) )
+
+            if topic == "runtime" and subtype == "hello":
+                print("FORCE UPDATE  FORCE UPDATE  FORCE UPDATE  FORCE UPDATE  FORCE UPDATE  FORCE UPDATE  FORCE UPDATE  ")
+                self.forceUpdate = True
+                self.tag_redraw()
+
+        execution_queue.execute_or_queue_action(QueuedExecution)  
             
     # When the render engine instance is destroy, this is called. Clean up any
     # render engine data here, for example stopping running render threads.
@@ -120,7 +134,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
     # check the current blender-data and publish changes
     def update_data(self,region,space_view3d,scene):
-        print("update-data %s" % self.view_id)
+        #print("update-data %s" % self.view_id)
         self.region = region
         self.space_view3d = space_view3d
         self.scene = scene
@@ -155,11 +169,8 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         forceMatrix = False
 
         # check screen resolution
-        # if data["width"]!=region.width or data["height"]!=region.height:
-        #     data["width"] = region.width
-        #     data["height"] = region.height
-        #     changes["resolution"]={ 'width' : region.width, 'height' : region.height }
-        #     forceMatrix = True
+        if data["width"]!=region.width or data["height"]!=region.height:
+             forceMatrix = True
 
         # check view matrix
         region3d = space_view3d.region_3d
@@ -170,7 +181,10 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
         #aspect = pmat[1][1]/prj[0][0]
 
-        if (forceMatrix 
+        print("UPDATE DATA! FORCED:%s",self.forceUpdate)
+
+
+        if (self.forceUpdate or forceMatrix 
                 or data["current_view_matrix"] != region3d.view_matrix 
                 or (region3d.view_perspective=="ORTHO" and data["current_view_distance"]!=region3d.view_distance)):
             data["current_view_matrix"] = region3d.view_matrix.copy()
@@ -197,6 +211,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
             print("pos:%s type:%s dir:%s top:%s" %(str(pos),type(pos),direction,top))
             
+            self.forceUpdate = False
 
 
 

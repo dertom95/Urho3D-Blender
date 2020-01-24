@@ -1371,7 +1371,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     optimizeIndices : BoolProperty(
             name = "Optimize indices (slow)",
             description = "Linear-Speed vertex cache optimisation",
-            default = True)
+            default = False)
 
     # --- Components settings ---
 
@@ -2599,7 +2599,7 @@ def call_execution_queue():
             except:
                 pass
             set_found_blender_runtime(True)
-            PingData.ping_check_running = False
+            PingData.ping_check_running = True
     
 
     return 0.05

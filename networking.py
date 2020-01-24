@@ -21,7 +21,6 @@ if BCONNECT_AVAILABLE:
             if topic=="runtime" and subtype=="pong":
                 set_found_blender_runtime(True)
                 PingData.ping_check_running = False
-            pass
 
         execution_queue.queue_action(QueuedExecution) 
 
