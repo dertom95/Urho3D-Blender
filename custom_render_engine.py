@@ -9,7 +9,7 @@ import weakref
 from mathutils import Vector
 
 # connect to blender connect if available
-from .utils import IsBConnectAddonAvailable, execution_queue, vec2dict, matrix2dict
+from .utils import IsBConnectAddonAvailable, execution_queue, vec2dict, matrix2dict, PingForRuntime
 
 BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
 
@@ -76,6 +76,8 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         self.scene = None
         self.viewRenderer = None
         
+        execution_queue.execute_or_queue_action(PingForRuntime)     
+
 
         print("##########-############-###########-###########")
         print("##########-############-###########-###########")
@@ -318,8 +320,6 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         # Get viewport dimensions
         dimensions = region.width, region.height
 
-        
-
         # Bind shader that converts from scene linear to display space,
         bgl.glEnable(bgl.GL_BLEND)
         bgl.glBlendFunc(bgl.GL_ONE, bgl.GL_ONE_MINUS_SRC_ALPHA);
@@ -342,7 +342,7 @@ class CustomDrawData:
 
         print("NEW CUSTOMDRAWDATA with resolution %s:%s" %( width,height ))
 
-        self.pixels = [255,255,0,255] * width * height
+        self.pixels = [255,0,0,255] * width * height
         self.pixels = bgl.Buffer(bgl.GL_BYTE, width * height * 4, self.pixels)
 
         # Generate texture

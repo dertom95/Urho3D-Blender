@@ -1,20 +1,8 @@
 import bpy
 
-from .utils import IsBConnectAddonAvailable, execution_queue
+from .utils import IsBConnectAddonAvailable, execution_queue, set_found_blender_runtime
 
 BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
-
-FOUND_RUNTIME = False
-
-def found_blender_runtime():
-    global FOUND_RUNTIME
-
-    return FOUND_RUNTIME
-
-def set_found_blender_runtime(found=True):
-    global FOUND_RUNTIME
-    
-    FOUND_RUNTIME=found
 
 if BCONNECT_AVAILABLE:
     import addon_blender_connect
@@ -31,7 +19,7 @@ if BCONNECT_AVAILABLE:
             #     bpy.ops.nodetree.jsonload('EXEC_DEFAULT')
             print("INCOMING %s - %s - %s - %s" % ( topic,subtype,meta,data ) )
             if topic=="runtime" and subtype=="pong":
-                FOUND_RUNTIME = True
+                set_found_blender_runtime(True)
             pass
 
         execution_queue.queue_action(QueuedExecution) 

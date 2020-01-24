@@ -19,6 +19,30 @@ from math import degrees
 from mathutils import Vector
 import traceback
 
+
+# -----------------------------------------
+# Check if json-nodetree-addon is available
+# -----------------------------------------
+def IsJsonNodeAddonAvailable():
+    #jsonNodetreeAvailable = False
+    #log = logging.getLogger("ExportLogger")
+    jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.preferences.addons.keys()
+    return jsonNodetreeAvailable
+
+# -------------------------------------------
+# Check if blender-connect-addon is available
+# -------------------------------------------
+def IsBConnectAddonAvailable():
+    bconnectAvailable = "addon_blender_connect" in  bpy.context.preferences.addons.keys()
+    return bconnectAvailable    
+
+
+BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
+
+if BCONNECT_AVAILABLE:
+    import addon_blender_connect
+    from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener,GetSessionId
+
 log = logging.getLogger("ExportLogger")
 
 
@@ -298,21 +322,7 @@ def SDBMHash(key):
         hash = ord(key[i]) + (hash << 6) + (hash << 16) - hash
     return (hash & 0xFFFFFFFF)
 
-# -----------------------------------------
-# Check if json-nodetree-addon is available
-# -----------------------------------------
-def IsJsonNodeAddonAvailable():
-    #jsonNodetreeAvailable = False
-    #log = logging.getLogger("ExportLogger")
-    jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.preferences.addons.keys()
-    return jsonNodetreeAvailable
 
-# -------------------------------------------
-# Check if blender-connect-addon is available
-# -------------------------------------------
-def IsBConnectAddonAvailable():
-    bconnectAvailable = "addon_blender_connect" in  bpy.context.preferences.addons.keys()
-    return bconnectAvailable    
 
 def getLodSetWithID(id,returnIdx=False):
     cnt=0
@@ -402,4 +412,40 @@ def matrix2dict(matrix,convToDeg=False):
     for vector in matrix:
         resultmatrix.append(vec2dict(vector,convToDeg))
     return resultmatrix
+
+class PingData:
+    ping_check_running = False
+    ping_runtime_timer = 0
+    ping_runtime_interval = 2
+    ping_count = 0
+
+
+
+FOUND_RUNTIME = False
+
+def found_blender_runtime():
+    global FOUND_RUNTIME
+    return FOUND_RUNTIME
+
+def set_found_blender_runtime(found=True):
+    global FOUND_RUNTIME
+    
+    FOUND_RUNTIME=found
+
+
+def PingForRuntime():
+    print("PPIINNGG for Runtime")
+
+    if PingData.ping_check_running: 
+        return
+
+    PingData.ping_check_running = True
+    print("Setted:%s" % PingData.ping_check_running)
+    PingData.ping_runtime_timer = 0
+    PingData.ping_runtime_interval = 2
+    PingData.ping_count = 0
+    set_found_blender_runtime(False)
+
+
+
 

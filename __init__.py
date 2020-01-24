@@ -46,7 +46,8 @@ from .decompose import TOptions, Scan
 from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, UrhoWriteAnimation, \
                          UrhoWriteTriggers, UrhoExport
 from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterialTrees
-from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable,IsBConnectAddonAvailable, getLodSetWithID,getObjectWithID, execution_queue
+from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable,IsBConnectAddonAvailable, getLodSetWithID,getObjectWithID, execution_queue, \
+                    PingData,set_found_blender_runtime,found_blender_runtime
 
 
 if DEBUG: from .testing import PrintUrhoData, PrintAll
@@ -70,7 +71,7 @@ import shutil
 import logging
 import subprocess
 import json
-from .networking import BCONNECT_AVAILABLE, found_blender_runtime, set_found_blender_runtime
+from .networking import BCONNECT_AVAILABLE
 
 # object-array to keep track of temporary objects created just for the export-process(like for the lodsets)
 tempObjects = []
@@ -1281,7 +1282,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     modifiers : BoolProperty(
             name = "Apply modifiers",
             description = "Apply the object modifiers before exporting",
-            default = False)
+            default = True)
 
     modifiersRes : EnumProperty(
             name = "Modifiers setting",
@@ -2560,41 +2561,40 @@ addon_keymaps = []
 
 ntSelectedObject = None
 
-ping_runtime_timer = 0
-ping_runtime_interval = 2
-ping_count = 0
-
 # timer callback
 #if 'call_execution_queue' not in globals():
 def call_execution_queue():
-    global ping_runtime_interval
-    global ping_runtime_timer
-    global ping_count
-
     # flush the actions
     execution_queue.flush_actions()
     # come back in 0.1s
-    if ping_runtime_timer <= 0:
-        ping_runtime_timer = ping_runtime_interval
 
-        _data = {}
-        _data["session_id"]=GetSessionId()
-        setJson = json.dumps(_data, indent=4)
-        data = str.encode(setJson)
-        Publish("blender","ping","json",data)
-        ping_count += 1
-    else:
-        ping_runtime_timer -= 1
+    print("ping_check:%s" % PingData.ping_check_running)
 
-    if ping_count > 2 and not found_blender_runtime():
-        print("auto start runtime")
-        try:
-            bpy.ops.urho.start_runtime()
-        except:
-            pass
-        set_found_blender_runtime(True)
+    if PingData.ping_check_running:
+        bpy.context.scene.view_settings.view_transform = 'Raw'
 
-    return 1
+        if PingData.ping_runtime_timer <= 0:
+            PingData.ping_runtime_timer = PingData.ping_runtime_interval
+
+            _data = {}
+            _data["session_id"]=GetSessionId()
+            setJson = json.dumps(_data, indent=4)
+            data = str.encode(setJson)
+            Publish("blender","ping","json",data)
+            PingData.ping_count += 1
+        else:
+            PingData.ping_runtime_timer -= 1
+
+        if PingData.ping_count > 2 and not found_blender_runtime():
+            print("auto start runtime")
+            try:
+                bpy.ops.urho.start_runtime()
+            except:
+                pass
+            set_found_blender_runtime(True)
+            PingData.ping_check_running = False
+
+    return 0.05
         
 
 def register():
