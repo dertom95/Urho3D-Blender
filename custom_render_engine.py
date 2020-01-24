@@ -76,6 +76,8 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         self.scene = None
         self.viewRenderer = None
         self.forceUpdate = False
+        self.changes = None
+
         
         print("##########-############-###########-###########")
         print("##########-############-###########-###########")
@@ -90,7 +92,9 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             "current_view_matrix" : None,
             "current_scene_name" : None,
             "current_view_distance" : None,
-            "export_path" : None
+            "export_path" : None,
+            "pos" : None,
+            "dir" : None
         }
 
         execution_queue.execute_or_queue_action(PingForRuntime)
@@ -163,7 +167,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
 
         data = self.renderViewData
-        changes = {}
+        
 
         
         forceMatrix = False
@@ -183,35 +187,47 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
         print("UPDATE DATA! FORCED:%s",self.forceUpdate)
 
+        if not self.changes:
+            self.changes = {}
+
+        changed = False
+
+        direction = region3d.view_rotation @ Vector((0.0, 0.0, -1.0))
+        top = region3d.view_rotation @ Vector((0.0, 1.0, 0.0))
+        pos = view3d_utils.region_2d_to_origin_3d(region, region3d, (region.width/2.0, region.height/2.0))
 
         if (self.forceUpdate or forceMatrix 
                 or data["current_view_matrix"] != region3d.view_matrix 
+                or data["pos"]!=pos or data["dir"]!=direction
                 or (region3d.view_perspective=="ORTHO" and data["current_view_distance"]!=region3d.view_distance)):
             data["current_view_matrix"] = region3d.view_matrix.copy()
             data["current_view_distance"] = region3d.view_distance
-            changes["view_matrix"]=matrix2dict(region3d.view_matrix)
+
+            data["dir"]=direction
+            data["pos"]=pos
+
+            self.changes["view_matrix"]=matrix2dict(region3d.view_matrix)
             vm = region3d.view_matrix
             #changes["view_matrix_euler"] = vec2dict(vm.to_euler(),True)
             #changes["view_matrix_trans"] = vec2dict(vm.to_translation())
             #changes["view_matrix_scale"] = vec2dict(vm.to_scale())
             #changes["view_location"]=vec2dict(region3d.view_location)
             #changes["view_rotation"]=vec2dict(region3d.view_rotation)
-            changes["view_perspective_type"]=str(region3d.view_perspective)
-            changes["perspective_matrix"]=matrix2dict(region3d.perspective_matrix);
-            changes["fov"]=fov
-            changes["view_distance"]=region3d.view_distance
+            self.changes["view_perspective_type"]=str(region3d.view_perspective)
+            self.changes["perspective_matrix"]=matrix2dict(region3d.perspective_matrix);
+            self.changes["fov"]=fov
+            self.changes["view_distance"]=region3d.view_distance
 
-            direction = region3d.view_rotation @ Vector((0.0, 0.0, -1.0))
-            top = region3d.view_rotation @ Vector((0.0, 1.0, 0.0))
-            pos = view3d_utils.region_2d_to_origin_3d(region, region3d, (region.width/2.0, region.height/2.0))
+            
 
-            changes["view_direction"]=vec2dict(direction)
-            changes["view_up"]=vec2dict(top)
-            changes["view_position"]=vec2dict(pos)
+            self.changes["view_direction"]=vec2dict(direction)
+            self.changes["view_up"]=vec2dict(top)
+            self.changes["view_position"]=vec2dict(pos)
 
             print("pos:%s type:%s dir:%s top:%s" %(str(pos),type(pos),direction,top))
             
             self.forceUpdate = False
+            changed = True
 
 
 
@@ -224,29 +240,32 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
 #        if (data["export_path"] != export_path):
 
-        if len(changes)>0:
-            changes["view_id"] = data["view_id"]
-            changes["session_id"] = GetSessionId()
+        if changed:
+            self.changes["view_id"] = data["view_id"]
+            self.changes["session_id"] = GetSessionId()
 
 
             export_path = urho_settings.outputPath
-            changes["export_path"] = export_path
+            self.changes["export_path"] = export_path
             data["export_path"] = export_path
 
             data["current_scene_name"]=scene.name
-            changes["scene_name"]=scene.name
+            self.changes["scene_name"]=scene.name
 
             data["width"] = region.width
             data["height"] = region.height
-            changes["resolution"]={ 'width' : region.width, 'height' : region.height }
+            self.changes["resolution"]={ 'width' : region.width, 'height' : region.height }
 
-
-            changesJson = json.dumps(changes, indent=4)
-            print("changesJson: %s" % changesJson)
-            data = str.encode(changesJson)
-
-            Publish("blender","data_change","json",data)
+            self.tag_redraw()
+            print("CHANGED")
         else:
+            if self.changes:
+                changesJson = json.dumps(self.changes, indent=4)
+                print("changesJson: %s" % changesJson)
+                data = str.encode(changesJson)
+
+                Publish("blender","data_change","json",data)
+                self.changes = None
             print("no changes")
 
 

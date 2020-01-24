@@ -2563,7 +2563,7 @@ addon_keymaps = []
 
 ntSelectedObject = None
 
-tick = 0.15
+tick = 0.2
 
 # timer callback
 #if 'call_execution_queue' not in globals():
