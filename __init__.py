@@ -1579,7 +1579,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     prefabs : BoolProperty(
             name = "Export Urho Prefabs",
             description = "Export Urho3D XML objects (prefabs)",
-            default = False,
+            default = True,
             update = update_func)
 
     individualPrefab : BoolProperty(
@@ -1603,7 +1603,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     scenePrefab : BoolProperty(
             name = "Scene Prefab",
             description = "Same content as 'Collective', but outputs a Urho3D xml scene (with Octree, PhysicsWorld and DebugRenderer)",
-            default = False,
+            default = True,
             update = update_func)
 
     sceneCreateZone : BoolProperty(
