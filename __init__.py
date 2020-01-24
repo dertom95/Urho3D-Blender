@@ -408,6 +408,8 @@ def poll_material_nodetree(self,object):
 class NodetreeInfo(bpy.types.PropertyGroup):
     nodetreePointer : bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_component_nodetree)
 
+
+
 class UL_URHO_LIST_NODETREE(bpy.types.UIList):
     """KeyValue UIList."""
 
@@ -2561,6 +2563,8 @@ addon_keymaps = []
 
 ntSelectedObject = None
 
+tick = 0.15
+
 # timer callback
 #if 'call_execution_queue' not in globals():
 def call_execution_queue():
@@ -2574,7 +2578,7 @@ def call_execution_queue():
         if PingData.ping_auto_timer<=0:
             execution_queue.execute_or_queue_action(PingForRuntime) 
         else:
-            PingData.ping_auto_timer -= 0.05
+            PingData.ping_auto_timer -= tick
             #print("PingData.auto_timer %s" % PingData.ping_auto_timer)
 
     if PingData.ping_check_running:
@@ -2590,7 +2594,7 @@ def call_execution_queue():
             Publish("blender","ping","json",data)
             PingData.ping_count += 1
         else:
-            PingData.ping_runtime_timer -= 0.05
+            PingData.ping_runtime_timer -= tick
 
         if PingData.ping_count > 2 and not found_blender_runtime():
             print("auto start runtime")
@@ -2602,7 +2606,7 @@ def call_execution_queue():
             PingData.ping_check_running = True
     
 
-    return 0.05
+    return tick
         
 
 def register():
