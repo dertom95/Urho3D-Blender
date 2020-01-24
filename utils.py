@@ -369,7 +369,7 @@ class ExecutionQueue:
         return not self.queue.empty
 
     def flush_actions(self):
-        print("TRY TO FLUSH EXECUTION ACTIONS: empty?: %s" % self.queue.empty())
+        #print("TRY TO FLUSH EXECUTION ACTIONS: empty?: %s" % self.queue.empty())
         while not self.queue.empty():
             print("DO EXECUTION FUNCTION")
             # get queued-action...
@@ -418,6 +418,7 @@ class PingData:
     ping_runtime_timer = 0
     ping_runtime_interval = 2
     ping_count = 0
+    ping_auto_timer = 0
 
 
 
@@ -438,6 +439,8 @@ def PingForRuntime():
 
     if PingData.ping_check_running: 
         return
+
+    PingData.ping_auto_timer = 10
 
     PingData.ping_check_running = True
     print("Setted:%s" % PingData.ping_check_running)

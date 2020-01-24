@@ -47,7 +47,7 @@ from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, Urho
                          UrhoWriteTriggers, UrhoExport
 from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterialTrees
 from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable,IsBConnectAddonAvailable, getLodSetWithID,getObjectWithID, execution_queue, \
-                    PingData,set_found_blender_runtime,found_blender_runtime
+                    PingData,set_found_blender_runtime,found_blender_runtime, PingForRuntime
 
 
 if DEBUG: from .testing import PrintUrhoData, PrintAll
@@ -2568,7 +2568,14 @@ def call_execution_queue():
     execution_queue.flush_actions()
     # come back in 0.1s
 
-    print("ping_check:%s" % PingData.ping_check_running)
+    #print("ping_check:%s" % PingData.ping_check_running)
+
+    if bpy.context.scene.render.engine=="URHO3D":
+        if PingData.ping_auto_timer<=0:
+            execution_queue.execute_or_queue_action(PingForRuntime) 
+        else:
+            PingData.ping_auto_timer -= 0.05
+            #print("PingData.auto_timer %s" % PingData.ping_auto_timer)
 
     if PingData.ping_check_running:
         bpy.context.scene.view_settings.view_transform = 'Raw'
@@ -2593,6 +2600,7 @@ def call_execution_queue():
                 pass
             set_found_blender_runtime(True)
             PingData.ping_check_running = False
+    
 
     return 0.05
         

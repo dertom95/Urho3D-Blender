@@ -1,6 +1,6 @@
 import bpy
 
-from .utils import IsBConnectAddonAvailable, execution_queue, set_found_blender_runtime
+from .utils import IsBConnectAddonAvailable, execution_queue, set_found_blender_runtime,PingData
 
 BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
 
@@ -20,6 +20,7 @@ if BCONNECT_AVAILABLE:
             print("INCOMING %s - %s - %s - %s" % ( topic,subtype,meta,data ) )
             if topic=="runtime" and subtype=="pong":
                 set_found_blender_runtime(True)
+                PingData.ping_check_running = False
             pass
 
         execution_queue.queue_action(QueuedExecution) 

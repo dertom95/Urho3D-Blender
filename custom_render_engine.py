@@ -76,9 +76,6 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         self.scene = None
         self.viewRenderer = None
         
-        execution_queue.execute_or_queue_action(PingForRuntime)     
-
-
         print("##########-############-###########-###########")
         print("##########-############-###########-###########")
         print("##########-############-###########-###########")
@@ -94,6 +91,8 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             "current_view_distance" : None,
             "export_path" : None
         }
+
+        execution_queue.execute_or_queue_action(PingForRuntime)     
 
             
     # When the render engine instance is destroy, this is called. Clean up any
@@ -231,7 +230,6 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             print("changesJson: %s" % changesJson)
             data = str.encode(changesJson)
 
-
             Publish("blender","data_change","json",data)
         else:
             print("no changes")
@@ -275,7 +273,6 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
         print("VIEWUPDATE(%s): region:%s view3d:%s scene:%s"%(self.view_id,type(region),type(view3d),scene.name))
 
-
         # Get viewport dimensions
         dimensions = region.width, region.height
 
@@ -313,8 +310,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         scene = depsgraph.scene
         view3d = context.space_data
 
-
-        print("view_draw(%s): region:%s view3d:%s scene:%s"%(self.view_id,type(region),type(view3d),scene.name))
+        #print("view_draw(%s): region:%s view3d:%s scene:%s"%(self.view_id,type(region),type(view3d),scene.name))
         self.update_data(region,view3d,scene)
 
         # Get viewport dimensions
