@@ -2590,7 +2590,7 @@ def call_execution_queue():
             Publish("blender","ping","json",data)
             PingData.ping_count += 1
         else:
-            PingData.ping_runtime_timer -= 1
+            PingData.ping_runtime_timer -= 0.05
 
         if PingData.ping_count > 2 and not found_blender_runtime():
             print("auto start runtime")

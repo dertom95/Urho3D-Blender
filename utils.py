@@ -416,7 +416,7 @@ def matrix2dict(matrix,convToDeg=False):
 class PingData:
     ping_check_running = False
     ping_runtime_timer = 0
-    ping_runtime_interval = 2
+    ping_runtime_interval = 0.5
     ping_count = 0
     ping_auto_timer = 0
 
