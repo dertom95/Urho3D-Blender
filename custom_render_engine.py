@@ -187,7 +187,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
         #aspect = pmat[1][1]/prj[0][0]
 
-        print("UPDATE DATA! FORCED:%s",self.forceUpdate)
+        #print("UPDATE DATA! FORCED:%s",self.forceUpdate)
 
         if not self.changes:
             self.changes = {}
@@ -268,7 +268,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
                 Publish("blender","data_change","json",data)
                 self.changes = None
-            print("no changes")
+            #print("no changes")
 
 
 
@@ -307,7 +307,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         view3d = context.space_data
         scene = depsgraph.scene
 
-        print("VIEWUPDATE(%s): region:%s view3d:%s scene:%s"%(self.view_id,type(region),type(view3d),scene.name))
+        #print("VIEWUPDATE(%s): region:%s view3d:%s scene:%s"%(self.view_id,type(region),type(view3d),scene.name))
 
         # Get viewport dimensions
         dimensions = region.width, region.height

@@ -159,6 +159,7 @@ def PublishRuntimeSettings(self,context):
     settings["show_physics"]=self.runtimeShowPhysics
     settings["show_physics_depth"]=self.runtimeShowPhysicsDepth
     settings["activate_physics"]=self.runtimeActivatePhysics
+    settings["session_id"]=GetSessionId()
 
     setJson = json.dumps(settings, indent=4)
     print("settingsJson: %s" % setJson)
@@ -2203,7 +2204,8 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             innerbox = box.box()
             row = innerbox.row()
             row.prop(settings,"runtimeShowPhysics",text="show physics")
-            row.prop(settings,"runtimeShowPhysicsDepth",text="depth")
+            if settings.runtimeShowPhysics:
+                row.prop(settings,"runtimeShowPhysicsDepth",text="use depth test")
             #row = innerbox.row()
             #row.prop(settings,"runtimeActivatePhysics",text="activate physics")
             
@@ -2514,7 +2516,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             space_treetype = bpy.context.space_data.tree_type
             nodetree = bpy.context.space_data.node_tree
 
-            print("TreeType:%s" % space_treetype )
+            #print("TreeType:%s" % space_treetype )
 
             layout = self.layout
             box = layout.box()
@@ -2577,7 +2579,7 @@ addon_keymaps = []
 
 ntSelectedObject = None
 
-tick = 0.2
+tick = 0.05
 
 # timer callback
 #if 'call_execution_queue' not in globals():
