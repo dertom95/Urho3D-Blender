@@ -168,7 +168,6 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
         data = self.renderViewData
         
-
         
         forceMatrix = False
 
@@ -178,6 +177,9 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
         # check view matrix
         region3d = space_view3d.region_3d
+
+        region3d.view_perspective = 'PERSP'
+
 
         vmat_inv = region3d.view_matrix.inverted()
         pmat = region3d.perspective_matrix @ vmat_inv

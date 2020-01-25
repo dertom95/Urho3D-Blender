@@ -1319,8 +1319,8 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = False)
 
     ignoreHidden : BoolProperty(
-            name = "Ignore hidden objects",
-            description = "Ignore hidden objects",
+            name = "Don't export hidden objects",
+            description = "Don't export hidden objects",
             default = False)  
 
     wiredAsEmpty : BoolProperty(
@@ -1336,7 +1336,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     exportGroupsAsObject : BoolProperty(
             name = "Export Instanced Collections as PrefabObject",
             description = "Export Collections as PrefabObject and write meta data into the group-instance-empties",
-            default = False)   
+            default = True)   
 
     exportObjectCollectionAsTag   : BoolProperty(
             name = "add collections as tag",
@@ -1363,7 +1363,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     lods : BoolProperty(
             name = "Use LODs",
             description = "Search for the LOD distance if the object name, objects with the same name are added as LODs",
-            default = False)
+            default = True)
 
     strictLods : BoolProperty(
             name = "Strict LODs",
@@ -2221,12 +2221,23 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         row.label(text="Objects:")
         row.prop(settings, "source", expand=True)
 
-        row = box.row()
-        row.label(text="Origin:")
-        row.prop(settings, "origin", expand=True)
+        # row = box.row()
+        # row.label(text="Origin:")
+        # row.prop(settings, "origin", expand=True)
 
-        box.prop(settings, "orientation")
-        box.prop(settings, "scale")
+        #box.prop(settings, "orientation")
+
+        #        # box.prop(settings, "merge")
+        # if settings.merge:
+        #     row = box.row()
+        #     row.separator()
+        #     row.prop(settings, "mergeNotMaterials")        # box.prop(settings, "merge")
+        # if settings.merge:
+        #     row = box.row()
+        #     row.separator()
+        #     row.prop(settings, "mergeNotMaterials")
+
+        #box.prop(settings, "scale")
         
         box.prop(settings, "modifiers")
         
@@ -2235,11 +2246,12 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         #     row.separator()
         #     row.prop(settings, "modifiersRes", expand=True)
 
-        box.prop(settings, "merge")
-        if settings.merge:
-            row = box.row()
-            row.separator()
-            row.prop(settings, "mergeNotMaterials")
+        # TODO
+        # box.prop(settings, "merge")
+        # if settings.merge:
+        #     row = box.row()
+        #     row.separator()
+        #     row.prop(settings, "mergeNotMaterials")
 
         box.prop(settings,"ignoreHidden")
         box.prop(settings, "exportGroupsAsObject")
@@ -2252,7 +2264,8 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         
         box.prop(settings, "forceElements")
 
-        box.prop(settings, "geometrySplit")
+        #TODO: what and why
+        #box.prop(settings, "geometrySplit")
         box.prop(settings, "optimizeIndices")
         box.prop(settings, "lods")
         if settings.lods:
@@ -2351,17 +2364,18 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             col.enabled = settings.morphNor and settings.geometryTan
             col.prop(settings, "morphTan")
 
-        row = box.row()
-        row.prop(settings, "materials")
-        row.label(text="", icon='MATERIAL_DATA')
-        if settings.materials:
-            row = box.row()
-            row.separator()
-            row.prop(settings, "materialsList")
+        # TODO
+        # row = box.row()
+        # row.prop(settings, "materials")
+        # row.label(text="", icon='MATERIAL_DATA')
+        # if settings.materials:
+        #     row = box.row()
+        #     row.separator()
+        #     row.prop(settings, "materialsList")
 
-        row = box.row()
-        row.prop(settings, "textures")
-        row.label(text="", icon='TEXTURE_DATA')
+        #row = box.row()
+        #row.prop(settings, "textures")
+        #row.label(text="", icon='TEXTURE_DATA')
 
         row = box.row()
         row.prop(settings, "prefabs")
