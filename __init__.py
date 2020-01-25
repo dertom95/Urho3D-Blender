@@ -2489,6 +2489,8 @@ def ObjectMaterialNodetree(obj,box):
     #row.operator('urho_material_nodetrees.move_item', text='DOWN').direction = 'DOWN'
 
     #bpy.ops.wm.read_homefile('INVOKE_DEFAULT')                
+    row = box.row()
+    row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object-nodetree")
 
     if obj.mode == 'EDIT':
         row = box.row(align=True)
@@ -2517,6 +2519,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             nodetree = bpy.context.space_data.node_tree
 
             #print("TreeType:%s" % space_treetype )
+            PingForRuntime()
 
             layout = self.layout
             box = layout.box()
@@ -2526,14 +2529,15 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             row = innerBox.row()
             row.prop(bpy.context.scene,"nodetree",text="Scene-Logic")
 
-            innerBox = box.box()
-            row = innerBox.row() 
-            row.prop(bpy.context.scene.urho_exportsettings,"create_default_material_nodetree",text="auto-create nodetree for empty nodetrees")
 
             if space_treetype=="urho3dcomponents":
                 ObjectComponentSubpanel(obj,layout,box)
 
             if space_treetype=="urho3dmaterials" and bpy.context.active_object.type=="MESH":
+                innerBox = box.box()
+                row = innerBox.row()
+                row.prop(bpy.context.scene.urho_exportsettings,"create_default_material_nodetree",text="auto-create nodetree for empty nodetrees")
+
                 ObjectMaterialNodetree(obj,box)
 
                 if nodetree and not nodetree.initialized:
@@ -3252,7 +3256,8 @@ def ExecuteUrhoExport(context):
                 arma_mod.object=lodset.armatureObj
             
             # add decimate-modifier if the decimate was < 1.0
-            if lod.decimate < 1.0 and not lodset.armatureObj:
+            
+            if not lodset.armatureObj:
                 decimate = new_obj.modifiers.new(name="__decimate",type="DECIMATE")
                 decimate.ratio = lod.decimate
 
@@ -3411,8 +3416,14 @@ def ExecuteUrhoExport(context):
 
 def ExecuteAddon(context, silent=False):
     before_export_selection = bpy.context.selected_objects
-    before_export_mode = bpy.context.active_object.mode
     before_export_active_obj = bpy.context.active_object
+    
+    before_export_mode = "OBJECT"
+    if before_export_active_obj:
+        try:
+            before_export_mode = bpy.context.active_object.mode
+        except:
+            pass            
 
     startTime = time.time()
     print("----------------------Urho export start----------------------")    
@@ -3427,12 +3438,15 @@ def ExecuteAddon(context, silent=False):
         pass
     tempObjects.clear()
 
-    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    try:
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    except:
+        pass        
     bpy.ops.object.select_all(action='DESELECT')
     for select_obj in before_export_selection:
         select_obj.select_set(True)
     bpy.context.view_layer.objects.active = before_export_active_obj
-    bpy.ops.object.mode_set(mode=before_export_mode, toggle=False)
+    #bpy.ops.object.mode_set(mode=before_export_mode, toggle=False)
 
 
     log.info("Export ended in {:.4f} sec".format(time.time() - startTime) )

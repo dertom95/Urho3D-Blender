@@ -1737,6 +1737,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
     beforeMode = meshObj.mode
 
     meshObj.select_set(True)
+    bpy.context.view_layer.objects.active = meshObj
     bpy.ops.object.mode_set(mode="OBJECT")
 
     verticesMap = {}
@@ -1764,7 +1765,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
     # TODO2.8: not 100% sure about calc_undeformed- formerly you specified PREVIEW or RENDER
 #    mesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
 
-    if tOptions.applyModifiers:
+    if tOptions.applyModifiers or "_LOD" in meshObj.name:
         # apply modifiers
         mesh = meshObj.evaluated_get(dgraph).to_mesh()
         print("MeshObj-Type:%s" % type(meshObj))
