@@ -68,7 +68,7 @@ import os
 import time
 import sys
 import shutil
-import logging
+import logging, random
 import subprocess
 import json
 from .networking import BCONNECT_AVAILABLE
@@ -891,9 +891,17 @@ class UrhoExportMeshSettings(bpy.types.PropertyGroup):
     use_uv2 : bpy.props.BoolProperty(default=False) 
     manual_uv2_idx : bpy.props.EnumProperty(items=get_uvs) 
 
+def PrefixFile(input):
+    global_settings = bpy.data.worlds[0].global_settings
+    scenename = bpy.context.scene.name
+
+    return "%s-%s-%s" % (global_settings.file_id,scenename,input)
+
+
 
 class UrhoExportGlobalSettings(bpy.types.PropertyGroup):
-    pass
+    file_id : bpy.props.IntProperty(default=-1) # a unique id that will optionally prefixed to your model-filename 
+    
 
     
 
@@ -916,7 +924,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         if self.outputPath:
             # REMOVE THIS?
             print("OUTPUT")
-            addonPrefs.outputPath = self.outputPath
+            #addonPrefs.outputPath = self.outputPath
 
             bpy.data.worlds[0].jsonNodes.path = "%s__blender_material.json" % self.outputPath
             print("--")
@@ -1651,9 +1659,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
                 ('Mesh', "Mesh-Name", "The object's mesh gets its name by the mesh preventing duplicated mesh-files")),
         default='Mesh')
 
-    
+    generateModelNamePrefix : BoolProperty(
+        name ="add prefix to modelfiles",
+        description="prefix 'scene_xxx_' to your model-filename",
+        default=True
+    )
         
-
     bonesGlobalOrigin : BoolProperty(name = "Bones global origin", default = False)
     actionsGlobalOrigin : BoolProperty(name = "Actions global origin", default = False)
     
@@ -2124,7 +2135,6 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
         settings = scene.urho_exportsettings
-        global_settings = bpy.data.worlds[0].urho_global
 
         row = layout.row()
         #row=layout.row(align=True)
@@ -2160,6 +2170,8 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         row = box.row()
         row.label(text="Modelname:")
         row.prop(settings, "meshnameDerivedBy", expand=True)
+
+        box.prop(settings, "generateModelNamePrefix")
 
         box.prop(settings, "exportOnSave")
         box.prop(settings, "fileOverwrite")
@@ -2751,7 +2763,7 @@ def register():
     bpy.types.World.lodsets=bpy.props.CollectionProperty(type=LODSet)
     bpy.types.World.lodset_counter=bpy.props.IntProperty()
     bpy.types.World.meshid_counter=bpy.props.IntProperty()
-    bpy.types.World.urho_global=bpy.props.PointerProperty(type=UrhoExportGlobalSettings)
+    bpy.types.World.global_settings=bpy.props.PointerProperty(type=UrhoExportGlobalSettings)
     bpy.types.World.objid_counter=bpy.props.IntProperty()
     bpy.types.Collection.urhoExport = bpy.props.BoolProperty(description="export as urho3d object")
 
@@ -3199,6 +3211,7 @@ def ExecuteUrhoExport(context):
 
     settings.errorsMem.Clear()
 
+
     if settings.onlyErrors:
         log.setLevel(logging.WARNING)
     else:
@@ -3312,7 +3325,10 @@ def ExecuteUrhoExport(context):
                         uModel.meshName=uModel.name
                     else:
                         uModel.meshName=obj.data.name
-                
+
+                    if settings.generateModelNamePrefix:
+                        uModel.meshName=PrefixFile(uModel.meshName)
+
             except:
                 uModel.meshName=uModel.name
                 uModel.isEmpty=False
@@ -3415,6 +3431,12 @@ def ExecuteUrhoExport(context):
 
 
 def ExecuteAddon(context, silent=False):
+    global_settings = bpy.data.worlds[0].global_settings
+
+    if global_settings.file_id == -1:
+        global_settings.file_id = random.randrange(100,999)
+
+
     before_export_selection = bpy.context.selected_objects
     before_export_active_obj = bpy.context.active_object
     
