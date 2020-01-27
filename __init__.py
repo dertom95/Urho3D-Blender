@@ -163,6 +163,9 @@ def PublishRuntimeSettings(self,context):
 
     setJson = json.dumps(settings, indent=4)
     print("settingsJson: %s" % setJson)
+    print("settingsJson: %s" % setJson)
+    print("settingsJson: %s" % setJson)
+    print("settingsJson: %s" % setJson)
     data = str.encode(setJson)
 
     Publish("blender","settings","json",data)
@@ -1934,7 +1937,6 @@ class UrhoExportStartRuntime2(bpy.types.Operator):
     bl_idname = "urho.start_runtime2"
     bl_label = "Start Runtime 2"
     
-    
 
     @classmethod
     def poll(self, context):
@@ -2312,7 +2314,6 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row = innerbox.row()
             row.prop(settings,"runtimeShowPhysics",text="show physics")
             if settings.runtimeShowPhysics:
-                row = innerbox.row()
                 row.prop(settings,"runtimeShowPhysicsDepth",text="use depth test")
             #row = innerbox.row()
             #row.prop(settings,"runtimeActivatePhysics",text="activate physics")
@@ -2737,6 +2738,19 @@ def call_execution_queue():
         
 
 def register():
+    def OnRuntimeMessage(topic,subtype,meta,data):
+
+        def QueuedExecution():
+            print("init onRuntime %s - %s - %s - %s" % ( topic,subtype,meta,data ))
+            if topic == "runtime" and subtype == "hello":
+                settings = bpy.context.scene.urho_exportsettings
+                PublishRuntimeSettings(settings,bpy.context)
+
+        execution_queue.execute_or_queue_action(QueuedExecution)  
+
+    AddListener("runtime",OnRuntimeMessage)     
+
+
         # property hooks:
     def updateMaterialTreeName(self,ctx):
         if self.materialTreeId!=-1:

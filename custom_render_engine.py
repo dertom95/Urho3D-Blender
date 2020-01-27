@@ -117,11 +117,6 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
     # render engine data here, for example stopping running render threads.
     def __del__(self):
         print("###############################################################")
-        print("###############################################################")
-        print("###############################################################")
-        print("###############################################################")
-        print("###############################################################")
-        print("###############################################################")
         print("DELETEDELETE %s" % type(self))
         # changes = {"viewId" : self.view_id,
         #            "action" : "destroy"}

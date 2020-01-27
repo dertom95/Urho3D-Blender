@@ -359,10 +359,10 @@ class ExecutionQueue:
     ## execute immediately if called from main-thread, otherwise queue it
     def execute_or_queue_action(self,action):
         if current_thread() is main_thread():
-            print("immediate call")
+            #print("immediate call")
             action()
         else:
-            print("queued:%s"%current_thread().getName())
+            #print("queued:%s"%current_thread().getName())
             self.queue_action(action)
 
     def has_actions(self):
@@ -435,7 +435,7 @@ def set_found_blender_runtime(found=True):
 
 
 def PingForRuntime():
-    print("PPIINNGG for Runtime")
+    #print("PPIINNGG for Runtime")
 
     if PingData.ping_check_running: 
         return
