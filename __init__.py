@@ -68,7 +68,7 @@ import os
 import time
 import sys
 import shutil
-import logging, random
+import logging, random, ntpath
 import subprocess
 import json
 from .networking import BCONNECT_AVAILABLE
@@ -1216,6 +1216,15 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
                     maxlen = 512,
                     subtype = "FILE_PATH")   
 
+    enableRuntime2 : bpy.props.BoolProperty(default=False,description="enable a second runtime to be started from within blender")
+
+    runtime2File :  bpy.props.StringProperty(
+                    name="Runtime WorkingDir",
+                    description="WorkingDir",
+                    maxlen = 512,
+                    default = "",
+                    subtype='FILE_PATH')            
+
 
     # --- Output settings ---
     
@@ -1856,6 +1865,7 @@ class UrhoExportStartRuntime(bpy.types.Operator):
     bl_label = "Start Runtime"
     
 
+
     @classmethod
     def poll(self, context):
         return True
@@ -1917,6 +1927,76 @@ class UrhoExportStartRuntime(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
+
+## TODO: mrege both into one...
+class UrhoExportStartRuntime2(bpy.types.Operator):
+    ''' Start runtime '''
+    bl_idname = "urho.start_runtime2"
+    bl_label = "Start Runtime 2"
+    
+    
+
+    @classmethod
+    def poll(self, context):
+        return True
+
+    def execute(self, context):
+        scene = context.scene
+        settings = scene.urho_exportsettings
+
+        execpath = bpy.path.abspath(settings.runtime2File)
+        if execpath[0:2] in { "./", ".\\" }:
+            pwd = os.path.dirname(bpy.app.binary_path)
+            execpath = pwd + os.sep + execpath
+
+        # workingdir = bpy.path.abspath(settings.outputPath)
+        # # workingdir = bpy.path.abspath(settings.runtimeWorkingDir)
+
+        processParams = []
+        processParams.append(execpath)
+        # if workingdir != "":
+        #     processParams.append("--workingdir")
+        #     processParams.append(workingdir)
+
+
+        # exportComponentPath = settings.runtimeExportComponents
+        # if IsJsonNodeAddonAvailable:
+        #     exportComponentPath = bpy.data.worlds[0].jsonNodes.path
+        
+        # if exportComponentPath != "":
+        #     processParams.append("--componentexport")
+        #     processParams.append(exportComponentPath)
+
+
+        # processParams.append("--scenename")
+        # processParams.append(bpy.context.scene.name+".xml")
+        
+##        parameters = " --workdir "+workingdir
+        print("EXEC-DIR: %s" % execpath)
+        # print("WORKING-DIR: %s" % workingdir)
+        # print("PARAMS:%s" % processParams)
+        # launch game
+        try:
+            subp = subprocess.Popen(processParams,  shell=False)
+            print("\nLAUNCH RUNTIME: %s\n" % processParams)
+            # if settings.runtimeBlocking:
+            #     subp.communicate() #like wait() but without the risk of deadlock with verbose output
+            returnv = subp.returncode
+
+            if returnv != 0:
+                self.report({'ERROR'},"runtime exited anormally.")
+                return {'CANCELLED'}
+
+            self.report({'INFO'},"runtime exited normally.")
+        except OSError as er:
+            self.report({'ERROR'}, "Could not launch: " + execpath + " Error: " + str(er))
+            return {'CANCELLED'}
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
 
 
 def ObjectUserData(obj,layout):
@@ -2208,21 +2288,36 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             # row = box.row()
             # row.prop(settings,"runtimeFlags")            
             row = box.row()
-            if IsJsonNodeAddonAvailable:
-                row.prop(bpy.data.worlds[0].jsonNodes,"path",text="material-json path")  
-            else:
-                row.prop(settings,"runtimeExportComponents",text="material-json path")  
+            row.operator("urho.start_runtime",icon="GHOST_ENABLED")
+
+            row = box.row()
+            row.prop(settings,"enableRuntime2")
+            if (settings.enableRuntime2):
+                row = box.row()
+                row.prop(settings,"runtime2File")
+                if (settings.runtime2File):
+                    path = bpy.path.abspath(settings.runtime2File)
+                    if os.path.exists(path):
+                        filename = ntpath.basename(path)
+                        row = box.row()
+                        row.operator("urho.start_runtime2",text="Run %s" % filename)
+
+
+            # if IsJsonNodeAddonAvailable:
+            #     row.prop(bpy.data.worlds[0].jsonNodes,"path",text="material-json path")  
+            # else:
+            #     row.prop(settings,"runtimeExportComponents",text="material-json path")  
             
             innerbox = box.box()
             row = innerbox.row()
             row.prop(settings,"runtimeShowPhysics",text="show physics")
             if settings.runtimeShowPhysics:
+                row = innerbox.row()
                 row.prop(settings,"runtimeShowPhysicsDepth",text="use depth test")
             #row = innerbox.row()
             #row.prop(settings,"runtimeActivatePhysics",text="activate physics")
             
-            row = box.row()            
-            row.operator("urho.start_runtime",icon="GHOST_ENABLED")
+
 
 
         row = layout.row()
@@ -2725,6 +2820,7 @@ def register():
     bpy.utils.register_class(UrhoExportObjectPanel)
     bpy.utils.register_class(UrhoExportMaterialPanel)
     bpy.utils.register_class(UrhoExportStartRuntime)
+    bpy.utils.register_class(UrhoExportStartRuntime2)
     bpy.utils.register_class(UrhoApplyVertexData)
 
     
@@ -2872,6 +2968,7 @@ def register():
     km = wm.keyconfigs.addon.keymaps.new('Window', space_type='EMPTY', region_type='WINDOW', modal=False)
 
     kmi = km.keymap_items.new("urho.start_runtime", 'A', 'PRESS', ctrl=True,shift=True)
+    kmi = km.keymap_items.new("urho.start_runtime2", 'Q', 'PRESS', ctrl=True,shift=True)
     addon_keymaps.append(km)
 
     print("installed addons: %s" % bpy.context.preferences.addons.keys())
@@ -2905,6 +3002,7 @@ def unregister():
     bpy.utils.unregister_class(UrhoApplyVertexData)
     bpy.utils.unregister_class(UrhoExportMaterialPanel)
     bpy.utils.unregister_class(UrhoExportGlobalSettings)
+    bpy.utils.unregister_class(UrhoExportStartRuntime2)
 
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)
