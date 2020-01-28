@@ -1879,39 +1879,28 @@ class UrhoExportStartRuntime(bpy.types.Operator):
         addonPrefs = bpy.context.preferences.addons[__name__].preferences
 
         execpath = bpy.path.abspath(addonPrefs.runtimeFile)
-        if execpath[0:2] in { "./", ".\\" }:
-            pwd = os.path.dirname(bpy.app.binary_path)
-            execpath = pwd + os.sep + execpath
+        workingdir =os.path.dirname(execpath)
+        # if execpath[0:2] in { "./", ".\\" }:
+        #     pwd = os.path.dirname(bpy.app.binary_path)
+        #     execpath = pwd + os.sep + execpath
 
         # workingdir = bpy.path.abspath(settings.outputPath)
         # # workingdir = bpy.path.abspath(settings.runtimeWorkingDir)
 
+
+
         processParams = []
         processParams.append(execpath)
-        # if workingdir != "":
-        #     processParams.append("--workingdir")
-        #     processParams.append(workingdir)
 
-
-        # exportComponentPath = settings.runtimeExportComponents
-        # if IsJsonNodeAddonAvailable:
-        #     exportComponentPath = bpy.data.worlds[0].jsonNodes.path
-        
-        # if exportComponentPath != "":
-        #     processParams.append("--componentexport")
-        #     processParams.append(exportComponentPath)
-
-
-        # processParams.append("--scenename")
-        # processParams.append(bpy.context.scene.name+".xml")
         
 ##        parameters = " --workdir "+workingdir
         print("EXEC-DIR: %s" % execpath)
+        print("PWD:%s abspath:%s" % ( os.path.dirname(bpy.app.binary_path),bpy.path.abspath(addonPrefs.runtimeFile) ))
         # print("WORKING-DIR: %s" % workingdir)
         # print("PARAMS:%s" % processParams)
         # launch game
         try:
-            subp = subprocess.Popen(processParams,  shell=False)
+            subp = subprocess.Popen(processParams,  shell=False, cwd=workingdir)
             print("\nLAUNCH RUNTIME: %s\n" % processParams)
             # if settings.runtimeBlocking:
             #     subp.communicate() #like wait() but without the risk of deadlock with verbose output
@@ -1946,40 +1935,25 @@ class UrhoExportStartRuntime2(bpy.types.Operator):
         scene = context.scene
         settings = scene.urho_exportsettings
 
+        workingdir =os.path.dirname(execpath)
+
         execpath = bpy.path.abspath(settings.runtime2File)
         if execpath[0:2] in { "./", ".\\" }:
             pwd = os.path.dirname(bpy.app.binary_path)
             execpath = pwd + os.sep + execpath
 
-        # workingdir = bpy.path.abspath(settings.outputPath)
+    
         # # workingdir = bpy.path.abspath(settings.runtimeWorkingDir)
 
         processParams = []
         processParams.append(execpath)
-        # if workingdir != "":
-        #     processParams.append("--workingdir")
-        #     processParams.append(workingdir)
-
-
-        # exportComponentPath = settings.runtimeExportComponents
-        # if IsJsonNodeAddonAvailable:
-        #     exportComponentPath = bpy.data.worlds[0].jsonNodes.path
-        
-        # if exportComponentPath != "":
-        #     processParams.append("--componentexport")
-        #     processParams.append(exportComponentPath)
-
-
-        # processParams.append("--scenename")
-        # processParams.append(bpy.context.scene.name+".xml")
-        
 ##        parameters = " --workdir "+workingdir
         print("EXEC-DIR: %s" % execpath)
         # print("WORKING-DIR: %s" % workingdir)
         # print("PARAMS:%s" % processParams)
         # launch game
         try:
-            subp = subprocess.Popen(processParams,  shell=False)
+            subp = subprocess.Popen(processParams,  shell=False, cwd=workingdir)
             print("\nLAUNCH RUNTIME: %s\n" % processParams)
             # if settings.runtimeBlocking:
             #     subp.communicate() #like wait() but without the risk of deadlock with verbose output
@@ -2745,6 +2719,7 @@ def register():
             if topic == "runtime" and subtype == "hello":
                 settings = bpy.context.scene.urho_exportsettings
                 PublishRuntimeSettings(settings,bpy.context)
+                bpy.ops.urho.exportmaterials()
 
         execution_queue.execute_or_queue_action(QueuedExecution)  
 
