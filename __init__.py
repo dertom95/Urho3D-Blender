@@ -1935,12 +1935,13 @@ class UrhoExportStartRuntime2(bpy.types.Operator):
         scene = context.scene
         settings = scene.urho_exportsettings
 
-        workingdir =os.path.dirname(execpath)
 
         execpath = bpy.path.abspath(settings.runtime2File)
         if execpath[0:2] in { "./", ".\\" }:
             pwd = os.path.dirname(bpy.app.binary_path)
             execpath = pwd + os.sep + execpath
+
+        workingdir =os.path.dirname(execpath)
 
     
         # # workingdir = bpy.path.abspath(settings.runtimeWorkingDir)
