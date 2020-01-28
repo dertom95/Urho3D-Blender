@@ -948,8 +948,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
     ## create a mapping to determine in which collection the corressponding object is contained
     for col in instancedCollections:
-        for grpObj in col.all_objects:
+        grpObjects = col.all_objects[:] 
+        for grpObj in grpObjects:
             print(("obj:%s grp:%s") %(grpObj.name,col.name) )
+
+            if grpObj.type=="ARMATURE":
+                print("Found armature: adding children to group")
+                for child in grpObj.children:
+                    grpObjects.append(child)
+                    print("armature-child:%s" % child.name)
 
             if grpObj.name in groupObjMapping:
                 groupObjMapping[grpObj.name].append(col)
@@ -1044,7 +1051,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     groupName = GetGroupName(group.name)
                     
                     # get or create node for the group
-                    if  groupName not in a:
+                    if  groupName not in a :
                         offset = group.instance_offset # Vector((0,0,0)) # no offset in blender 2.8 anymore
 
                         a[groupName] = ET.Element('node')
