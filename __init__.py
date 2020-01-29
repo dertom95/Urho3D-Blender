@@ -1075,16 +1075,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
         self.skeletons = False
         self.onlyKeyedBones = False
-        self.onlyDeformBones = False
-        self.onlyVisibleBones = False
-        self.actionsByFcurves = False
-        self.parentBoneSkinning = False
-        self.derigify = False
-        self.clampBoundingBox = False
-
-        self.animations = False
-        self.objAnimations = False
-        self.animationSource = 'USED_ACTIONS'
+        self.onlyDeformBones = Falsegeometry
         self.animationExtraFrame = True
         self.animationTriggers = False
         self.animationRatioTriggers = False
@@ -1756,9 +1747,11 @@ class UrhoExportOperator(bpy.types.Operator):
     
     bl_idname = "urho.export"
     bl_label = "Export"
+
+    ignore_geo_skel_anim : bpy.props.BoolProperty(default=False)
   
     def execute(self, context):
-        ExecuteAddon(context, not bpy.context.scene.urho_exportsettings.showLog )
+        ExecuteAddon(context, not bpy.context.scene.urho_exportsettings.showLog, self.ignore_geo_skel_anim )
         return {'FINISHED'}
  
     def invoke(self, context, event):
@@ -2197,7 +2190,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         #row=layout.row(align=True)
         minimizeIcon = 'ZOOM_IN' if settings.minimize else 'ZOOM_OUT'
         row.prop(settings, "minimize", text="", icon=minimizeIcon, toggle=False)
-        row.operator("urho.export", icon='EXPORT')
+        row.operator("urho.export", icon='EXPORT').ignore_geo_skel_anim=False
         #split = layout.split(percentage=0.1)
         if sys.platform.startswith('win'):
             row.operator("wm.console_toggle", text="", icon='CONSOLE')
@@ -2207,6 +2200,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             return
 
         row = layout.row()
+        row.operator("urho.export", icon='EXPORT',text='EXPORT(no geo)').ignore_geo_skel_anim=True
         row.operator("urho.exportmaterials", icon='EXPORT')
         
         row = layout.row()
@@ -3518,11 +3512,23 @@ def ExecuteUrhoExport(context):
     return True
 
 
-def ExecuteAddon(context, silent=False):
+def ExecuteAddon(context, silent=False, ignoreGeoAnim=False):
     global_settings = bpy.data.worlds[0].global_settings
 
     if global_settings.file_id == -1:
         global_settings.file_id = random.randrange(100,999)
+
+    settings = bpy.context.scene.urho_exportsettings
+
+    if ignoreGeoAnim:
+        before_export_geo =  settings.geometries
+        before_export_anim = settings.animations
+        before_export_skel = settings.skeletons
+        before_export_morph = settings.morphs
+        settings.geometries = False
+        settings.animations = False
+        #settings.skeletons = False
+        settings.morphs = False
 
 
     before_export_selection = bpy.context.selected_objects
@@ -3557,6 +3563,13 @@ def ExecuteAddon(context, silent=False):
         select_obj.select_set(True)
     bpy.context.view_layer.objects.active = before_export_active_obj
     #bpy.ops.object.mode_set(mode=before_export_mode, toggle=False)
+
+
+    if ignoreGeoAnim:
+        settings.geometries = before_export_geo
+        settings.animations = before_export_anim
+        settings.skeletons = before_export_skel
+        settings.morphs = before_export_morph
 
 
     log.info("Export ended in {:.4f} sec".format(time.time() - startTime) )

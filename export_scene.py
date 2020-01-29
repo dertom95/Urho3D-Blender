@@ -246,74 +246,6 @@ class UrhoScene:
 # Export materials
 #------------------------
 
-def UrhoWriteMaterial(uScene, uMaterial, filepath, fOptions):
-
-    materialElem = ET.Element('material')
-
-    
-
-    #comment = ET.Comment("Material {:s} created from Blender".format(uMaterial.name))
-    #materialElem.append(comment)
-
-    # Technique
-    techniquFile = GetFilepath(PathType.TECHNIQUES, uMaterial.techniqueName, fOptions)
-    techniqueElem = ET.SubElement(materialElem, "technique")
-    techniqueElem.set("name", techniquFile[1])
-
-    # Textures
-    if uMaterial.diffuseTexName:
-        diffuseElem = ET.SubElement(materialElem, "texture")
-        diffuseElem.set("unit", "diffuse")
-        diffuseElem.set("name", uScene.FindFile(PathType.TEXTURES, uMaterial.diffuseTexName))
-
-    if uMaterial.normalTexName:
-        normalElem = ET.SubElement(materialElem, "texture")
-        normalElem.set("unit", "normal")
-        normalElem.set("name", uScene.FindFile(PathType.TEXTURES, uMaterial.normalTexName))
-
-    if uMaterial.specularTexName:
-        specularElem = ET.SubElement(materialElem, "texture")
-        specularElem.set("unit", "specular")
-        specularElem.set("name", uScene.FindFile(PathType.TEXTURES, uMaterial.specularTexName))
-
-    if uMaterial.emissiveTexName:
-        emissiveElem = ET.SubElement(materialElem, "texture")
-        emissiveElem.set("unit", "emissive")
-        emissiveElem.set("name", uScene.FindFile(PathType.TEXTURES, uMaterial.emissiveTexName))
-
-    # PS defines
-    if uMaterial.psdefines != "":
-        psdefineElem = ET.SubElement(materialElem, "shader")
-        psdefineElem.set("psdefines", uMaterial.psdefines.lstrip())
-
-    # VS defines
-    if uMaterial.vsdefines != "":
-        vsdefineElem = ET.SubElement(materialElem, "shader")
-        vsdefineElem.set("vsdefines", uMaterial.vsdefines.lstrip())
-
-    # Parameters
-    if uMaterial.diffuseColor:
-        diffuseColorElem = ET.SubElement(materialElem, "parameter")
-        diffuseColorElem.set("name", "MatDiffColor")
-        diffuseColorElem.set("value", Vector4ToString(uMaterial.diffuseColor) )
-
-    if uMaterial.specularColor:
-        specularElem = ET.SubElement(materialElem, "parameter")
-        specularElem.set("name", "MatSpecColor")
-        specularElem.set("value", Vector4ToString(uMaterial.specularColor) )
-
-    if uMaterial.emissiveColor:
-        emissiveElem = ET.SubElement(materialElem, "parameter")
-        emissiveElem.set("name", "MatEmissiveColor")
-        emissiveElem.set("value", Vector3ToString(uMaterial.emissiveColor) )
-
-    if uMaterial.twoSided:
-        cullElem = ET.SubElement(materialElem, "cull")
-        cullElem.set("value", "none")
-        shadowCullElem = ET.SubElement(materialElem, "shadowcull")
-        shadowCullElem.set("value", "none")
-
-    WriteXmlFile(materialElem, directroy, fOptions)
 
 def UrhoWriteMaterialTrees(fOptions,getUsedMaterials=False):
     print ("EXPORT MATERIAL-NODETREES")
@@ -957,6 +889,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 for child in grpObj.children:
                     grpObjects.append(child)
                     print("armature-child:%s" % child.name)
+                continue
 
             if grpObj.name in groupObjMapping:
                 groupObjMapping[grpObj.name].append(col)
@@ -1074,7 +1007,9 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         
                     
                     # create root for the group object
-                    a[groupName].append(a[modelNode])
+                    print("a[%s].append(a[%s]" %(groupName,modelNode))
+                    if a[modelNode] not in a[groupName]:
+                        a[groupName].append(a[modelNode])
                 #a[modelNode] = ET.SubElement(a[groupName],'node') 
 
         a[modelNode].set("id", "{:d}".format(k))
