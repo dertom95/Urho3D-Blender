@@ -2,6 +2,15 @@ Urho3D-Blender
 ==============
 
 This plugin is heavily under development....
+   
+   
+Wanna give it a try? Download the latest release from the [release section](https://github.com/dertom95/Urho3D-Blender/releases/tag/0.1.2). In the zip are instruction how to install.
+     
+  
+   
+
+
+   
 [HOW to install and use](https://github.com/dertom95/Urho3D-Blender/wiki)
 
 At the moment the handling with runtime, installation, addon dependencies is a bit compilcated but I will work on this to make it more user-friendly in the future.
