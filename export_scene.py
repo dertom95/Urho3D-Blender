@@ -88,17 +88,67 @@ class UrhoSceneModel:
         self.rotation = Quaternion((1.0, 0.0, 0.0, 0.0))
         # Model scale
         self.scale = Vector((1.0, 1.0, 1.0))
+
+        self.parent_bone = None
+
     def Load(self, uExportData, uModel, objectName, sOptions):
         self.name = uModel.name
 
         self.blenderObjectName = objectName
         object = bpy.data.objects[objectName]
+
         if objectName:
 
             transObject = object
+
+            bone_parent = False
+
+
             if object.parent and object.parent.type=="ARMATURE":
-                print("FOUND PARENT Armature!")
-                transObject = object.parent
+
+                if object.parent_type=="BONE":
+                    bone_parent = True
+
+                    # we need to parent the bone-parented objects to one child of the armature (due to matrix-problems)
+                    # whoever finds a better way is welcome to use this. until then let's do the hack
+                    old_matrix = object.matrix_local.copy()
+                    old_parent = object.parent
+                    old_parent_matrix = object.matrix_parent_inverse.copy()
+                    self.parent_bone = object.parent_bone
+
+                    print("FOUND PARENT Bone parenting!")
+                    print("FOUND PARENT Armature!")
+                    print("FOUND PARENT Armature!")
+                    try:
+                        # we need to add the object to one child of the armature
+                        for child in object.parent.children:
+                            if child != object:
+                                object.parent = child
+                                object.parent_type="OBJECT"
+                                object.matrix_parent_inverse = child.matrix_world.inverted()                                
+
+                                parentObject = child
+                                transObject = object
+                                break
+                    except Exception as e:
+                        print("problem: %s" % e)
+                        transObject = object.parent
+                        parentObject = transObject.parent
+                else:
+                    transObject = object.parent
+                    parentObject = transObject.parent
+            else:
+                parentObject = transObject.parent
+
+
+            if (object.name=="Suzanne"):
+                print("###############--------------------------")
+                print("###############--------------------------")
+                print("Transobject:%s ParentObject:%s" %( transObject,parentObject ))
+                print("Transobject:%s ParentObject:%s" %( transObject.name,parentObject.name ))
+                print("###############--------------------------")
+                print("###############--------------------------")
+
 
             # Get the local matrix (relative to parent)
             objMatrix = transObject.matrix_local
@@ -120,11 +170,21 @@ class UrhoSceneModel:
             self.scale = Vector((scale.x, scale.z, scale.y))
 
             # Get parent object
-            parentObject = transObject.parent
             if parentObject :
                 self.parentObjectName = parentObject.name
 
-        if len(uModel.bones) > 0 or len(uModel.morphs) > 0:
+            if bone_parent:
+                object.parent=old_parent
+                object.parent_bone=self.parent_bone
+                object.parent_type="BONE"
+                object.matrix_parent_inverse = old_parent_matrix
+                object.matrix_local = old_matrix
+
+
+        print("ObjectName:%s uModelName:%s bones:%s" % (uModel.name,object.name,len(uModel.bones)))
+#        if (len(uModel.bones) > 0 and len(object.vertex_groups)>0) or len(uModel.morphs) > 0):
+        if ( (object.type=="MESH" and (len(object.vertex_groups)>0 or object.data.shape_keys))
+            or (object.type!="MESH" and (len(uModel.bones) > 0 or len(uModel.morphs) > 0))):
             self.type = "AnimatedModel"
         elif object.lodsetID>0:
             # this object has an lodset as mesh
@@ -974,6 +1034,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             else:
                 for usm in uScene.modelsList:
                     if usm.name == uSceneModel.parentObjectName:
+                        print("name:%s parentName:%s" % ( uSceneModel.objectName,uSceneModel.parentObjectName ))
                         a[modelNode] = ET.SubElement(a[usm.name], "node")
                         break                    
 
@@ -1063,6 +1124,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             currentMaterialValue = "Material" + materials
             a["{:d}".format(m)].set("value", currentMaterialValue)
             m += 1
+
+            if obj.parent_type=="BONE":
+                attrs={
+                    "boneName" : obj.parent_bone
+                }
+                add_component(a[modelNode],"ParentBone",attrs)
+
 
             if obj.type=="MESH":
                 if obj.cast_shadow:
@@ -1183,6 +1251,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     else:
                         # we already added this nodetree! nothing more to do
                         pass
+
+            if obj.parent_type=="BONE":
+                attrs={
+                    "boneName" : obj.parent_bone
+                }
+                add_component(a[modelNode],"ParentBone",attrs)
+
             if obj.type == "LIGHT": #simple shadow-settings-export. For more control use LightNode
                 if not HasComponent(a[modelNode],"RotationFix"):
                     add_component(a[modelNode],"RotationFix")
