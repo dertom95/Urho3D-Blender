@@ -6,9 +6,9 @@ This plugin is heavily under development....
 
 **Use this:**
    
-Wanna give it a try? Download the latest release from the [release section](https://github.com/dertom95/Urho3D-Blender/releases/tag/0.1.2). In the zip are instruction how to install.
+Wanna give it a try? Download the latest release from the [release section](https://github.com/dertom95/Urho3D-Blender/releases/tag/0.1.2). **In the zip are instruction how to install.**
      
-**Ignore the rest (eventhough most of it is still valid)  **
+**Ignore the rest (eventhough most of it is still valid)**
   
 ------------------------------------------------------------------------------------  
   
