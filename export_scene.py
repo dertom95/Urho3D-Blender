@@ -141,13 +141,7 @@ class UrhoSceneModel:
                 parentObject = transObject.parent
 
 
-            if (object.name=="Suzanne"):
-                print("###############--------------------------")
-                print("###############--------------------------")
-                print("Transobject:%s ParentObject:%s" %( transObject,parentObject ))
-                print("Transobject:%s ParentObject:%s" %( transObject.name,parentObject.name ))
-                print("###############--------------------------")
-                print("###############--------------------------")
+
 
 
             # Get the local matrix (relative to parent)

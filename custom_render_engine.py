@@ -262,6 +262,12 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
                 data = str.encode(changesJson)
 
                 Publish("blender","data_change","json",data)
+
+                # def call_on_queue():
+                #     bpy.ops.urho.export(ignore_geo_skel_anim=True)
+
+                # execution_queue.execute_or_queue_action(call_on_queue)
+
                 self.changes = None
             #print("no changes")
 
