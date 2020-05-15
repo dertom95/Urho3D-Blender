@@ -2304,7 +2304,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         # row.label(text="Origin:")
         # row.prop(settings, "origin", expand=True)
 
-        #box.prop(settings, "orientation")
+        box.prop(settings, "orientation")
 
         #        # box.prop(settings, "merge")
         # if settings.merge:
