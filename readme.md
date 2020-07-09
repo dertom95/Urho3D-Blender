@@ -6,24 +6,20 @@ This plugin is heavily under development....
 
 **Use this:**
    
-Wanna give it a try? Download the latest release from the [release section](https://github.com/dertom95/Urho3D-Blender/releases). **In the zip are instruction how to install.**
-     
+Wanna give it a try? Download the latest release from the [release section](https://github.com/dertom95/Urho3D-Blender/releases).      
  
 
 **It is important to strictly follow this installation steps:**  
 [HOW to install and use](https://github.com/dertom95/Urho3D-Blender/wiki)
-  
+
+**Additional**  
+[Getting Started Video](https://www.youtube.com/watch?v=vyP0dXvh9Aw)  
+[Video Playlist](https://www.youtube.com/playlist?list=PL3dUhaUzMSSq0ngtTH6f_cj7jKKRhtzdM)  
+   
 At the moment the handling with runtime, installation, addon dependencies is a bit compilcated but I will work on this to make it more user-friendly in the future.
      
 **INFO** If you struggle to install this addon, there is [another exporter](https://github.com/1vanK/Urho3D-Blender/tree/2_80) also based on reattiva's addon for blender 2.8+ that might worker better for you.   
      
-------------------------------------------------------------------------------------  
-------------------------------------------------------------------------------------  
-OLD INSTRUCTIONS
-------------------------------------------------------------------------------------  
-------------------------------------------------------------------------------------  
-   
-   
    
    
    
@@ -43,6 +39,12 @@ Videos:
 - [custom component workflow](https://www.youtube.com/watch?v=B37ZTa7mbpE)
 - [Collection Instances](https://www.youtube.com/watch?v=Ut0HJYpvuFc)
 - [Armature Animation](https://www.youtube.com/watch?v=h2NS348L8X0)
+
+------------------------------------------------------------------------------------  
+------------------------------------------------------------------------------------  
+OLD INSTRUCTIONS
+------------------------------------------------------------------------------------  
+------------------------------------------------------------------------------------  
 
 
 Guide [here](https://github.com/reattiva/Urho3D-Blender/blob/master/guide.txt).
