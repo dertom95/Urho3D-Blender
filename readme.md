@@ -15,6 +15,8 @@ Wanna give it a try? Download the latest release from the [release section](dert
   
 At the moment the handling with runtime, installation, addon dependencies is a bit compilcated but I will work on this to make it more user-friendly in the future.
      
+**INFO** If you struggle to install this addon, there is [another exporter](https://github.com/1vanK/Urho3D-Blender/tree/2_80) also based on reattiva's addon for blender 2.8+ that might worker better for you.   
+     
 ------------------------------------------------------------------------------------  
 ------------------------------------------------------------------------------------  
 OLD INSTRUCTIONS
