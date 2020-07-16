@@ -1968,6 +1968,42 @@ class UrhoExportStartRuntime2(bpy.types.Operator):
         return self.execute(context)
 
 
+class ApplyExportUrhoToCollectionChildren(bpy.types.Operator):
+    ''' Batch (un)set direct(!) children of this collection (exclusive parent) '''
+    bl_idname = "urho.colexport_apply_children"
+    bl_label = "Apply to Children"
+    
+    exportValue : bpy.props.BoolProperty()
+
+    @classmethod
+    def poll(self, context):
+        return True
+
+    # def iterate_collection(self,collection,value):
+    #     if not collection or len(collection.children)==0:
+    #         return
+        
+    #     collection.urhoExport = value
+
+    #     for col in collection.children:
+    #         col.urhoExport = value
+    #         self.iterate_collection(col,value)
+
+
+
+    def execute(self, context):
+
+        parent_col = bpy.context.collection
+
+        if not parent_col:
+            return
+
+        for child in parent_col.children:
+            child.urhoExport=self.exportValue
+
+        return {'FINISHED'}
+
+
 
 def ObjectUserData(obj,layout):
     box = layout.box()
@@ -2034,6 +2070,14 @@ class UrhoExportObjectPanel(bpy.types.Panel):
             box.label(text="Collection '%s'" % currentCollection.name)
             row = box.row()
             row.prop(currentCollection,"urhoExport",text="export as urho object")
+            
+            if len(currentCollection.children)>0:
+                row = box.row()
+                #,description="Batch unset direct(!) children of this collection (exclusive parent)"
+                row.operator("urho.colexport_apply_children",text="children: set export",icon="CHECKBOX_HLT").exportValue=True
+                row = box.row()
+                # ,description="Batch unset direct(!) children of this collection (exclusive parent)"
+                row.operator("urho.colexport_apply_children",text="children: unset export",icon="CHECKBOX_DEHLT").exportValue=False
 
 
         if obj.type=="MESH":
@@ -2806,6 +2850,7 @@ def register():
     bpy.utils.register_class(UrhoExportStartRuntime)
     bpy.utils.register_class(UrhoExportStartRuntime2)
     bpy.utils.register_class(UrhoApplyVertexData)
+    bpy.utils.register_class(ApplyExportUrhoToCollectionChildren)
 
     
     bpy.utils.register_class(UrhoReportDialog)
@@ -2987,6 +3032,7 @@ def unregister():
     bpy.utils.unregister_class(UrhoExportMaterialPanel)
     bpy.utils.unregister_class(UrhoExportGlobalSettings)
     bpy.utils.unregister_class(UrhoExportStartRuntime2)
+    bpy.utils.unregister_class(ApplyExportUrhoToCollectionChildren)
 
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)
