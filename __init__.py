@@ -449,6 +449,51 @@ class UL_URHO_LIST_ITEM_NODETREE(bpy.types.Operator):
 
         return{'FINISHED'}
 
+class UL_URHO_NODETREE_SET_NODETREE_TO_SELECTED(bpy.types.Operator):
+    """Set this material-node for all selected objects (slot 0)"""
+
+    bl_idname = "urho_nodetrees.set_selected"
+    bl_label = "Apply Material to Selection(Slot0)"
+
+    material_nt_name : bpy.props.StringProperty()
+
+    def execute(self, context):
+
+        print("call with %s" % self.material_nt_name)
+
+
+        if self.material_nt_name not in bpy.data.node_groups:
+            print("couldn't find nodetree:%s" % self.material_nt_name)
+            print("couldn't find nodetree:%s" % self.material_nt_name)
+            print("couldn't find nodetree:%s" % self.material_nt_name)
+            print("couldn't find nodetree:%s" % self.material_nt_name)
+            print("couldn't find nodetree:%s" % self.material_nt_name)
+            print("couldn't find nodetree:%s" % self.material_nt_name)
+            print("couldn't find nodetree:%s" % self.material_nt_name)
+            print("couldn't find nodetree:%s" % self.material_nt_name)
+            print("couldn't find nodetree:%s" % self.material_nt_name)
+            print("couldn't find nodetree:%s" % self.material_nt_name)
+            return
+        
+        material_node_tree = bpy.data.node_groups[self.material_nt_name]
+
+        print("FOUND TREE:%s" % material_node_tree.name)
+
+        for obj in bpy.context.selected_objects:
+            if obj.type!="MESH":
+                print("NO MESH: %s" % obj.name)
+                continue
+
+            print("adding to %s" % obj.name)                
+            if len(obj.data.materialNodetrees)==0:
+                obj.data.materialNodetrees.add()
+                
+            ntInfo = obj.data.materialNodetrees[0]
+            ntInfo.nodetreePointer = material_node_tree
+                
+        return{'FINISHED'}
+
+
 
 class UL_URHO_LIST_ITEM_DEL_NODETREE(bpy.types.Operator):
     """Delete the selected item from the list."""
@@ -2658,6 +2703,9 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
                 innerBox = box.box()
                 row = innerBox.row()
                 row.prop(bpy.context.scene.urho_exportsettings,"create_default_material_nodetree",text="auto-create nodetree for empty nodetrees")
+                if nodetree and len(bpy.context.selected_objects):
+                    row = innerBox.row()
+                    row.operator("urho_nodetrees.set_selected").material_nt_name=nodetree.name
 
                 ObjectMaterialNodetree(obj,box)
 
@@ -2851,6 +2899,7 @@ def register():
     bpy.utils.register_class(UrhoExportStartRuntime2)
     bpy.utils.register_class(UrhoApplyVertexData)
     bpy.utils.register_class(ApplyExportUrhoToCollectionChildren)
+    bpy.utils.register_class(UL_URHO_NODETREE_SET_NODETREE_TO_SELECTED)
 
     
     bpy.utils.register_class(UrhoReportDialog)
@@ -3033,6 +3082,7 @@ def unregister():
     bpy.utils.unregister_class(UrhoExportGlobalSettings)
     bpy.utils.unregister_class(UrhoExportStartRuntime2)
     bpy.utils.unregister_class(ApplyExportUrhoToCollectionChildren)
+    bpy.utils.unregister_class(UL_URHO_NODETREE_SET_NODETREE_TO_SELECTED)
 
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)
