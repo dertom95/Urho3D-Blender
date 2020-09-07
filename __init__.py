@@ -353,7 +353,7 @@ class UL_URHO_LIST_ITEM_DEL_USERDATA(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object.user_data
+        return context.active_object and context.active_object.user_data
 
     def execute(self, context):
         kv_list = context.active_object.user_data
@@ -376,7 +376,7 @@ class UL_URHO_LIST_ITEM_MOVE_USERDATA(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object.user_data
+        return context.active_object and context.active_object.user_data
 
     def move_index(self):
         """ Move  """
@@ -503,7 +503,7 @@ class UL_URHO_LIST_ITEM_DEL_NODETREE(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object.nodetrees
+        return context.active_object and context.active_object.type=="MESH" and context.active_object.nodetrees
 
     def execute(self, context):
         currentlist = context.active_object.nodetrees
@@ -526,7 +526,7 @@ class UL_URHO_LIST_ITEM_MOVE_NODETREE(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object.nodetrees
+        return context.active_object and  context.active_object.type=="MESH" and context.active_object.nodetrees
 
     def move_index(self):
         """ Move  """
@@ -600,7 +600,7 @@ class UL_URHO_LIST_ITEM_DEL_MATERIAL_NODETREE(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object.data.materialNodetrees
+        return context.active_object and context.active_object.type=="MESH"
 
     def execute(self, context):
         currentlist = context.active_object.data.materialNodetrees
@@ -624,7 +624,7 @@ class UL_URHO_LIST_ITEM_MOVE_MATERIAL_NODETREE(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object.data.materialNodetrees
+        return context.active_object and  context.active_object.type=="MESH" and context.active_object.data.materialNodetrees
 
     def move_index(self):
         """ Move  """
@@ -825,7 +825,7 @@ class UL_URHO_LIST_ITEM_DEL_LOD(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object.lodsetID
+        return context.active_object and context.active_object.lodsetID
 
     def execute(self, context):
         lodset = getLodSetWithID(context.active_object.lodsetID)
@@ -849,7 +849,7 @@ class UL_URHO_LIST_ITEM_MOVE_LOD(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object.lodsetID
+        return context.active_object and context.active_object.lodsetID
 
     def move_index(self):
         """ Move  """
@@ -2802,7 +2802,7 @@ def register():
     def OnRuntimeMessage(topic,subtype,meta,data):
 
         def QueuedExecution():
-            print("init onRuntime %s - %s - %s - %s" % ( topic,subtype,meta,data ))
+            #print("init onRuntime %s - %s - %s - %s" % ( topic,subtype,meta,data ))
             if topic == "runtime" and subtype == "hello":
                 settings = bpy.context.scene.urho_exportsettings
                 PublishRuntimeSettings(settings,bpy.context)

@@ -17,7 +17,7 @@ if BCONNECT_AVAILABLE:
             # if subtype == "component-update":
             #     print("Try to reload components: todo check if the current file is %s" % data)
             #     bpy.ops.nodetree.jsonload('EXEC_DEFAULT')
-            print("INCOMING %s - %s - %s - %s" % ( topic,subtype,meta,data ) )
+            #print("INCOMING %s - %s - %s - %s" % ( topic,subtype,meta,data ) )
             if topic=="runtime" and subtype=="pong":
                 set_found_blender_runtime(True)
                 PingData.ping_check_running = False

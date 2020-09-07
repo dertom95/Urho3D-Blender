@@ -352,9 +352,9 @@ class ExecutionQueue:
         self.queue = Queue()
 
     def queue_action(self,action):
-        print("added queue function(THREAD:%s)" % current_thread().getName())        
+        #print("added queue function(THREAD:%s)" % current_thread().getName())        
         self.queue.put(action)
-        print("..done..")
+        #print("..done..")
 
     ## execute immediately if called from main-thread, otherwise queue it
     def execute_or_queue_action(self,action):
@@ -371,7 +371,7 @@ class ExecutionQueue:
     def flush_actions(self):
         #print("TRY TO FLUSH EXECUTION ACTIONS: empty?: %s" % self.queue.empty())
         while not self.queue.empty():
-            print("DO EXECUTION FUNCTION")
+            #print("DO EXECUTION FUNCTION")
             # get queued-action...
             action = self.queue.get()
             # ...and execute it
@@ -443,7 +443,7 @@ def PingForRuntime():
     PingData.ping_auto_timer = 10
 
     PingData.ping_check_running = True
-    print("Setted:%s" % PingData.ping_check_running)
+    #print("Setted:%s" % PingData.ping_check_running)
     PingData.ping_runtime_timer = 0
     PingData.ping_runtime_interval = 2
     PingData.ping_count = 0

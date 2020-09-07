@@ -101,10 +101,10 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         AddListener("runtime",self.OnRuntimeMessage)     
 
     def OnRuntimeMessage(self,topic,subtype,meta,data):
-        print("##runtime mesg %s/%s" % (topic,subtype) )
+        #print("##runtime mesg %s/%s" % (topic,subtype) )
         def QueuedExecution():
-            print("FORTY:")
-            print("##runtime mesg %s/%s" % (topic,subtype) )
+            #print("FORTY:")
+            #print("##runtime mesg %s/%s" % (topic,subtype) )
 
             if topic == "runtime" and subtype == "hello":
                 print("FORCE UPDATE  FORCE UPDATE  FORCE UPDATE  FORCE UPDATE  FORCE UPDATE  FORCE UPDATE  FORCE UPDATE  ")
