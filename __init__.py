@@ -77,7 +77,8 @@ from .networking import BCONNECT_AVAILABLE
 tempObjects = []
 
 if IsJsonNodeAddonAvailable():
-    import JSONNodetreeUtils    
+    import JSONNodetreeUtils   
+    from JSONNodetreeCustom import Custom 
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
@@ -1120,7 +1121,17 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
         self.skeletons = False
         self.onlyKeyedBones = False
-        self.onlyDeformBones = Falsegeometry
+        self.onlyDeformBones = False
+        self.onlyVisibleBones = False
+        self.actionsByFcurves = False
+        self.parentBoneSkinning = False
+        self.derigify = False
+        self.clampBoundingBox = False
+
+        self.animations = False
+        self.objAnimations = False
+        self.animationSource = 'USED_ACTIONS'        
+        self.onlyDeformBones = False
         self.animationExtraFrame = True
         self.animationTriggers = False
         self.animationRatioTriggers = False
@@ -2799,6 +2810,12 @@ def call_execution_queue():
         
 
 def register():
+    if IsJsonNodeAddonAvailable():
+        def UI_urho3dcomponents__CNavigationMesh(self,context,layout,propName):
+            layout.label(text="FORTUNA")
+            layout.operator("object.simple_operator")
+
+
     def OnRuntimeMessage(topic,subtype,meta,data):
 
         def QueuedExecution():
