@@ -13,13 +13,11 @@ import os
 import logging
 import math
 
-jsonNodetreeAvailable = False
+jsonNodetreeAvailable = True
 log = logging.getLogger("ExportLogger")
 
-jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.preferences.addons.keys()
-if jsonNodetreeAvailable:
-    from addon_jsonnodetree import JSONNodetree
-    from addon_jsonnodetree import JSONNodetreeUtils
+from .addon_jsonnodetree import JSONNodetree
+from .addon_jsonnodetree import JSONNodetreeUtils
 
 usedMaterialTrees = []
  

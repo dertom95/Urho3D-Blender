@@ -1,0 +1,6 @@
+[submodule "addon_jsonnodetree"]
+	path = addon_jsonnodetree
+	url = https://github.com/dertom95/addon_jsonnodetree.git
+[submodule "addon_blender_connect"]
+	path = addon_blender_connect
+	url = https://github.com/dertom95/addon_blender_connect

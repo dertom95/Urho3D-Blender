@@ -20,28 +20,28 @@ from mathutils import Vector
 import traceback
 
 
-# -----------------------------------------
-# Check if json-nodetree-addon is available
-# -----------------------------------------
-def IsJsonNodeAddonAvailable():
-    #jsonNodetreeAvailable = False
-    #log = logging.getLogger("ExportLogger")
-    jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.preferences.addons.keys()
-    return jsonNodetreeAvailable
+# # -----------------------------------------
+# # Check if json-nodetree-addon is available
+# # -----------------------------------------
+# def IsJsonNodeAddonAvailable():
+#     #jsonNodetreeAvailable = False
+#     #log = logging.getLogger("ExportLogger")
+#     jsonNodetreeAvailable = "addon_jsonnodetree" in bpy.context.preferences.addons.keys()
+#     return jsonNodetreeAvailable
 
-# -------------------------------------------
-# Check if blender-connect-addon is available
-# -------------------------------------------
-def IsBConnectAddonAvailable():
-    bconnectAvailable = "addon_blender_connect" in  bpy.context.preferences.addons.keys()
-    return bconnectAvailable    
+# # -------------------------------------------
+# # Check if blender-connect-addon is available
+# # -------------------------------------------
+# def IsBConnectAddonAvailable():
+#     bconnectAvailable = "addon_blender_connect" in  bpy.context.preferences.addons.keys()
+#     return bconnectAvailable    
 
 
-BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
+# BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
 
-if BCONNECT_AVAILABLE:
-    import addon_blender_connect
-    from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener,GetSessionId
+# if BCONNECT_AVAILABLE:
+#     import addon_blender_connect
+#     from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener,GetSessionId
 
 log = logging.getLogger("ExportLogger")
 

@@ -25,8 +25,8 @@ if DEBUG: print("Urho export init")
 bl_info = {
     "name": "Urho3D export",
     "description": "Urho3D export",
-    "author": "reattiva",
-    "version": (0, 7),
+    "author": "reattiva, dertom",
+    "version": (0, 8),
     "blender": (2, 80, 0),
     "location": "Properties > Render > Urho export",
     "warning": "",
@@ -46,24 +46,25 @@ from .decompose import TOptions, Scan
 from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, UrhoWriteAnimation, \
                          UrhoWriteTriggers, UrhoExport
 from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterialTrees
-from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem,IsJsonNodeAddonAvailable,IsBConnectAddonAvailable, getLodSetWithID,getObjectWithID, execution_queue, \
+from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem, getLodSetWithID,getObjectWithID, execution_queue, \
                     PingData,set_found_blender_runtime,found_blender_runtime, PingForRuntime
 
+from .networking import Start as StartNetwork
+StartNetwork()
 
 if DEBUG: from .testing import PrintUrhoData, PrintAll
 
+from platform import system
 
 from .custom_render_engine import UrhoRenderEngine,register as reRegister,unregister as reUnregister
 
 # connect to blender connect if available
 from .utils import vec2dict, matrix2dict
 
-BCONNECT_AVAILABLE = IsBConnectAddonAvailable()
-
-if BCONNECT_AVAILABLE:
-    import addon_blender_connect
-    from addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener,GetSessionId
-
+#import . addon_blender_connect
+from .addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener,GetSessionId
+from .addon_blender_connect import register as addon_blender_connect_register
+from .addon_blender_connect import unregister as addon_blender_connect_unregister
 import os
 import time
 import sys
@@ -71,14 +72,15 @@ import shutil
 import logging, random, ntpath
 import subprocess
 import json
-from .networking import BCONNECT_AVAILABLE
-
 # object-array to keep track of temporary objects created just for the export-process(like for the lodsets)
 tempObjects = []
 
-if IsJsonNodeAddonAvailable():
-    import JSONNodetreeUtils   
-    from JSONNodetreeCustom import Custom 
+from .addon_jsonnodetree import JSONNodetreeUtils   
+from .addon_jsonnodetree.JSONNodetreeCustom import Custom 
+from .addon_jsonnodetree import register as jsonnodetree_register
+from .addon_jsonnodetree import unregister as jsonnodetree_unregister
+from .addon_jsonnodetree import unregisterSelectorPanel,NODE_PT_json_nodetree_select
+    
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
@@ -176,16 +178,26 @@ def PublishRuntimeSettings(self,context):
 # Blender UI
 #--------------------
 
+current_system = system()
+default_runtime_folder = ""
+if current_system=="Linux":
+    default_runtime_folder=os.path.dirname(os.path.realpath(__file__))+"/runtimes/urho3d-blender-runtime"
+elif current_system=="Windows":
+    default_runtime_folder=os.path.dirname(os.path.realpath(__file__))+"/runtimes/urho3d-blender-runtime.exe"
+
+
 # Addon preferences, they are visible in the Users Preferences Addons page,
 # under the Urho exporter addon row
 class UrhoAddonPreferences(bpy.types.AddonPreferences):
+    global default_runtime_folder
+
     bl_idname = __name__
 
     runtimeFile : bpy.props.StringProperty(
                 name="Runtime",
                 description="Path of the urho3d runtime",
                 maxlen = 512,
-                default = "",
+                default = default_runtime_folder,
                 subtype='FILE_PATH')
 
     outputPath : StringProperty(
@@ -2810,12 +2822,17 @@ def call_execution_queue():
         
 
 def register():
-    if IsJsonNodeAddonAvailable():
-        def UI_urho3dcomponents__CNavigationMesh(self,context,layout,propName):
-            layout.label(text="FORTUNA")
-            layout.operator("object.simple_operator")
+    try:
+        jsonnodetree_register()
+    except:
+        print("Unexpected error in jsonnodetree_register:", sys.exc_info()[0])
 
+    try:    
+        addon_blender_connect_register()
+    except:
+        print("Unexpected error in addon_blender_connect_register:", sys.exc_info()[0])
 
+    
     def OnRuntimeMessage(topic,subtype,meta,data):
 
         def QueuedExecution():
@@ -2966,82 +2983,78 @@ def register():
     bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_LOD)    
     bpy.utils.register_class(UrhoExportMeshPanel)
 
-    if IsJsonNodeAddonAvailable():
-        bpy.utils.register_class(UrhoExportNodetreePanel)
-        bpy.utils.register_class(UrhoExportScenePanel)
+    bpy.utils.register_class(UrhoExportNodetreePanel)
+    bpy.utils.register_class(UrhoExportScenePanel)
 
-        bpy.utils.register_class(UL_URHO_LIST_NODETREE)
-        bpy.utils.register_class(UL_URHO_LIST_ITEM_NODETREE)
-        bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_NODETREE)
-        bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_NODETREE)
-        bpy.utils.register_class(NodetreeInfo)
-        bpy.types.Object.nodetrees = bpy.props.CollectionProperty(type=NodetreeInfo)
-        bpy.types.Object.list_index_nodetrees = IntProperty(name = "Index for nodetree list",default = 0)
-
-
-        bpy.utils.register_class(UL_URHO_LIST_MATERIAL_NODETREE)
-        bpy.utils.register_class(UL_URHO_LIST_ITEM_MATERIAL_NODETREE)
-        bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_MATERIAL_NODETREE)
-        bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_MATERIAL_NODETREE)
-        bpy.utils.register_class(MaterialNodetreeInfo)
-        bpy.types.Mesh.materialNodetrees = bpy.props.CollectionProperty(type=MaterialNodetreeInfo)
-        bpy.types.Mesh.list_index_nodetrees = IntProperty(name = "Index for nodetree list",default = 0)
-
-        #bpy.types.Mesh.materialNodetree=bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_material_nodetree)
+    bpy.utils.register_class(UL_URHO_LIST_NODETREE)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_NODETREE)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_NODETREE)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_NODETREE)
+    bpy.utils.register_class(NodetreeInfo)
+    bpy.types.Object.nodetrees = bpy.props.CollectionProperty(type=NodetreeInfo)
+    bpy.types.Object.list_index_nodetrees = IntProperty(name = "Index for nodetree list",default = 0)
 
 
-        try:
-            #print("Try to remove the default-nodetree-selector")
-            import addon_jsonnodetree
-            
+    bpy.utils.register_class(UL_URHO_LIST_MATERIAL_NODETREE)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_MATERIAL_NODETREE)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_MATERIAL_NODETREE)
+    bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_MATERIAL_NODETREE)
+    bpy.utils.register_class(MaterialNodetreeInfo)
+    bpy.types.Mesh.materialNodetrees = bpy.props.CollectionProperty(type=MaterialNodetreeInfo)
+    bpy.types.Mesh.list_index_nodetrees = IntProperty(name = "Index for nodetree list",default = 0)
 
-            def customAutoSelection(current_obj,current_treetype,current_tree):
-                global ntSelectedObject;
-                def chooseRighTreeForObject(current_obj,current_treetype,current_tree):
-                    global ntSelectedObject;
+    #bpy.types.Mesh.materialNodetree=bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_material_nodetree)
 
-                    if current_treetype=="urho3dcomponents" and current_obj:
-                        selectNT = current_obj.list_index_nodetrees
-                        if current_obj and len(current_obj.nodetrees)>0 and current_obj.nodetrees[selectNT].nodetreePointer:
-                            try:
-                                autoNodetree = current_obj.nodetrees[selectNT].nodetreePointer
-                                ntSelectedObject = current_obj                                
-                                return autoNodetree
-                            except:
-                                pass
-                    elif current_treetype=="urho3dmaterials" and current_obj.type=="MESH" and len(current_obj.data.materialNodetrees)>0:
-                        if current_obj and current_obj.data and len(current_obj.data.materialNodetrees)>0:
-                            selectNT = current_obj.data.list_index_nodetrees
-                            try:
-                                slot = current_obj.data.materialNodetrees[bpy.context.object.active_material_index]                                  
-                                if slot.nodetreePointer:
-                                    autoNodetree = slot.nodetreePointer
-                                ntSelectedObject = current_obj
-                                return autoNodetree
-                            except:
-                                return "NOTREE"
-                # aprint("CUSTOM CHECK:%s %s %s" % (current_obj.name,current_treetype,current_tree))
-                # check if we have at least one nodetree for this object
-                if bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree:
-                    return chooseRighTreeForObject(current_obj,current_treetype,current_tree)     
-                    # dont show anything if in auto mode and no nodetree found
-                else:
-                    # when a different treetype is chosen than seen, change this. once
-                    if (current_treetype and current_tree and current_treetype!=current_tree.bl_idname):
-                        return chooseRighTreeForObject(current_obj,current_treetype,current_tree)     
 
-                return None
+        
+
+    def customAutoSelection(current_obj,current_treetype,current_tree):
+        global ntSelectedObject;
+        def chooseRighTreeForObject(current_obj,current_treetype,current_tree):
+            global ntSelectedObject;
+
+            if current_treetype=="urho3dcomponents" and current_obj:
+                selectNT = current_obj.list_index_nodetrees
+                if current_obj and len(current_obj.nodetrees)>0 and current_obj.nodetrees[selectNT].nodetreePointer:
+                    try:
+                        autoNodetree = current_obj.nodetrees[selectNT].nodetreePointer
+                        ntSelectedObject = current_obj                                
+                        return autoNodetree
+                    except:
+                        pass
+            elif current_treetype=="urho3dmaterials" and current_obj.type=="MESH" and len(current_obj.data.materialNodetrees)>0:
+                if current_obj and current_obj.data and len(current_obj.data.materialNodetrees)>0:
+                    selectNT = current_obj.data.list_index_nodetrees
+                    try:
+                        slot = current_obj.data.materialNodetrees[bpy.context.object.active_material_index]                                  
+                        if slot.nodetreePointer:
+                            autoNodetree = slot.nodetreePointer
+                        ntSelectedObject = current_obj
+                        return autoNodetree
+                    except:
+                        return "NOTREE"
+        # aprint("CUSTOM CHECK:%s %s %s" % (current_obj.name,current_treetype,current_tree))
+        # check if we have at least one nodetree for this object
+        if bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree:
+            return chooseRighTreeForObject(current_obj,current_treetype,current_tree)     
+            # dont show anything if in auto mode and no nodetree found
+        else:
+            # when a different treetype is chosen than seen, change this. once
+            if (current_treetype and current_tree and current_treetype!=current_tree.bl_idname):
+                return chooseRighTreeForObject(current_obj,current_treetype,current_tree)     
+
+        return None
 
 
 
 
-            JSONNodetreeUtils.overrideAutoNodetree = customAutoSelection
-            
-            addon_jsonnodetree.unregisterSelectorPanel()
-            bpy.utils.unregister_class(addon_jsonnodetree.NODE_PT_json_nodetree_select)
-            print("ok!")
-        except:
-            print("did not work")
+    JSONNodetreeUtils.overrideAutoNodetree = customAutoSelection
+    
+    unregisterSelectorPanel()
+    #bpy.utils.unregister_class(NODE_PT_json_nodetree_select)
+    
+    print("ok!")
+
 
 
     
@@ -3078,6 +3091,16 @@ def register():
 
 # Called when the addon is disabled. Here we remove our UI classes.
 def unregister():
+    try:
+        jsonnodetree_unregister()
+    except:
+        print("Unexpected error in jsonnodetree_register:", sys.exc_info()[0])
+
+    try:
+        addon_blender_connect_unregister()
+    except:
+        print("Unexpected error in addon_blender_connect_unregister:", sys.exc_info()[0])        
+    
     if DEBUG: print("Urho export unregister")
     
     #bpy.utils.unregister_module(__name__)
@@ -3112,6 +3135,7 @@ def unregister():
 
     bpy.utils.unregister_class(UL_URHO_LIST_CREATE_GENERIC)
     bpy.utils.unregister_class(UrhoReportDialog)
+    bpy.utils.unregister_class(KeyValue)
     bpy.utils.unregister_class(UL_URHO_LIST_USERDATA)
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_USERDATA)
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_USERDATA)
@@ -3132,19 +3156,18 @@ def unregister():
     del bpy.types.World.urho_global
     del bpy.types.NodeTree.initialized
     
-    if IsJsonNodeAddonAvailable():
-        bpy.utils.unregister_class(UL_URHO_LIST_NODETREE)
-        bpy.utils.unregister_class(UL_URHO_LIST_ITEM_NODETREE)
-        bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_NODETREE)
-        bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE_NODETREE)
+    bpy.utils.unregister_class(UL_URHO_LIST_NODETREE)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_NODETREE)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_NODETREE)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE_NODETREE)
 
-        bpy.utils.unregister_class(UrhoExportNodetreePanel)
-        bpy.utils.unregister_class(UrhoExportScenePanel)
-        del bpy.types.Object.materialNodetree
-        del bpy.types.Object.materialTreeId
-        del bpy.types.Scene.nodetree
-        del bpy.types.Scene.sceneTreeId
-        del bpy.types.Collection.urhoExport
+    bpy.utils.unregister_class(UrhoExportNodetreePanel)
+    bpy.utils.unregister_class(UrhoExportScenePanel)
+    del bpy.types.Object.materialNodetree
+    del bpy.types.Object.materialTreeId
+    del bpy.types.Scene.nodetree
+    del bpy.types.Scene.sceneTreeId
+    del bpy.types.Collection.urhoExport
 
 
     bpy.app.timers.unregister(call_execution_queue)        
