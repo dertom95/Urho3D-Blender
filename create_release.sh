@@ -20,4 +20,6 @@ cp temp/urho3d-blender-runtime-ver2/build/mingw/bin/urho3d-blender-runtime.exe r
 rm -Rf temp
 rm -Rf __pycache__
 
-zip -r urho3d-blender-exporter.zip . -x '*.git*'
+cd ..
+zip -r $HOME/urho3d-blender-exporter.zip Urho3D-Blender -x '*.git*'
+cd $HOME

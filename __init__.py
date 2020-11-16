@@ -182,6 +182,9 @@ current_system = system()
 default_runtime_folder = ""
 if current_system=="Linux":
     default_runtime_folder=os.path.dirname(os.path.realpath(__file__))+"/runtimes/urho3d-blender-runtime"
+    if os.path.isfile(default_runtime_folder):
+        os.chmod(default_runtime_folder, 0o755)
+
 elif current_system=="Windows":
     default_runtime_folder=os.path.dirname(os.path.realpath(__file__))+"/runtimes/urho3d-blender-runtime.exe"
 
