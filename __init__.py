@@ -79,6 +79,7 @@ from .addon_jsonnodetree import JSONNodetreeUtils
 from .addon_jsonnodetree.JSONNodetreeCustom import Custom 
 from .addon_jsonnodetree import register as jsonnodetree_register
 from .addon_jsonnodetree import unregister as jsonnodetree_unregister
+from .addon_jsonnodetree import DeActivatePath2Timer as jsonnodetree_activateTimers
 from .addon_jsonnodetree import unregisterSelectorPanel,NODE_PT_json_nodetree_select
     
 
@@ -267,19 +268,10 @@ class UrhoAddonPreferences(bpy.types.AddonPreferences):
         return 'addon_jsonnodetree' in  bpy.context.preferences.addons.keys()
 
 
-    blender_connect_installed : BoolProperty(get=check_blender_connect)
-    json_nodetree_installed : BoolProperty(get=check_json_nodetree)
-            
     def draw(self, context):
 
         
         layout = self.layout
-
-        box = layout.box()
-        box.label(text="Requirements:")
-        box.prop(self, "blender_connect_installed",text="Addon: Blender Connect installed?")
-        box.prop(self, "json_nodetree_installed", text="Addon: JSON Nodetree installed?")
-        
 
         layout.prop(self, "runtimeFile")
         layout.prop(self, "outputPath")
@@ -479,15 +471,6 @@ class UL_URHO_NODETREE_SET_NODETREE_TO_SELECTED(bpy.types.Operator):
 
 
         if self.material_nt_name not in bpy.data.node_groups:
-            print("couldn't find nodetree:%s" % self.material_nt_name)
-            print("couldn't find nodetree:%s" % self.material_nt_name)
-            print("couldn't find nodetree:%s" % self.material_nt_name)
-            print("couldn't find nodetree:%s" % self.material_nt_name)
-            print("couldn't find nodetree:%s" % self.material_nt_name)
-            print("couldn't find nodetree:%s" % self.material_nt_name)
-            print("couldn't find nodetree:%s" % self.material_nt_name)
-            print("couldn't find nodetree:%s" % self.material_nt_name)
-            print("couldn't find nodetree:%s" % self.material_nt_name)
             print("couldn't find nodetree:%s" % self.material_nt_name)
             return
         
@@ -1308,25 +1291,32 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
     modelsPath : StringProperty(
             name = "Models",
-            description = "Models subpath (relative to output)")
+            description = "Models subpath (relative to output)",
+            default="Models")
     animationsPath : StringProperty(
             name = "Animations",
-            description = "Animations subpath (relative to output)")
+            description = "Animations subpath (relative to output)",
+            default="Models")
     materialsPath : StringProperty(
             name = "Materials",
-            description = "Materials subpath (relative to output)")
+            description = "Materials subpath (relative to output)",
+            default="Materials")
     techniquesPath : StringProperty(
             name = "Techniques",
-            description = "Techniques subpath (relative to output)")
+            description = "Techniques subpath (relative to output)",
+            default="Techniques")
     texturesPath : StringProperty(
             name = "Textures",
-            description = "Textures subpath (relative to output)")
+            description = "Textures subpath (relative to output)",
+            default="Textures")
     objectsPath : StringProperty(
             name = "Objects",
-            description = "Objects subpath (relative to output)")
+            description = "Objects subpath (relative to output)",
+            default="Objects")
     scenesPath : StringProperty(
             name = "Scenes",
-            description = "Scenes subpath (relative to output)")
+            description = "Scenes subpath (relative to output)",
+            default="Scenes")
 
     fileOverwrite : BoolProperty(
             name = "Files overwrite",
@@ -3058,10 +3048,7 @@ def register():
     
     print("ok!")
 
-
-
-    
-
+    print("acitvate autoload-timers")
     #bpy.context.preferences.filepaths.use_relative_paths = False
     
     if not PostLoad in bpy.app.handlers.load_post:
@@ -3071,6 +3058,9 @@ def register():
         bpy.app.handlers.save_post.append(PostSave)
 
     bpy.app.timers.register(call_execution_queue,persistent=True)        
+
+    execution_queue.queue_action(jsonnodetree_activateTimers)
+
 
     # handle the shortcuts
     wm = bpy.context.window_manager
@@ -3156,7 +3146,6 @@ def unregister():
     
     del bpy.types.Scene.urho_exportsettings
     del bpy.types.Object.user_data
-    del bpy.types.World.urho_global
     del bpy.types.NodeTree.initialized
     
     bpy.utils.unregister_class(UL_URHO_LIST_NODETREE)
@@ -3164,12 +3153,23 @@ def unregister():
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_NODETREE)
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE_NODETREE)
 
+    bpy.utils.unregister_class(UL_URHO_LIST_MATERIAL_NODETREE)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MATERIAL_NODETREE)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_MATERIAL_NODETREE)
+    bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE_MATERIAL_NODETREE)
+    bpy.utils.unregister_class(MaterialNodetreeInfo)
+    del bpy.types.Mesh.materialNodetrees
+    del bpy.types.Mesh.list_index_nodetrees
+
+    bpy.utils.unregister_class(NodetreeInfo)
+    del bpy.types.Object.nodetrees
+    del bpy.types.Object.list_index_nodetrees
+
     bpy.utils.unregister_class(UrhoExportNodetreePanel)
     bpy.utils.unregister_class(UrhoExportScenePanel)
-    del bpy.types.Object.materialNodetree
-    del bpy.types.Object.materialTreeId
+
     del bpy.types.Scene.nodetree
-    del bpy.types.Scene.sceneTreeId
+#    del bpy.types.Scene.sceneTreeId
     del bpy.types.Collection.urhoExport
 
 
