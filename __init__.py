@@ -1408,7 +1408,15 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     exportOnSave : BoolProperty(
             name = "Export Data on Save",
             description = "Export Data after Saving the blend",
-            default = False)    
+            default = False) 
+    
+    export_on_save_modes = [ 
+        ( "ALL","All Scene","All scene",1 ),
+        ( "NOGEO","No Geometry","No Geometry",2 ),
+        ( "MAT","Only Material","Only Materials",3 )
+    ]
+
+    exportOnSaveMode : EnumProperty(items=export_on_save_modes,default=1,description="Specific what export mode to use on save!")
 
     exportGroupsAsObject : BoolProperty(
             name = "Export Instanced Collections as PrefabObject",
@@ -2295,22 +2303,31 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         scene = context.scene
         settings = scene.urho_exportsettings
 
-        row = layout.row()
+        outer_row = layout.row()
         #row=layout.row(align=True)
         minimizeIcon = 'ZOOM_IN' if settings.minimize else 'ZOOM_OUT'
-        row.prop(settings, "minimize", text="", icon=minimizeIcon, toggle=False)
-        row.operator("urho.export", icon='EXPORT').ignore_geo_skel_anim=False
+        outer_row.prop(settings, "minimize", text="", icon=minimizeIcon, toggle=False)
+        
+        col = outer_row.column()
+        row = col.row()
+        row.operator("urho.export", icon='EXPORT',text='Export: ALL SCENE').ignore_geo_skel_anim=False
+        row = col.row()
+        row.operator("urho.export", icon='EXPORT',text='Export: WITHOUT GEOMETRY').ignore_geo_skel_anim=True
+        row = col.row()
+        row.operator("urho.exportmaterials", icon='EXPORT', text='Export: ONLY MATERIAL')
+
+
         #split = layout.split(percentage=0.1)
         if sys.platform.startswith('win'):
-            row.operator("wm.console_toggle", text="", icon='CONSOLE')
-        row.prop(settings, "onlyErrors", text="", icon='FORCE_WIND')
-        row.operator("urho.report", text="", icon='TEXT')
+            outer_row.operator("wm.console_toggle", text="", icon='CONSOLE')
+        outer_row.prop(settings, "onlyErrors", text="", icon='FORCE_WIND')
+        outer_row.operator("urho.report", text="", icon='TEXT')
         if settings.minimize:
             return
 
-        row = layout.row()
-        row.operator("urho.export", icon='EXPORT',text='EXPORT(no geo)').ignore_geo_skel_anim=True
-        row.operator("urho.exportmaterials", icon='EXPORT')
+        # row = layout.row()
+        # row.operator("urho.export", icon='EXPORT',text='EXPORT(no geo)').ignore_geo_skel_anim=True
+        # row.operator("urho.exportmaterials", icon='EXPORT')
         
         row = layout.row()
         row.separator()
@@ -2333,7 +2350,11 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
         box.prop(settings, "generateModelNamePrefix")
 
-        box.prop(settings, "exportOnSave")
+        row = box.row()
+        row.prop(settings, "exportOnSave")
+        if settings.exportOnSave:
+            row.prop(settings,"exportOnSaveMode",text="")
+
         box.prop(settings, "fileOverwrite")
         row = box.row()
         row.prop(settings, "useSubDirs")
@@ -2762,8 +2783,19 @@ def PostLoad(dummy):
 def PostSave(dummy):
     settings = bpy.context.scene.urho_exportsettings
     if settings.exportOnSave:
+
+        if settings.exportOnSaveMode=='ALL':
+            bpy.ops.urho.export().ignore_geo_skel_anim=False
+        elif settings.exportOnSaveMode=='NOGEO':
+            print("NOGEO")
+            bpy.ops.urho.export().ignore_geo_skel_anim=True
+        elif settings.exportOnSaveMode=="MAT":
+            bpy.ops.urho.exportmaterials()
+        else:
+            print("UNKNOWN SAVEMODE %s" % settings.exportOnSaveMode)
+
         print("AUTO EXPORT on SAVE")
-        bpy.ops.urho.export()
+        
     
 
 
@@ -2970,8 +3002,11 @@ def register():
     
     #bpy.utils.register_module(__name__)
     
+    try:
+        bpy.utils.register_class(UrhoRenderEngine)
+    except:
+        print("Unexpected error in jsonnodetree_register_ui:%s" % traceback.format_exc())
 
-    bpy.utils.register_class(UrhoRenderEngine)
     reRegister()
     bpy.utils.register_class(UrhoAddonPreferences)
     bpy.utils.register_class(UrhoExportSettings)
