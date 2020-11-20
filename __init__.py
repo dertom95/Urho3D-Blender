@@ -2736,7 +2736,12 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
                         CreateInitialMaterialTree(nodetree)
                         return
 
-                    execution_queue.execute_or_queue_action(QueuedExecution)        
+                    execution_queue.execute_or_queue_action(QueuedExecution)
+
+            jsonNodes = bpy.data.worlds[0].jsonNodes
+
+            row = layout.row()        
+            row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
 
 
 #--------------------
