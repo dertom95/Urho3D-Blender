@@ -65,7 +65,7 @@ from .utils import vec2dict, matrix2dict
 from .addon_blender_connect.BConnectNetwork import Publish,StartNetwork,NetworkRunning,AddListener,GetSessionId
 from .addon_blender_connect import register as addon_blender_connect_register
 from .addon_blender_connect import unregister as addon_blender_connect_unregister
-import os
+import os,traceback
 import time
 import sys
 import shutil
@@ -77,11 +77,15 @@ tempObjects = []
 
 from .addon_jsonnodetree import JSONNodetreeUtils   
 from .addon_jsonnodetree.JSONNodetreeCustom import Custom 
-from .addon_jsonnodetree import register as jsonnodetree_register
-from .addon_jsonnodetree import unregister as jsonnodetree_unregister
+from .addon_jsonnodetree import json_nodetree_register as jsonnodetree_register
+from .addon_jsonnodetree import json_nodetree_unregister as jsonnodetree_unregister
 from .addon_jsonnodetree import DeActivatePath2Timer as jsonnodetree_activateTimers
-from .addon_jsonnodetree import unregisterSelectorPanel,NODE_PT_json_nodetree_select
-    
+from .addon_jsonnodetree import drawJSONFileSettings as jsonnodetree_draw_ui
+from .addon_jsonnodetree import NODE_PT_json_nodetree_file
+
+class URHO3D_JSONNODETREE_REBRAND(NODE_PT_json_nodetree_file):
+    bl_category = "Urho3D"
+    bl_label = "Urho3D-Settings"
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
@@ -2747,6 +2751,7 @@ def PostLoad(dummy):
     settings.errorsMem.Clear()
     settings.updatingProperties = False
     settings.reset_paths(bpy.context, False)
+    setup_json_nodetree()
 
 @persistent
 def PostSave(dummy):
@@ -2813,12 +2818,66 @@ def call_execution_queue():
 
     return tick
         
+def customAutoSelection(current_obj,current_treetype,current_tree):
+    global ntSelectedObject
+    def chooseRighTreeForObject(current_obj,current_treetype,current_tree):
+        global ntSelectedObject
+
+        if current_treetype=="urho3dcomponents" and current_obj:
+            selectNT = current_obj.list_index_nodetrees
+            if current_obj and len(current_obj.nodetrees)>0 and current_obj.nodetrees[selectNT].nodetreePointer:
+                try:
+                    autoNodetree = current_obj.nodetrees[selectNT].nodetreePointer
+                    ntSelectedObject = current_obj                                
+                    return autoNodetree
+                except:
+                    pass
+        elif current_treetype=="urho3dmaterials" and current_obj.type=="MESH" and len(current_obj.data.materialNodetrees)>0:
+            if current_obj and current_obj.data and len(current_obj.data.materialNodetrees)>0:
+                selectNT = current_obj.data.list_index_nodetrees
+                try:
+                    slot = current_obj.data.materialNodetrees[bpy.context.object.active_material_index]                                  
+                    if slot.nodetreePointer:
+                        autoNodetree = slot.nodetreePointer
+                    ntSelectedObject = current_obj
+                    return autoNodetree
+                except:
+                    return "NOTREE"
+    # aprint("CUSTOM CHECK:%s %s %s" % (current_obj.name,current_treetype,current_tree))
+    # check if we have at least one nodetree for this object
+    if bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree:
+        return chooseRighTreeForObject(current_obj,current_treetype,current_tree)     
+        # dont show anything if in auto mode and no nodetree found
+    else:
+        # when a different treetype is chosen than seen, change this. once
+        if (current_treetype and current_tree and current_treetype!=current_tree.bl_idname):
+            return chooseRighTreeForObject(current_obj,current_treetype,current_tree)     
+
+    return None
+
+
+def setup_json_nodetree():
+    # setup json-nodetree
+    JSONNodetreeUtils.overrideAutoNodetree = customAutoSelection
+    bpy.data.worlds[0].jsonNodes.path_ui_name = "Material-JSON"
+    bpy.data.worlds[0].jsonNodes.path2_ui_name = "Component-JSON"
+    bpy.data.worlds[0].jsonNodes.load_trees_button_name = "Load Trees"
+    bpy.data.worlds[0].jsonNodes.show_custom_ui_field = False
+    bpy.data.worlds[0].jsonNodes.show_developer = False
+    bpy.data.worlds[0].jsonNodes.show_export_panel = False
+    bpy.data.worlds[0].jsonNodes.show_auto_select = False
+    bpy.data.worlds[0].jsonNodes.show_object_mapping = False
+    print("--ok--")
+
 
 def register():
     try:
         jsonnodetree_register()
+        bpy.utils.register_class(URHO3D_JSONNODETREE_REBRAND)
+        #bpy.unregister_class(NODE_PT_json_nodetree_file)
     except:
-        print("Unexpected error in jsonnodetree_register:", sys.exc_info()[0])
+        desired_trace = traceback.format_exc()
+        print("Unexpected error in jsonnodetree_register:", desired_trace)
 
     try:    
         addon_blender_connect_register()
@@ -3001,54 +3060,17 @@ def register():
 
         
 
-    def customAutoSelection(current_obj,current_treetype,current_tree):
-        global ntSelectedObject;
-        def chooseRighTreeForObject(current_obj,current_treetype,current_tree):
-            global ntSelectedObject;
-
-            if current_treetype=="urho3dcomponents" and current_obj:
-                selectNT = current_obj.list_index_nodetrees
-                if current_obj and len(current_obj.nodetrees)>0 and current_obj.nodetrees[selectNT].nodetreePointer:
-                    try:
-                        autoNodetree = current_obj.nodetrees[selectNT].nodetreePointer
-                        ntSelectedObject = current_obj                                
-                        return autoNodetree
-                    except:
-                        pass
-            elif current_treetype=="urho3dmaterials" and current_obj.type=="MESH" and len(current_obj.data.materialNodetrees)>0:
-                if current_obj and current_obj.data and len(current_obj.data.materialNodetrees)>0:
-                    selectNT = current_obj.data.list_index_nodetrees
-                    try:
-                        slot = current_obj.data.materialNodetrees[bpy.context.object.active_material_index]                                  
-                        if slot.nodetreePointer:
-                            autoNodetree = slot.nodetreePointer
-                        ntSelectedObject = current_obj
-                        return autoNodetree
-                    except:
-                        return "NOTREE"
-        # aprint("CUSTOM CHECK:%s %s %s" % (current_obj.name,current_treetype,current_tree))
-        # check if we have at least one nodetree for this object
-        if bpy.data.worlds[0].jsonNodes.autoSelectObjectNodetree:
-            return chooseRighTreeForObject(current_obj,current_treetype,current_tree)     
-            # dont show anything if in auto mode and no nodetree found
-        else:
-            # when a different treetype is chosen than seen, change this. once
-            if (current_treetype and current_tree and current_treetype!=current_tree.bl_idname):
-                return chooseRighTreeForObject(current_obj,current_treetype,current_tree)     
-
-        return None
 
 
 
 
-    JSONNodetreeUtils.overrideAutoNodetree = customAutoSelection
     
-    unregisterSelectorPanel()
+    #unregisterSelectorPanel()
     #bpy.utils.unregister_class(NODE_PT_json_nodetree_select)
     
     print("ok!")
 
-    print("acitvate autoload-timers")
+    print("activate autoload-timers")
     #bpy.context.preferences.filepaths.use_relative_paths = False
     
     if not PostLoad in bpy.app.handlers.load_post:
@@ -3058,6 +3080,10 @@ def register():
         bpy.app.handlers.save_post.append(PostSave)
 
     bpy.app.timers.register(call_execution_queue,persistent=True)        
+
+
+
+    execution_queue.queue_action(setup_json_nodetree)
 
     execution_queue.queue_action(jsonnodetree_activateTimers)
 
@@ -3086,6 +3112,7 @@ def register():
 def unregister():
     try:
         jsonnodetree_unregister()
+        bpy.utils.unregister_class(URHO3D_JSONNODETREE_REBRAND)
     except:
         print("Unexpected error in jsonnodetree_register:", sys.exc_info()[0])
 
