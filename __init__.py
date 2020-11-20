@@ -2765,6 +2765,83 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
 
 
+
+class URHO_PT_mainscene(bpy.types.Panel):
+    bl_idname = "URHO_PT_MAINSCENE"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Urho3D"
+    bl_label ="Urho3D-Scene"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        settings = bpy.context.scene.urho_exportsettings
+
+        layout = self.layout
+        box = layout.box()
+        row = box.row()
+        row.prop(settings,"runtimeShowPhysics",text="show physics")
+        if settings.runtimeShowPhysics:
+            row.prop(settings,"runtimeShowPhysicsDepth",text="use depth test")
+
+class URHO_PT_mainuserdata(bpy.types.Panel):
+    bl_idname = "URHO_PT_MAINCOMPONENT"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Urho3D"
+    bl_label ="Urho3D-Components"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        obj = bpy.context.active_object
+        layout = self.layout
+        ObjectUserData(obj,layout)
+
+class URHO_PT_maincomponent(bpy.types.Panel):
+    bl_idname = "URHO_PT_MAINUSERDATA"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Urho3D"
+    bl_label ="Urho3D-Userdata"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        obj = bpy.context.active_object
+        ObjectComponentSubpanel(obj,layout)
+
+
+class URHO_PT_mainmaterial(bpy.types.Panel):
+    bl_idname = "URHO_PT_MAINMATERIAL"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Urho3D"
+    bl_label ="Urho3D-Material"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object and context.active_object.type=="MESH"
+
+    def draw(self, context):
+        settings = bpy.context.scene.urho_exportsettings
+
+        layout = self.layout
+
+        obj = bpy.context.active_object
+
+        ObjectMaterialNodetree(obj,layout)
+
+
+
 #--------------------
 # Handlers
 #--------------------
@@ -3026,6 +3103,10 @@ def register():
     bpy.utils.register_class(UrhoApplyVertexData)
     bpy.utils.register_class(ApplyExportUrhoToCollectionChildren)
     bpy.utils.register_class(UL_URHO_NODETREE_SET_NODETREE_TO_SELECTED)
+    bpy.utils.register_class(URHO_PT_mainscene)
+    bpy.utils.register_class(URHO_PT_maincomponent)
+    bpy.utils.register_class(URHO_PT_mainmaterial)
+    bpy.utils.register_class(URHO_PT_mainuserdata)
 
     
     bpy.utils.register_class(UrhoReportDialog)
@@ -3183,6 +3264,10 @@ def unregister():
     bpy.utils.unregister_class(UrhoExportStartRuntime2)
     bpy.utils.unregister_class(ApplyExportUrhoToCollectionChildren)
     bpy.utils.unregister_class(UL_URHO_NODETREE_SET_NODETREE_TO_SELECTED)
+    bpy.utils.unregister_class(URHO_PT_mainscene) 
+    bpy.utils.unregister_class(URHO_PT_mainuserdata)    
+    bpy.utils.unregister_class(URHO_PT_mainmaterial)
+    bpy.utils.unregister_class(URHO_PT_maincomponent)
 
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)
