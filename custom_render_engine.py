@@ -315,8 +315,8 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             first_time = True
 
             # Loop over all datablocks used in the scene.
-            for datablock in depsgraph.ids:
-                pass
+            # for datablock in depsgraph.ids:
+            #     pass
         else:
             first_time = False
 
@@ -329,9 +329,9 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
                 print("Materials updated")
 
         # Loop over all object instances in the scene.
-        if first_time or depsgraph.id_type_updated('OBJECT'):
-            for instance in depsgraph.object_instances:
-                pass
+        # if first_time or depsgraph.id_type_updated('OBJECT'):
+        #     for instance in depsgraph.object_instances:
+        #         pass
 
     # For viewport renders, this method is called whenever Blender redraws
     # the 3D viewport. The renderer is expected to quickly draw the render
