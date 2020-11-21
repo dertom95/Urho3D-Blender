@@ -168,6 +168,16 @@ def PublishRuntimeSettings(self,context):
     settings["show_physics_depth"]=self.runtimeShowPhysicsDepth
     settings["activate_physics"]=self.runtimeActivatePhysics
     settings["session_id"]=GetSessionId()
+    if not self.runtimeExportComponents:
+        settings["export_component_mode"]=0
+    else:
+        mode = self.runtimeExportComponentsMode
+        if mode == "LITE":
+            settings["export_component_mode"]=1
+        elif mode == "ALL":
+            settings["export_component_mode"]=2
+        else:
+            print("SETTINGS-ERROR! Unknown runtimeExportComponentsMode:%s" % mode)
 
     setJson = json.dumps(settings, indent=4)
     print("settingsJson: %s" % setJson)
@@ -1248,6 +1258,19 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = False,
             update=PublishRuntimeSettings)              
                   
+    runtimeExportComponents : BoolProperty(
+            name = "Export Components",
+            description = "Export components to be used in Component-Tree",
+            default = False,
+            update=PublishRuntimeSettings)   
+
+    runtimeExportComponentsMode : EnumProperty(
+            name = "Component Export",
+            description = "Export components",
+            items=(('LITE', "Lite", "Just a selection of components",1),
+                   ('ALL', "All", "All registered components",2)),
+            default=1,
+            update=PublishRuntimeSettings)                  
 
     runtimeWorkingDir : bpy.props.StringProperty(
                     name="Runtime WorkingDir",
@@ -1262,11 +1285,11 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
                     maxlen = 512,
                     default = "")
 
-    runtimeExportComponents : bpy.props.StringProperty(
-                    name="component export file",
-                    description="Override component export-file (default: ./urho3d_components.json)",
-                    maxlen = 512,
-                    subtype = "FILE_PATH")   
+    # runtimeExportComponents : bpy.props.StringProperty(
+    #                 name="component export file",
+    #                 description="Override component export-file (default: ./urho3d_components.json)",
+    #                 maxlen = 512,
+    #                 subtype = "FILE_PATH")   
 
     enableRuntime2 : bpy.props.BoolProperty(default=False,description="enable a second runtime to be started from within blender")
 
@@ -2414,6 +2437,12 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.prop(settings,"runtimeShowPhysics",text="show physics")
             if settings.runtimeShowPhysics:
                 row.prop(settings,"runtimeShowPhysicsDepth",text="use depth test")
+
+            row = innerbox.row()
+            row.prop(settings,"runtimeExportComponents")
+            if settings.runtimeExportComponents:
+                row.prop(settings,"runtimeExportComponentsMode",text="")
+
             #row = innerbox.row()
             #row.prop(settings,"runtimeActivatePhysics",text="activate physics")
             
