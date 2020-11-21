@@ -2339,6 +2339,10 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         row = col.row()
         row.operator("urho.exportmaterials", icon='EXPORT', text='Export: ONLY MATERIAL')
 
+        row = col.row()
+        row.prop(settings, "exportOnSave")
+        if settings.exportOnSave:
+            row.prop(settings,"exportOnSaveMode",text="")
 
         #split = layout.split(percentage=0.1)
         if sys.platform.startswith('win'):
@@ -2372,11 +2376,6 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         row.prop(settings, "meshnameDerivedBy", expand=True)
 
         box.prop(settings, "generateModelNamePrefix")
-
-        row = box.row()
-        row.prop(settings, "exportOnSave")
-        if settings.exportOnSave:
-            row.prop(settings,"exportOnSaveMode",text="")
 
         box.prop(settings, "fileOverwrite")
         row = box.row()
