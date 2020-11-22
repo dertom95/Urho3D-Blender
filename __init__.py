@@ -161,6 +161,12 @@ consoleHandler.addFilter(consoleFilter)
 log.addHandler(consoleHandler)
 
 
+def PublishAction(self,context,action,dataDict):
+    setJson = json.dumps(dataDict, indent=4)
+    data = str.encode(setJson)
+    print("Publish action:%s data:%s" % (action,data))
+    Publish("blender",action,"json",data)    
+
 # publish runtime-settings (show_physics...) to runtime
 def PublishRuntimeSettings(self,context):
     settings={}
@@ -1319,6 +1325,14 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             subtype = "DIR_PATH",
             update = update_func)   
 
+    packPath : StringProperty(
+            name = "",
+            description = "Path where to store your package",
+            default = "", 
+            maxlen = 1024,
+            subtype = "FILE_PATH",
+            update = update_func)               
+
     useSubDirs : BoolProperty(
             name = "Use sub folders",
             description = "Use sub folders inside the output folder (Materials, Models, Textures ...)",
@@ -2107,7 +2121,25 @@ class ApplyExportUrhoToCollectionChildren(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class PackOutputFolder(bpy.types.Operator):
+    ''' Use packagetool on output-folder '''
+    bl_idname = "urho.pack_exportfolder"
+    bl_label = "Pack Folder"
+    
 
+    @classmethod
+    def poll(self, context):
+        return True
+
+    def execute(self, context):
+        settings = context.scene.urho_exportsettings
+        data={}
+        data["package_folder"]=settings.outputPath
+        data["package_name"]=settings.packPath
+
+        PublishAction(self,context,"packagetool",data)
+
+        return {'FINISHED'}
 
 def ObjectUserData(obj,layout):
     box = layout.box()
@@ -2353,6 +2385,14 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         row = col.row()
         row.operator("urho.exportmaterials", icon='EXPORT', text='Export: ONLY MATERIAL')
 
+
+
+        row = col.row()
+        split = row.split(factor=0.2)
+        split.column().label(text="Folder:")
+        split = split.split()
+        split.column().prop(settings, "outputPath")
+
         row = col.row()
         row.prop(settings, "exportOnSave")
         if settings.exportOnSave:
@@ -2371,19 +2411,26 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         # row.operator("urho.exportmaterials", icon='EXPORT')
         
         row = layout.row()
+
+
+
         row.separator()
         row.separator()
         row.prop(settings,"showLog")    
 
 
-        row = layout.row()
-        row.label(text="Output:")
-
-
         box = layout.box()
-
-        box.label(text="Output folder:")
-        box.prop(settings, "outputPath")
+        
+        ibox = box.box()
+        row = ibox.row()
+        split = row.split(factor=0.7)
+        col = split.column()
+        col.label(text="Pack Destination:")
+        split = split.split()
+        col = split.column()
+        pack_op = col.operator("urho.pack_exportfolder")
+        col.enabled=settings.packPath!=""
+        ibox.prop(settings,"packPath")
 
         row = box.row()
         row.label(text="Modelname:")
@@ -2826,6 +2873,10 @@ class URHO_PT_mainscene(bpy.types.Panel):
         settings = bpy.context.scene.urho_exportsettings
 
         layout = self.layout
+
+        row = layout.row()
+        row.prop(bpy.context.scene,"nodetree",text="Scene logic")
+
         box = layout.box()
         row = box.row()
         row.prop(settings,"runtimeShowPhysics",text="show physics")
@@ -2889,7 +2940,10 @@ class URHO_PT_mainmaterial(bpy.types.Panel):
 #--------------------
 # Handlers
 #--------------------
-
+def get_default_context():
+    window = bpy.context.window_manager.windows[0]
+    return {'window': window, 'screen': window.screen}
+    
 # Called after loading a new blend. Set the default path if the path edit box is empty.        
 @persistent
 def PostLoad(dummy):
@@ -2899,6 +2953,8 @@ def PostLoad(dummy):
     settings.updatingProperties = False
     settings.reset_paths(bpy.context, False)
     setup_json_nodetree()
+    ctx=bpy.context
+    PublishRuntimeSettings(settings,bpy.context)
 
 @persistent
 def PostSave(dummy):
@@ -3151,6 +3207,7 @@ def register():
     bpy.utils.register_class(URHO_PT_maincomponent)
     bpy.utils.register_class(URHO_PT_mainmaterial)
     bpy.utils.register_class(URHO_PT_mainuserdata)
+    bpy.utils.register_class(PackOutputFolder)
     
 
     
@@ -3315,6 +3372,7 @@ def unregister():
     bpy.utils.unregister_class(URHO_PT_mainuserdata)    
     bpy.utils.unregister_class(URHO_PT_mainmaterial)
     bpy.utils.unregister_class(URHO_PT_maincomponent)
+    bpy.utils.unregister_class(PackOutputFolder)
     
 
     try:
