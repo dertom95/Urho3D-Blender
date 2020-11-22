@@ -1257,20 +1257,18 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     ldata = obj.data
                     light_attrs={}
                     light_attrs["Is Enabled"]="true"
+                    light_attrs["Use Physical Values"]=ldata.use_pbr
+                    
+                    light_attrs["Brightness Multiplier"]=ldata.energy*10.0
                     if ldata.type=="POINT":
-                        light_attrs["Light Type"] = "Point";
+                        light_attrs["Light Type"] = "Point"
                         light_attrs["Range"] = ldata.shadow_soft_size
-                        light_attrs["Specular Intensity"]=ldata.specular_factor
-                        light_attrs["Temperature"]=ldata.energy
                     elif ldata.type=="SUN" or ldata.type=="AREA":                
-                        light_attrs["Light Type"] = "Directional";
+                        light_attrs["Light Type"] = "Directional"
                         light_attrs["Specular Intensity"]=ldata.specular_factor
-                        light_attrs["Temperature"]=ldata.energy
                     elif ldata.type=="SPOT":                
-                        light_attrs["Light Type"] = "Spot";
-                        light_attrs["Temperature"]=ldata.energy
+                        light_attrs["Light Type"] = "Spot"
                         light_attrs["Range"] = ldata.shadow_soft_size
-                        light_attrs["Specular Intensity"]=ldata.specular_factor
                         light_attrs["Spot FOV"]=math.degrees(ldata.spot_size)
                         
                     col = ldata.color

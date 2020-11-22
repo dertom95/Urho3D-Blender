@@ -179,6 +179,8 @@ def PublishRuntimeSettings(self,context):
         else:
             print("SETTINGS-ERROR! Unknown runtimeExportComponentsMode:%s" % mode)
 
+    settings["activate_pbr"]=self.runtimeActivatePBR
+
     setJson = json.dumps(settings, indent=4)
     print("settingsJson: %s" % setJson)
     print("settingsJson: %s" % setJson)
@@ -1256,7 +1258,13 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             name = "Show Physics Depth",
             description = "Use depth-test on drawing physics",
             default = False,
-            update=PublishRuntimeSettings)              
+            update=PublishRuntimeSettings)     
+
+    runtimeActivatePBR : BoolProperty(
+            name = "PBR-Mode",
+            description = "Activate PBR-Mode",
+            default = False,
+            update=PublishRuntimeSettings)                       
                   
     runtimeExportComponents : BoolProperty(
             name = "Export Components",
@@ -2207,87 +2215,93 @@ class UrhoExportMeshPanel(bpy.types.Panel):
     
     @classmethod
     def poll(self, context):
-        return context.object.type=="MESH"
+        return context.object.type=="MESH" or context.object.type=="LIGHT"
 
 
     # Draw the export panel
     def draw(self, context):
         layout = self.layout
         obj = context.object
-        mesh = obj.data
 
         scene = context.scene
         settings = scene.urho_exportsettings
 
+        if context.object.type=="LIGHT":
+            light = obj.data
+            row = layout.row()
+            box = row.box()
+            box.prop(light,"use_pbr",text="Use Physical Values(PBR)")
 
-        row = layout.row()
-        row.label(text="Export Vertex-Data:")
-        row = layout.row()
-        row.prop(mesh.urho_export,"export_pos",text="Position")
-        row.prop(mesh.urho_export,"export_norm",text="Normals")
-        row = layout.row()
-        col = row.column()
-        col.prop(mesh.urho_export,"export_tan",text="Tangent")
-        col.enabled = mesh.urho_export.export_uv and mesh.urho_export.export_norm and mesh.urho_export.export_pos
-        row.prop(mesh.urho_export,"export_vcol",text="Vertex Color")
-        row = layout.row()
-        row.prop(mesh.urho_export,"export_weight",text="Weights")
-        row.prop(mesh.urho_export,"export_morph",text="Morphs")
-        
-        row = layout.row()
-        row.prop(mesh.urho_export,"export_uv",text="UV")
-        box = row.box()
-        if len(bpy.context.selected_objects)>0:
-            box.operator("urho.apply_vertexdata",text="Apply to selected").apply_to_selected=True
-        else:
-            box.operator("urho.apply_vertexdata",text="Apply to all").apply_to_selected=False
+        elif context.object.type=="MESH":
+            mesh = obj.data
+            row = layout.row()
+            row.label(text="Export Vertex-Data:")
+            row = layout.row()
+            row.prop(mesh.urho_export,"export_pos",text="Position")
+            row.prop(mesh.urho_export,"export_norm",text="Normals")
+            row = layout.row()
+            col = row.column()
+            col.prop(mesh.urho_export,"export_tan",text="Tangent")
+            col.enabled = mesh.urho_export.export_uv and mesh.urho_export.export_norm and mesh.urho_export.export_pos
+            row.prop(mesh.urho_export,"export_vcol",text="Vertex Color")
+            row = layout.row()
+            row.prop(mesh.urho_export,"export_weight",text="Weights")
+            row.prop(mesh.urho_export,"export_morph",text="Morphs")
+            
+            row = layout.row()
+            row.prop(mesh.urho_export,"export_uv",text="UV")
+            box = row.box()
+            if len(bpy.context.selected_objects)>0:
+                box.operator("urho.apply_vertexdata",text="Apply to selected").apply_to_selected=True
+            else:
+                box.operator("urho.apply_vertexdata",text="Apply to all").apply_to_selected=False
 
-        if mesh.urho_export.export_uv:
+            if mesh.urho_export.export_uv:
+
+                box = layout.box()
+
+                row = box.row()
+                row.prop(mesh.urho_export,"active_uv_as_uv1",text="use active uvmap as uv1")
+
+                row = box.row()
+                if mesh.urho_export.active_uv_as_uv1:
+                    row.prop(mesh.urho_export,"auto_uv1_idx",text="uv1")
+                else:
+                    row.prop(mesh.urho_export,"manual_uv1_idx",text="uv1")
+
+                row = box.row()
+                row.prop(mesh.urho_export,"use_uv2",text="use uv2")
+                if mesh.urho_export.use_uv2:
+                    row.prop(mesh.urho_export,"manual_uv2_idx",text="")
 
             box = layout.box()
-
             row = box.row()
-            row.prop(mesh.urho_export,"active_uv_as_uv1",text="use active uvmap as uv1")
-
+            row.prop_search(obj,"lodsetName",bpy.data.worlds[0],"lodsets")
             row = box.row()
-            if mesh.urho_export.active_uv_as_uv1:
-                row.prop(mesh.urho_export,"auto_uv1_idx",text="uv1")
-            else:
-                row.prop(mesh.urho_export,"manual_uv1_idx",text="uv1")
+            row.operator("urho_button.generic",text="new lodset").typeName="create_lodset"
 
-            row = box.row()
-            row.prop(mesh.urho_export,"use_uv2",text="use uv2")
-            if mesh.urho_export.use_uv2:
-                row.prop(mesh.urho_export,"manual_uv2_idx",text="")
+            lodset = getLodSetWithID(obj.lodsetID)
 
-        box = layout.box()
-        row = box.row()
-        row.prop_search(obj,"lodsetName",bpy.data.worlds[0],"lodsets")
-        row = box.row()
-        row.operator("urho_button.generic",text="new lodset").typeName="create_lodset"
+            if lodset:
+                row.operator("urho_button.generic",text="DELETE current").typeName="delete_lodset"
+            
 
-        lodset = getLodSetWithID(obj.lodsetID)
+            if lodset:
+                row = box.row()
+                row.prop(lodset,"name")
+                row = box.row();
+                row = box.label(text="Lods")
+                row = box.row()
+                row.template_list("UL_URHO_LIST_LOD", "The_List", lodset,
+                                "lods", lodset, "lods_idx",rows=len(lodset.lods))
 
-        if lodset:
-            row.operator("urho_button.generic",text="DELETE current").typeName="delete_lodset"
-        
-
-        if lodset:
-            row = box.row()
-            row.prop(lodset,"name")
-            row = box.row();
-            row = box.label(text="Lods")
-            row = box.row()
-            row.template_list("UL_URHO_LIST_LOD", "The_List", lodset,
-                            "lods", lodset, "lods_idx",rows=len(lodset.lods))
-
-            row = box.row()
-            row.prop(lodset,"armatureObj")
-            row = box.row()
-            row.operator('urho_lod.new_item', text='NEW')
-            row.operator('urho_lod.delete_item', text='REMOVE')
-            row.operator('urho_lod.move_item', text='UP').direction = 'UP'
-            row.operator('urho_lod.move_item', text='DOWN').direction = 'DOWN'
+                row = box.row()
+                row.prop(lodset,"armatureObj")
+                row = box.row()
+                row.operator('urho_lod.new_item', text='NEW')
+                row.operator('urho_lod.delete_item', text='REMOVE')
+                row.operator('urho_lod.move_item', text='UP').direction = 'UP'
+                row.operator('urho_lod.move_item', text='DOWN').direction = 'DOWN'
         
 # The export panel, here we draw the panel using properties we have created earlier
 class UrhoExportScenePanel(bpy.types.Panel):
@@ -2441,6 +2455,9 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.prop(settings,"runtimeExportComponents")
             if settings.runtimeExportComponents:
                 row.prop(settings,"runtimeExportComponentsMode",text="")
+
+            row = innerbox.row()
+            row.prop(settings,"runtimeActivatePBR")
 
             #row = innerbox.row()
             #row.prop(settings,"runtimeActivatePhysics",text="activate physics")
@@ -2829,7 +2846,7 @@ class URHO_PT_mainuserdata(bpy.types.Panel):
     def draw(self, context):
         obj = bpy.context.active_object
         layout = self.layout
-        ObjectUserData(obj,layout)
+        ObjectComponentSubpanel(obj,layout)
 
 class URHO_PT_maincomponent(bpy.types.Panel):
     bl_idname = "URHO_PT_MAINUSERDATA"
@@ -2845,7 +2862,8 @@ class URHO_PT_maincomponent(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         obj = bpy.context.active_object
-        ObjectComponentSubpanel(obj,layout)
+        ObjectUserData(obj,layout)
+        
 
 
 class URHO_PT_mainmaterial(bpy.types.Panel):
@@ -2867,8 +2885,6 @@ class URHO_PT_mainmaterial(bpy.types.Panel):
         obj = bpy.context.active_object
 
         ObjectMaterialNodetree(obj,layout)
-
-
 
 #--------------------
 # Handlers
@@ -2893,7 +2909,7 @@ def PostSave(dummy):
             bpy.ops.urho.export().ignore_geo_skel_anim=False
         elif settings.exportOnSaveMode=='NOGEO':
             print("NOGEO")
-            bpy.ops.urho.export().ignore_geo_skel_anim=True
+            bpy.ops.urho.export(ignore_geo_skel_anim=True)
         elif settings.exportOnSaveMode=="MAT":
             bpy.ops.urho.exportmaterials()
         else:
@@ -3135,6 +3151,7 @@ def register():
     bpy.utils.register_class(URHO_PT_maincomponent)
     bpy.utils.register_class(URHO_PT_mainmaterial)
     bpy.utils.register_class(URHO_PT_mainuserdata)
+    
 
     
     bpy.utils.register_class(UrhoReportDialog)
@@ -3156,6 +3173,8 @@ def register():
     bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
     bpy.types.Object.cast_shadow = bpy.props.BoolProperty(default=True)
     bpy.types.Object.receive_shadow = bpy.props.BoolProperty(default=True)
+    bpy.types.Light.use_pbr=bpy.props.BoolProperty()
+    bpy.types.Light.brightness_mul=bpy.props.FloatProperty(min=0.0,max=90000.0,default=1.0)
 
     bpy.types.Mesh.ID = bpy.props.IntProperty(default=-1)
     bpy.types.Mesh.urho_export = bpy.props.PointerProperty(type=UrhoExportMeshSettings)
@@ -3296,6 +3315,7 @@ def unregister():
     bpy.utils.unregister_class(URHO_PT_mainuserdata)    
     bpy.utils.unregister_class(URHO_PT_mainmaterial)
     bpy.utils.unregister_class(URHO_PT_maincomponent)
+    
 
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)
