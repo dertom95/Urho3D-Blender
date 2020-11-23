@@ -82,6 +82,7 @@ from .addon_jsonnodetree import json_nodetree_unregister as jsonnodetree_unregis
 from .addon_jsonnodetree import DeActivatePath2Timer as jsonnodetree_activateTimers
 from .addon_jsonnodetree import drawJSONFileSettings as jsonnodetree_draw_ui
 from .addon_jsonnodetree import NODE_PT_json_nodetree_file
+from .addon_jsonnodetree import JSONNodetree
 
 class URHO3D_JSONNODETREE_REBRAND(NODE_PT_json_nodetree_file):
     bl_category = "Urho3D"
@@ -185,7 +186,7 @@ def PublishRuntimeSettings(self,context):
         else:
             print("SETTINGS-ERROR! Unknown runtimeExportComponentsMode:%s" % mode)
 
-    settings["activate_pbr"]=self.runtimeActivatePBR
+    settings["renderPath"]=self.runtimeRenderPath
 
     setJson = json.dumps(settings, indent=4)
     print("settingsJson: %s" % setJson)
@@ -972,7 +973,12 @@ class UrhoExportGlobalSettings(bpy.types.PropertyGroup):
     file_id : bpy.props.IntProperty(default=-1) # a unique id that will optionally prefixed to your model-filename 
     
 
-    
+def renderpath_items(self,context):
+    try: 
+        return JSONNodetree.globalData["renderPaths_elemitems"]
+    except:
+        #print("Could not retrieve renderPaths")
+        return [("Default","Default","Default",0)]
 
 # Here we define all the UI objects to be added in the export panel
 class UrhoExportSettings(bpy.types.PropertyGroup):
@@ -1266,10 +1272,9 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = False,
             update=PublishRuntimeSettings)     
 
-    runtimeActivatePBR : BoolProperty(
-            name = "PBR-Mode",
-            description = "Activate PBR-Mode",
-            default = False,
+    runtimeRenderPath : EnumProperty(
+            name = "RenderPath",
+            items = renderpath_items,
             update=PublishRuntimeSettings)                       
                   
     runtimeExportComponents : BoolProperty(
@@ -2504,7 +2509,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
                 row.prop(settings,"runtimeExportComponentsMode",text="")
 
             row = innerbox.row()
-            row.prop(settings,"runtimeActivatePBR")
+            row.prop(settings,"runtimeRenderPath")
 
             #row = innerbox.row()
             #row.prop(settings,"runtimeActivatePhysics",text="activate physics")
@@ -2878,6 +2883,8 @@ class URHO_PT_mainscene(bpy.types.Panel):
         row.prop(bpy.context.scene,"nodetree",text="Scene logic")
 
         box = layout.box()
+        row = box.row()
+        row.prop(settings,"runtimeRenderPath")
         row = box.row()
         row.prop(settings,"runtimeShowPhysics",text="show physics")
         if settings.runtimeShowPhysics:
