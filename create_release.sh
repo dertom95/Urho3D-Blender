@@ -1,4 +1,5 @@
 HOME=$PWD
+FOLDER=${PWD##*/}
 
 rm -Rf runtimes
 rm -Rf temp
@@ -21,5 +22,5 @@ rm -Rf temp
 rm -Rf __pycache__
 
 cd ..
-zip -r $HOME/urho3d-blender-exporter.zip Urho3D-Blender -x '*.git*'
+zip -r $HOME/urho3d-blender-exporter.zip $FOLDER -x '*.git*' -x '*pycache*'
 cd $HOME
