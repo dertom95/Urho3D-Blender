@@ -168,9 +168,12 @@ def PublishAction(self,context,action,dataDict):
     print("Publish action:%s data:%s" % (action,data))
     Publish("blender",action,"json",data)    
 
+
+
 # publish runtime-settings (show_physics...) to runtime
 def PublishRuntimeSettings(self,context):
     settings={}
+    settings["export_path"]=self.outputPath
     settings["show_physics"]=self.runtimeShowPhysics
     settings["show_physics_depth"]=self.runtimeShowPhysicsDepth
     settings["activate_physics"]=self.runtimeActivatePhysics
@@ -189,9 +192,6 @@ def PublishRuntimeSettings(self,context):
     settings["renderPath"]=self.runtimeRenderPath
 
     setJson = json.dumps(settings, indent=4)
-    print("settingsJson: %s" % setJson)
-    print("settingsJson: %s" % setJson)
-    print("settingsJson: %s" % setJson)
     print("settingsJson: %s" % setJson)
     data = str.encode(setJson)
 
