@@ -32,6 +32,7 @@ class SOptions:
         self.doCollectivePrefab = False
         self.doScenePrefab = False
         self.SceneCreateZone = False
+        self.ZoneTexture = "None"
         self.noPhysics = False
         self.individualPhysics = False
         self.individualPrefab_onlyRootObject = True
@@ -829,6 +830,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             zone_attrs["Fog Color"]="0.5 0.5 0.7 1"
             zone_attrs["Fog Start"]=300
             zone_attrs["Fog End"]=500
+            if sOptions.ZoneTexture and sOptions.ZoneTexture!="None":
+                zone_attrs["Zone Texture"]=sOptions.ZoneTexture
             add_component(root,"Zone",zone_attrs)
 
 

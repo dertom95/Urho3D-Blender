@@ -978,7 +978,14 @@ def renderpath_items(self,context):
         return JSONNodetree.globalData["renderPaths_elemitems"]
     except:
         #print("Could not retrieve renderPaths")
-        return [("Default","Default","Default",0)]
+        return [("RenderPaths/Forward.xml","RenderPaths/Forward.xml","RenderPaths/Forward.xml",0)]
+
+def zone_cubetexture_items(self,context):
+    try: 
+        return zone_cubemap
+    except:
+        #print("Could not retrieve renderPaths")
+        return [("None","None","None",0)]        
 
 # Here we define all the UI objects to be added in the export panel
 class UrhoExportSettings(bpy.types.PropertyGroup):
@@ -1748,6 +1755,10 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             description = "Create DefaultZone-Node with -2000|-2000|-2000 2000|2000|2000",
             default = True,
             update = update_func)
+
+    sceneZoneCubeTexture : EnumProperty(
+            name = "ZoneTexture",
+            items = zone_cubetexture_items)             
 
     trasfObjects : BoolProperty(
             name = "Transform objects",
@@ -2713,11 +2724,9 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row.prop(settings, "scenePrefab")
             row.label(text="", icon='WORLD')
 
-            if settings.scenePrefab:
-                row = box.row()
-                row.separator()
-                row.separator()
-                row.prop(settings,"sceneCreateZone")
+            # if settings.scenePrefab:
+            #     row = box.row()
+            #     row.prop(settings,"sceneCreateZone")
 
 
             specialBox = box.box()
@@ -2882,6 +2891,15 @@ class URHO_PT_mainscene(bpy.types.Panel):
         row = layout.row()
         row.prop(bpy.context.scene,"nodetree",text="Scene logic")
 
+        if settings.scenePrefab:
+            row = layout.row()
+            split = row.split(factor=0.3)
+            split.prop(settings,"sceneCreateZone",text="Zone")
+            split=split.split()
+            if settings.sceneCreateZone:
+                split.prop(settings,"sceneZoneCubeTexture",text="Texture")
+
+
         box = layout.box()
         row = box.row()
         row.prop(settings,"runtimeRenderPath")
@@ -2995,6 +3013,18 @@ addon_keymaps = []
 ntSelectedObject = None
 
 tick = 0.05
+
+zone_cubemap=[("None","None","None",0)]
+
+def callback_after_nodetreecreation():
+    global zone_cubemap
+    try:
+        zone_cubemap=[("None","None","None",0)] + JSONNodetree.globalData["cubeTextures_elemitems"]
+    except:
+        zone_cubemap=[("None","None","None",0)]                
+
+JSONNodetreeUtils.AfterNodeTreeCreationCallback=callback_after_nodetreecreation
+
 
 # timer callback
 #if 'call_execution_queue' not in globals():
@@ -3670,6 +3700,7 @@ def ExecuteUrhoExport(context):
     sOptions.doCollectivePrefab = settings.collectivePrefab
     sOptions.doScenePrefab = settings.scenePrefab
     sOptions.SceneCreateZone = settings.sceneCreateZone
+    sOptions.ZoneTexture = settings.sceneZoneCubeTexture
     sOptions.noPhysics = (settings.physics == 'DISABLE')
     sOptions.individualPhysics = (settings.physics == 'INDIVIDUAL')
     sOptions.wiredAsEmpty = settings.wiredAsEmpty
