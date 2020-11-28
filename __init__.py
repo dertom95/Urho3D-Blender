@@ -1196,6 +1196,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         self.collectivePrefab = False
         self.scenePrefab = False
         self.sceneCreateZone = False
+        self.sceneCreateSkybox = False
         self.trasfObjects = False
         self.physics = 'INDIVIDUAL'
         self.shape = 'TRIANGLEMESH'
@@ -1757,6 +1758,21 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             update = update_func)
 
     sceneZoneCubeTexture : EnumProperty(
+            name = "ZoneTexture",
+            items = zone_cubetexture_items)             
+
+    sceneCreateSkybox : BoolProperty(
+            name = "Creaete default skybox",
+            description = "Create DefaultZone-Skybox(Models/Sphere.mdl)",
+            default = True,
+            update = update_func)
+    sceneSkyBoxHDR : BoolProperty(
+            name = "HDR",
+            description = "Use HDR-Material",
+            default = False)
+    
+
+    sceneSkyBoxCubeTexture : EnumProperty(
             name = "ZoneTexture",
             items = zone_cubetexture_items)             
 
@@ -2892,13 +2908,24 @@ class URHO_PT_mainscene(bpy.types.Panel):
         row.prop(bpy.context.scene,"nodetree",text="Scene logic")
 
         if settings.scenePrefab:
+            #Zone
             row = layout.row()
-            split = row.split(factor=0.3)
+            split = row.split(factor=0.25)
             split.prop(settings,"sceneCreateZone",text="Zone")
-            split=split.split()
+            split=split.split(factor=0.75)
             if settings.sceneCreateZone:
                 split.prop(settings,"sceneZoneCubeTexture",text="Texture")
 
+            #Skybox
+            row = layout.row()
+            split = row.split(factor=0.25)
+            split.prop(settings,"sceneCreateSkybox",text="Skybox")
+            split=split.split(factor=0.75)
+            if settings.sceneCreateSkybox:
+                split.prop(settings,"sceneSkyBoxCubeTexture",text="Texture")
+                split=split.split()
+                split.prop(settings,"sceneSkyBoxHDR",text="HDR")
+                
 
         box = layout.box()
         row = box.row()
@@ -3701,6 +3728,8 @@ def ExecuteUrhoExport(context):
     sOptions.doScenePrefab = settings.scenePrefab
     sOptions.SceneCreateZone = settings.sceneCreateZone
     sOptions.ZoneTexture = settings.sceneZoneCubeTexture
+    sOptions.sceneCreateSkybox = settings.sceneCreateSkybox
+    sOptions.sceneSkyBoxCubeTexture = settings.sceneSkyBoxCubeTexture
     sOptions.noPhysics = (settings.physics == 'DISABLE')
     sOptions.individualPhysics = (settings.physics == 'INDIVIDUAL')
     sOptions.wiredAsEmpty = settings.wiredAsEmpty

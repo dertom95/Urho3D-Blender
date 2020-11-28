@@ -5,7 +5,7 @@
 
 from .utils import PathType, GetFilepath, CheckFilepath, \
                    FloatToString, Vector3ToString, Vector4ToString, \
-                   WriteXmlFile, SDBMHash, getLodSetWithID, getObjectWithID
+                   WriteXmlFile,WriteStringFile, SDBMHash, getLodSetWithID, getObjectWithID
 from xml.etree import ElementTree as ET
 from mathutils import Vector, Quaternion, Matrix
 import bpy
@@ -733,7 +733,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     usedMaterialTrees.clear();
 
     blenderScene = bpy.data.scenes[uScene.blenderSceneName]
-    
+    urho_settings = blenderScene.urho_exportsettings
     '''
     # Re-order meshes
     orderedModelsList = []
@@ -749,6 +749,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     k = 0x1000000   # node ID
     compoID = k     # component ID
     m = 0           # internal counter
+
+    def add_attributes(parent,attributes=[]):
+        nonlocal m
+
+        for key in attributes:
+            a["{:d}".format(m)] = ET.SubElement(parent, "attribute")
+            a["{:d}".format(m)].set("name", str(key))
+            a["{:d}".format(m)].set("value", str(attributes[key]))
+            m += 1
 
     def add_component(parent,componentType,attributes=[]):
         nonlocal compoID
@@ -823,17 +832,63 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     a["{:d}".format(m)].set("value", uScene.blenderSceneName)
 
     if sOptions.SceneCreateZone:
-            zone_attrs = {}
-            zone_attrs["Bounding Box Min"]="-2000 -2000 -2000"
-            zone_attrs["Bounding Box Max"]="2000 2000 2000"
-            zone_attrs["Ambient Color"]="0.15 0.15 0.15 1"
-            zone_attrs["Fog Color"]="0.5 0.5 0.7 1"
-            zone_attrs["Fog Start"]=300
-            zone_attrs["Fog End"]=500
-            if sOptions.ZoneTexture and sOptions.ZoneTexture!="None":
-                zone_attrs["Zone Texture"]=sOptions.ZoneTexture
-            add_component(root,"Zone",zone_attrs)
+        zone_attrs = {}
+        zone_attrs["Bounding Box Min"]="-2000 -2000 -2000"
+        zone_attrs["Bounding Box Max"]="2000 2000 2000"
+        zone_attrs["Ambient Color"]="0.15 0.15 0.15 1"
+        zone_attrs["Fog Color"]="0.5 0.5 0.7 1"
+        zone_attrs["Fog Start"]=300
+        zone_attrs["Fog End"]=500
+        if sOptions.ZoneTexture and sOptions.ZoneTexture!="None":
+            zone_attrs["Zone Texture"]=sOptions.ZoneTexture
+        add_component(root,"Zone",zone_attrs)
 
+    if urho_settings.sceneCreateSkybox and urho_settings.sceneSkyBoxCubeTexture:
+        skybox = a["__skybox"] = ET.SubElement(root, "node")
+        
+        # <attribute name="Is Enabled" value="true" />
+		# <attribute name="Name" value="Sky" />
+		# <attribute name="Tags" />
+		# <attribute name="Position" value="0 0 0" />
+		# <attribute name="Rotation" value="1 0 0 0" />
+		# <attribute name="Scale" value="1 1 1" />
+		# <attribute name="Variables" />
+        attrs={}
+        attrs["Is Enabled"]=True
+        attrs["Name"]="%sSkybox" % context.scene.name
+        add_attributes(skybox,attrs)
+
+        # <component type="Skybox" id="12">
+        # <component type="Skybox" id="12">
+		# 	<attribute name="Model" value="Model;Models/Sphere.mdl" />
+		# 	<attribute name="Material" value="Material;Materials/Skybox2.xml" />
+		# </component>
+        skybox_attrs = {}
+        skybox_attrs["Model"]="Model;Models/SkyboxSphere.mdl"
+        materialName = "Materials/_%s_Skybox.xml" % context.scene.name
+        skybox_attrs["Material"]="Material;%s" % materialName
+        add_component(skybox,"Skybox",skybox_attrs)            
+
+        _skyboxTechnique="DiffSkybox"
+        if urho_settings.sceneSkyBoxHDR:
+            _skyboxTechnique += "HDRScale"
+
+        skyboxMaterial="""
+<material>
+	<parameter name="MatDiffColor" value="1 1 1 1"/>
+	<parameter name="MatSpecColor" value="0 0 0 1"/>
+	<parameter name="MatEmissiveColor" value="0 0 0"/>
+	<parameter name="UOffset" value="1.0 0 0 0"/>
+	<parameter name="VOffset" value="0 1.0 0 0"/>
+	<texture name="%s" unit="diffuse"/>
+	<cull value="none"/>
+	<shadowcull value="ccw"/>
+	<fill value="solid"/>
+	<technique loddistance="0" name="Techniques/%s.xml" quality="0"/>
+</material>
+            """ % (urho_settings.sceneSkyBoxCubeTexture,_skyboxTechnique)
+        matPath = GetFilepath(PathType.MATERIALS, "_%s_Skybox"% context.scene.name, fOptions)
+        WriteStringFile(skyboxMaterial,matPath[0],fOptions)
 
   #  a["lightnode"] = ET.SubElement(root, "node")
 

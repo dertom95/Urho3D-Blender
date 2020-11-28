@@ -234,8 +234,8 @@ def ensure_dir(file_path):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-# Write XML to a text file
-def WriteXmlFile(xmlContent, filepath, fOptions):
+
+def WriteStringFile(stringContent, filepath, fOptions):
     try:
         ensure_dir(filepath)
         file = open(filepath, "w")
@@ -243,10 +243,16 @@ def WriteXmlFile(xmlContent, filepath, fOptions):
         log.error("Cannot open file {:s} {:s}".format(filepath, e))
         return
     try:
-        file.write(XmlToPrettyString(xmlContent))
+        file.write(stringContent)
     except Exception as e:
         log.error("Cannot write to file {:s} {:s}".format(filepath, e))
     file.close()
+
+
+# Write XML to a text file
+def WriteXmlFile(xmlContent, filepath, fOptions):
+    WriteStringFile(XmlToPrettyString(xmlContent),filepath,fOptions)
+
 
 
 #--------------------
