@@ -176,6 +176,10 @@ def PublishRuntimeSettings(self,context):
     settings["export_path"]=self.outputPath
     settings["show_physics"]=self.runtimeShowPhysics
     settings["show_physics_depth"]=self.runtimeShowPhysicsDepth
+    settings["show_srgb"]=self.runtimeShowSRGB
+    settings["use_gamma"]=self.runtimeUseGamma
+    settings["use_bloom"]=self.runtimeUseBloom
+    settings["use_hdr"]=self.runtimeUseHDR
     settings["activate_physics"]=self.runtimeActivatePhysics
     settings["session_id"]=GetSessionId()
     if not self.runtimeExportComponents:
@@ -1277,6 +1281,28 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     runtimeShowPhysicsDepth : BoolProperty(
             name = "Show Physics Depth",
             description = "Use depth-test on drawing physics",
+            default = False,
+            update=PublishRuntimeSettings)    
+
+    runtimeShowSRGB : BoolProperty(
+            name = "sRGB",
+            description = "enable sRGB",
+            default = False,
+            update=PublishRuntimeSettings)     
+
+    runtimeUseGamma : BoolProperty(
+            name = "gamma",
+            description = "enable gamma-correction",
+            default = False,
+            update=PublishRuntimeSettings)     
+    runtimeUseHDR : BoolProperty(
+            name = "HDR",
+            description = "enable HDR",
+            default = False,
+            update=PublishRuntimeSettings)     
+    runtimeUseBloom : BoolProperty(
+            name = "bloom",
+            description = "enable bloom",
             default = False,
             update=PublishRuntimeSettings)     
 
@@ -2767,7 +2793,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
 
 def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
-    if not layout: 
+    if not layout or not obj: 
         return
     
     if not currentLayout:
@@ -2905,6 +2931,17 @@ class URHO_PT_mainscene(bpy.types.Panel):
         layout = self.layout
 
         row = layout.row()
+        box = layout.box()
+        row = box.row()
+        row.prop(settings,"runtimeRenderPath")
+        row = box.row()
+        row.prop(settings,"runtimeShowSRGB")
+        row.prop(settings,"runtimeUseGamma")
+        #row = box.row()
+        row.prop(settings,"runtimeUseHDR")
+        row.prop(settings,"runtimeUseBloom")
+
+        row = layout.row()
         row.prop(bpy.context.scene,"nodetree",text="Scene logic")
 
         if settings.scenePrefab:
@@ -2928,8 +2965,6 @@ class URHO_PT_mainscene(bpy.types.Panel):
                 
 
         box = layout.box()
-        row = box.row()
-        row.prop(settings,"runtimeRenderPath")
         row = box.row()
         row.prop(settings,"runtimeShowPhysics",text="show physics")
         if settings.runtimeShowPhysics:
@@ -3993,6 +4028,12 @@ def ExecuteAddon(context, silent=False, ignoreGeoAnim=False):
         settings.animations = False
         #settings.skeletons = False
         settings.morphs = False
+    else:
+        settings.geometries = True
+        settings.animations = True
+        #settings.skeletons = False
+        settings.morphs = True
+
 
 
     before_export_selection = bpy.context.selected_objects
