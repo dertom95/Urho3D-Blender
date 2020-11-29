@@ -3054,6 +3054,28 @@ def PostLoad(dummy):
     ctx=bpy.context
     PublishRuntimeSettings(settings,bpy.context)
 
+
+@persistent
+def on_depsgraph_update_post(self):
+    # Recache
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+
+    if len(depsgraph.updates)>0:
+        for update in depsgraph.updates:
+            try:
+                if update.is_updated_transform and hasattr(update.id,"type"):
+                    obj = update.id
+                    UpdateCheck.pos = obj.location
+                    UpdateCheck.rot = obj.rotation_euler
+                    UpdateCheck.scale = obj.scale
+                    UpdateCheck.modified_obj = obj
+                    print("Updated:%s" % update.id.name)
+
+                    UpdateCheck.request_save_scene = True
+                    return
+            except:
+                pass
+
 @persistent
 def PostSave(dummy):
     settings = bpy.context.scene.urho_exportsettings
@@ -3098,6 +3120,17 @@ def callback_after_nodetreecreation():
 
 JSONNodetreeUtils.AfterNodeTreeCreationCallback=callback_after_nodetreecreation
 
+class UpdateCheck:
+    last_pos = None
+    last_rot = None
+    last_scale = None
+    last_obj = None
+
+    request_save_scene = False
+    pos=None
+    rot=None
+    scale=None
+    modified_obj=None    
 
 # timer callback
 #if 'call_execution_queue' not in globals():
@@ -3114,6 +3147,33 @@ def call_execution_queue():
         else:
             PingData.ping_auto_timer -= tick
             #print("PingData.auto_timer %s" % PingData.ping_auto_timer)
+
+        if UpdateCheck.request_save_scene and bpy.context.scene.urho_exportsettings.outputPath:
+            print("Check: %s=%s %s=%s %s=%s " %(UpdateCheck.last_pos,UpdateCheck.pos,UpdateCheck.last_rot,UpdateCheck.rot,UpdateCheck.last_scale,UpdateCheck.scale))
+
+
+            isTransSame = UpdateCheck.last_pos==UpdateCheck.pos and UpdateCheck.last_rot==UpdateCheck.rot and UpdateCheck.last_scale==UpdateCheck.scale
+
+            if isTransSame:
+                print("EXPORT EXPORT")
+                bpy.ops.urho.export(ignore_geo_skel_anim=True)
+                UpdateCheck.modified_obj=None
+                UpdateCheck.last_obj=None
+                UpdateCheck.last_pos=None
+                UpdateCheck.last_rot=None
+                UpdateCheck.last_scale=None
+                UpdateCheck.pos=None
+                UpdateCheck.rot=None
+                UpdateCheck.scale=None
+                UpdateCheck.request_save_scene=False
+            else:
+                UpdateCheck.last_obj=UpdateCheck.modified_obj
+                UpdateCheck.last_pos=UpdateCheck.pos
+                UpdateCheck.last_rot=UpdateCheck.rot
+                UpdateCheck.last_scale=UpdateCheck.scale
+
+
+        request_save_scene=False
 
     if PingData.ping_check_running:
         bpy.context.scene.view_settings.view_transform = 'Raw'
@@ -3413,6 +3473,9 @@ def register():
 
     if not PostSave in bpy.app.handlers.save_post:
         bpy.app.handlers.save_post.append(PostSave)
+
+    if not on_depsgraph_update_post in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update_post)
 
     bpy.app.timers.register(call_execution_queue,persistent=True)        
 

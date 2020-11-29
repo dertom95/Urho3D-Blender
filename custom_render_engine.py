@@ -254,7 +254,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         else:
             if self.changes:
                 changesJson = json.dumps(self.changes, indent=4)
-                print("changesJson: %s" % changesJson)
+                #print("changesJson: %s" % changesJson)
                 data = str.encode(changesJson)
 
                 Publish("blender","data_change","json",data)

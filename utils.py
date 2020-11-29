@@ -427,7 +427,6 @@ class PingData:
     ping_auto_timer = 0
 
 
-
 FOUND_RUNTIME = False
 
 def found_blender_runtime():
