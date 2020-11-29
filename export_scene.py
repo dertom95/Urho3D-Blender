@@ -904,6 +904,16 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 #    a["{:d}".format(m+4)].set("name", "Rotation")
 #    a["{:d}".format(m+4)].set("value", "0.884784 0.399593 0.239756 -0")
 
+    attrs={
+        "RenderPath" : urho_settings.runtimeRenderPath,
+        "HDR" : urho_settings.runtimeUseHDR,
+        "Gamma" : urho_settings.runtimeUseGamma,
+        "Bloom" : urho_settings.runtimeUseBloom,
+        "FXAA2" : urho_settings.runtimeUseFXAA2,
+        "sRGB" : urho_settings.runtimeShowSRGB
+    }
+    add_component(root,"RenderData",attrs)
+
 
     # Create physics stuff for the root node
     if sOptions.globalPhysics:

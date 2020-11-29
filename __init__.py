@@ -176,10 +176,6 @@ def PublishRuntimeSettings(self,context):
     settings["export_path"]=self.outputPath
     settings["show_physics"]=self.runtimeShowPhysics
     settings["show_physics_depth"]=self.runtimeShowPhysicsDepth
-    settings["show_srgb"]=self.runtimeShowSRGB
-    settings["use_gamma"]=self.runtimeUseGamma
-    settings["use_bloom"]=self.runtimeUseBloom
-    settings["use_hdr"]=self.runtimeUseHDR
     settings["activate_physics"]=self.runtimeActivatePhysics
     settings["session_id"]=GetSessionId()
     if not self.runtimeExportComponents:
@@ -192,8 +188,6 @@ def PublishRuntimeSettings(self,context):
             settings["export_component_mode"]=2
         else:
             print("SETTINGS-ERROR! Unknown runtimeExportComponentsMode:%s" % mode)
-
-    settings["renderPath"]=self.runtimeRenderPath
 
     setJson = json.dumps(settings, indent=4)
     print("settingsJson: %s" % setJson)
@@ -1304,7 +1298,13 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             name = "bloom",
             description = "enable bloom",
             default = False,
-            update=PublishRuntimeSettings)     
+            update=PublishRuntimeSettings) 
+    
+    runtimeUseFXAA2 : BoolProperty(
+            name = "FXAA2",
+            description = "enable FXAA2",
+            default = False,
+            update=PublishRuntimeSettings)                  
 
     runtimeRenderPath : EnumProperty(
             name = "RenderPath",
@@ -2940,6 +2940,8 @@ class URHO_PT_mainscene(bpy.types.Panel):
         #row = box.row()
         row.prop(settings,"runtimeUseHDR")
         row.prop(settings,"runtimeUseBloom")
+        row.prop(settings,"runtimeUseFXAA2")
+        
 
         row = layout.row()
         row.prop(bpy.context.scene,"nodetree",text="Scene logic")
