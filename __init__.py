@@ -1786,26 +1786,29 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             name = "Create a default Zone",
             description = "Create DefaultZone-Node with -2000|-2000|-2000 2000|2000|2000",
             default = True,
-            update = update_func)
+            update = ExportNoGeo)
 
     sceneZoneCubeTexture : EnumProperty(
             name = "ZoneTexture",
-            items = zone_cubetexture_items)             
+            items = zone_cubetexture_items,
+            update = ExportNoGeo)             
 
     sceneCreateSkybox : BoolProperty(
             name = "Creaete default skybox",
             description = "Create DefaultZone-Skybox(Models/Sphere.mdl)",
-            default = True,
-            update = update_func)
+            default = False,
+            update = ExportNoGeo)
     sceneSkyBoxHDR : BoolProperty(
             name = "HDR",
             description = "Use HDR-Material",
+            update = ExportNoGeo,
             default = False)
     
 
     sceneSkyBoxCubeTexture : EnumProperty(
             name = "ZoneTexture",
-            items = zone_cubetexture_items)             
+            items = zone_cubetexture_items,
+            update = ExportNoGeo)             
 
     trasfObjects : BoolProperty(
             name = "Transform objects",
