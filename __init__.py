@@ -1051,6 +1051,11 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
         self.updatingProperties = False
 
+
+    def ExportNoGeo(self,context):
+        bpy.ops.urho.export(ignore_geo_skel_anim=True)
+
+
     def update_subfolders(self, context):
         # Move folders between the output path and the subfolders
         # (this should have been done with operators)
@@ -1288,28 +1293,28 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             name = "gamma",
             description = "enable gamma-correction",
             default = False,
-            update=PublishRuntimeSettings)     
+            update=ExportNoGeo)     
     runtimeUseHDR : BoolProperty(
             name = "HDR",
             description = "enable HDR",
             default = False,
-            update=PublishRuntimeSettings)     
+            update=ExportNoGeo)     
     runtimeUseBloom : BoolProperty(
             name = "bloom",
             description = "enable bloom",
             default = False,
-            update=PublishRuntimeSettings) 
+            update=ExportNoGeo) 
     
     runtimeUseFXAA2 : BoolProperty(
             name = "FXAA2",
             description = "enable FXAA2",
             default = False,
-            update=PublishRuntimeSettings)                  
+            update=ExportNoGeo)                  
 
     runtimeRenderPath : EnumProperty(
             name = "RenderPath",
             items = renderpath_items,
-            update=PublishRuntimeSettings)                       
+            update=ExportNoGeo)                       
                   
     runtimeExportComponents : BoolProperty(
             name = "Export Components",
@@ -1915,6 +1920,7 @@ class UrhoReportDialog(bpy.types.Operator):
             else:
                 lineicon = 'TEXT'
             layout.label(text = lines[1], icon = lineicon)
+
 
 
 # Export button
@@ -2935,10 +2941,10 @@ class URHO_PT_mainscene(bpy.types.Panel):
         row = box.row()
         row.prop(settings,"runtimeRenderPath")
         row = box.row()
-        row.prop(settings,"runtimeShowSRGB")
+        #row.prop(settings,"runtimeShowSRGB")
         row.prop(settings,"runtimeUseGamma")
-        #row = box.row()
         row.prop(settings,"runtimeUseHDR")
+        #row = box.row()
         row.prop(settings,"runtimeUseBloom")
         row.prop(settings,"runtimeUseFXAA2")
         
@@ -3051,7 +3057,7 @@ def PostSave(dummy):
     if settings.exportOnSave:
 
         if settings.exportOnSaveMode=='ALL':
-            bpy.ops.urho.export().ignore_geo_skel_anim=False
+            bpy.ops.urho.export(ignore_geo_skel_anim=False)
         elif settings.exportOnSaveMode=='NOGEO':
             print("NOGEO")
             bpy.ops.urho.export(ignore_geo_skel_anim=True)

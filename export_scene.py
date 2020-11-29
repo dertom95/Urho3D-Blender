@@ -1327,7 +1327,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     light_attrs["Is Enabled"]="true"
                     light_attrs["Use Physical Values"]=ldata.use_pbr
                     
-                    light_attrs["Brightness Multiplier"]=ldata.energy*10.0
+                    light_attrs["Brightness Multiplier"]=ldata.energy
+
                     if ldata.type=="POINT":
                         light_attrs["Light Type"] = "Point"
                         light_attrs["Range"] = ldata.shadow_soft_size
