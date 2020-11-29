@@ -26,7 +26,7 @@ bl_info = {
     "name": "Urho3D export",
     "description": "Urho3D export",
     "author": "reattiva, dertom",
-    "version": (0, 8),
+    "version": (0, 8, 1),
     "blender": (2, 80, 0),
     "location": "Properties > Render > Urho export",
     "warning": "",
