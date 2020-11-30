@@ -1,0 +1,14 @@
+v0.8.1:
+- stability, not so much crashes anymore
+- material's texture-category entries are fixed now. Before adding new folders in could lead to problems with reassigning the right image 
+- choose kind of export on save-types (scene with geometry,scene without geometry,material only)
+- pack whole export path into one urho3d-pak-file
+- export urho3d builtin components (none,lite(some subset),all). Those can be assigned via the 'urho3d-components'-nodetree (not all attributes are exposed,yet)
+- added urho3d-tab in 3d-view with components:
+  - urho3d-scene:
+    - select RenderPath ( those are all renderpaths available in the resource-cache of the exportPath)
+    - create default zone with optional cubemap.
+    - create SkyBox (For this the urho3d Sphere.mdl is integrated into the runtime's data-folder. So you need to be sure to copy the Sphere.mdl as SkyboxSphere.mdl into your resourcepath)
+  - urho3d-materials,components and userdata-assignment (nothing new here, just reused for this panel)
+- lights now have a "Use Physical Values"-Option ( for more custom behaviour you can create a component-nodetree with a lightnode and assign this to the light)
+
