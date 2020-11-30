@@ -1274,6 +1274,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = True,
             update=PublishRuntimeSettings) 
 
+    runtimeUnstable : BoolProperty(
+            name = "Unstable Features",
+            description = "activate (even more) unstable features",
+            default = False
+            )             
+
     runtimeShowPhysics : BoolProperty(
             name = "Show Physics",
             description = "Show Urho3D-Physics",
@@ -1329,7 +1335,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     runtimeExportComponents : BoolProperty(
             name = "Export Components",
             description = "Export components to be used in Component-Tree",
-            default = False,
+            default = True,
             update=PublishRuntimeSettings)   
 
     runtimeExportComponentsMode : EnumProperty(
@@ -2797,6 +2803,10 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row = specialBox.row()
             row.prop(settings, "export_userdata")
 
+            row = specialBox.row()
+            row.prop(settings, "runtimeUnstable")
+            
+
 
             # row = specialBox.row()
             # # todo: make it possible to check if physics are used in component-nodes and otherwise take the default settings(!)
@@ -2953,17 +2963,19 @@ class URHO_PT_mainscene(bpy.types.Panel):
         box = layout.box()
         row = box.row()
         row.prop(settings,"runtimeRenderPath")
-        row = box.row()
-        #row.prop(settings,"runtimeShowSRGB")
-        row.prop(settings,"runtimeUseGamma")
-        row.prop(settings,"runtimeUseHDR")
-        #row = box.row()
-        row.prop(settings,"runtimeUseBloom")
-        row.prop(settings,"runtimeUseFXAA2")
+        
+        if settings.runtimeUnstable:
+            row = box.row()
+            #row.prop(settings,"runtimeShowSRGB")
+            row.prop(settings,"runtimeUseGamma")
+            row.prop(settings,"runtimeUseHDR")
+            #row = box.row()
+            row.prop(settings,"runtimeUseBloom")
+            row.prop(settings,"runtimeUseFXAA2")
         
 
-        row = layout.row()
-        row.prop(bpy.context.scene,"nodetree",text="Scene logic")
+            row = layout.row()
+            row.prop(bpy.context.scene,"nodetree",text="Scene logic")
 
         if settings.scenePrefab:
             #Zone
@@ -3164,7 +3176,7 @@ def call_execution_queue():
         settings = bpy.context.scene.urho_exportsettings
         if UpdateCheck.request_save_scene and settings.outputPath:
             UpdateCheck.timer-=tick
-            print("Check[%s]: %s=%s %s=%s %s=%s " %(UpdateCheck.timer,UpdateCheck.last_pos,UpdateCheck.pos,UpdateCheck.last_rot,UpdateCheck.rot,UpdateCheck.last_scale,UpdateCheck.scale))
+            #print("Check[%s]: %s=%s %s=%s %s=%s " %(UpdateCheck.timer,UpdateCheck.last_pos,UpdateCheck.pos,UpdateCheck.last_rot,UpdateCheck.rot,UpdateCheck.last_scale,UpdateCheck.scale))
  
 
             isTransSame = UpdateCheck.last_pos==UpdateCheck.pos and UpdateCheck.last_rot==UpdateCheck.rot and UpdateCheck.last_scale==UpdateCheck.scale

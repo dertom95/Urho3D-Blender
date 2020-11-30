@@ -217,7 +217,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             self.changes["view_up"]=vec2dict(top)
             self.changes["view_position"]=vec2dict(pos)
 
-            print("pos:%s type:%s dir:%s top:%s" %(str(pos),type(pos),direction,top))
+            #print("pos:%s type:%s dir:%s top:%s" %(str(pos),type(pos),direction,top))
             
             self.forceUpdate = False
             changed = True
@@ -250,7 +250,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             self.changes["resolution"]={ 'width' : region.width, 'height' : region.height }
 
             self.tag_redraw()
-            print("CHANGED")
+            #print("CHANGED")
         else:
             if self.changes:
                 changesJson = json.dumps(self.changes, indent=4)
