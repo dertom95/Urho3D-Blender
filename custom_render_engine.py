@@ -1,5 +1,5 @@
 import bpy
-import bgl
+import bgl,os
 import json
 import ctypes
 import math
@@ -7,6 +7,15 @@ from bpy_extras import view3d_utils
 from threading import current_thread
 import weakref
 from mathutils import Vector
+
+try:
+    from PIL import Image,ImageDraw
+except:
+    import bpy,subprocess
+    pybin = bpy.app.binary_path_python
+    subprocess.check_call([pybin, '-m', 'ensurepip'])
+    subprocess.check_call([pybin, '-m', 'pip', 'install', 'Pillow'])
+    from PIL import Image,ImageDraw
 
 # connect to blender connect if available
 from .utils import execution_queue, vec2dict, matrix2dict, PingForRuntime
@@ -363,15 +372,22 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         bgl.glDisable(bgl.GL_BLEND)
 
 
+urhoImage = Image.open(os.path.dirname(os.path.realpath(__file__))+"/res/urho3d.png","r")
+
 class CustomDrawData:
     def __init__(self, dimensions):
+        global urhoImage
         # Generate dummy float image buffer
         self.dimensions = dimensions
         width, height = dimensions
 
         print("NEW CUSTOMDRAWDATA with resolution %s:%s" %( width,height ))
 
-        self.pixels = [255,0,0,255] * width * height
+        blank = Image.new('RGBA',(width,height),(100,100,100,255))
+        blank.alpha_composite(urhoImage,dest=(int(width/2-urhoImage.width/2),int(height/2-urhoImage.height/2)))
+
+        #self.pixels = [255,0,0,255] * width * height
+        self.pixels = list(blank.tobytes())
         self.pixels = bgl.Buffer(bgl.GL_BYTE, width * height * 4, self.pixels)
 
         # Generate texture
@@ -395,8 +411,8 @@ class CustomDrawData:
         bgl.glGenVertexArrays(1, self.vertex_array)
         bgl.glBindVertexArray(self.vertex_array[0])
 
-        texturecoord_location = bgl.glGetAttribLocation(shader_program[0], "texCoord");
-        position_location = bgl.glGetAttribLocation(shader_program[0], "pos");
+        texturecoord_location = bgl.glGetAttribLocation(shader_program[0], "texCoord")
+        position_location = bgl.glGetAttribLocation(shader_program[0], "pos")
 
         bgl.glEnableVertexAttribArray(texturecoord_location);
         bgl.glEnableVertexAttribArray(position_location);
