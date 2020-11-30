@@ -976,7 +976,7 @@ def renderpath_items(self,context):
         return JSONNodetree.globalData["renderPaths_elemitems"]
     except:
         #print("Could not retrieve renderPaths")
-        return [("RenderPaths/Forward.xml","RenderPaths/Forward.xml","RenderPaths/Forward.xml",0)]
+        return [("RenderPaths/Forward.xml","RenderPaths/Forward.xml","RenderPaths/Forward.xml",9902871)]
 
 def zone_cubetexture_items(self,context):
     try: 
@@ -1330,7 +1330,8 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     runtimeRenderPath : EnumProperty(
             name = "RenderPath",
             items = renderpath_items,
-            update=ExportNoGeo)                       
+            update=ExportNoGeo,
+            default=9902871)                       
                   
     runtimeExportComponents : BoolProperty(
             name = "Export Components",
@@ -4186,8 +4187,8 @@ def ExecuteAddon(context, silent=False, ignoreGeoAnim=False):
 
     log.info("Export ended in {:.4f} sec".format(time.time() - startTime) )
     
-    #if not silent:
-    #    bpy.ops.urho.report('INVOKE_DEFAULT')
+    if not silent:
+        bpy.ops.urho.report('INVOKE_DEFAULT')
 
     UpdateCheck.saving = False
 
