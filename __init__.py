@@ -1053,7 +1053,11 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
 
     def ExportNoGeo(self,context):
-        bpy.ops.urho.export(ignore_geo_skel_anim=True)
+        #ExecuteAddon(context, True, True )
+        settings = context.scene.urho_exportsettings
+        if settings.runtimeAutoUpdateTransforms:
+            bpy.ops.urho.exportcommand()
+        #bpy.ops.urho.export(ignore_geo_skel_anim=True)
 
 
     def update_subfolders(self, context):
@@ -1264,6 +1268,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             update = update_subfolders)
 
     # --- RUNTIME SETTINGS ---
+    runtimeAutoUpdateTransforms : BoolProperty(
+            name = "Auto Export on Transform",
+            description = "Auto Export on Transform",
+            default = True,
+            update=PublishRuntimeSettings) 
+
     runtimeShowPhysics : BoolProperty(
             name = "Show Physics",
             description = "Show Urho3D-Physics",
@@ -1981,7 +1991,7 @@ class UrhoExportCommandOperator(bpy.types.Operator):
     bl_label = "Export command"
   
     def execute(self, context):
-        ExecuteAddon(context, silent=True)
+        ExecuteAddon(context, silent=True, ignoreGeoAnim=True)
         return {'FINISHED'}
  
     def invoke(self, context, event):
@@ -3130,7 +3140,10 @@ class UpdateCheck:
     pos=None
     rot=None
     scale=None
-    modified_obj=None    
+    modified_obj=None  
+    timer = 1.0 
+
+    saving = False 
 
 # timer callback
 #if 'call_execution_queue' not in globals():
@@ -3148,15 +3161,20 @@ def call_execution_queue():
             PingData.ping_auto_timer -= tick
             #print("PingData.auto_timer %s" % PingData.ping_auto_timer)
 
-        if UpdateCheck.request_save_scene and bpy.context.scene.urho_exportsettings.outputPath:
-            print("Check: %s=%s %s=%s %s=%s " %(UpdateCheck.last_pos,UpdateCheck.pos,UpdateCheck.last_rot,UpdateCheck.rot,UpdateCheck.last_scale,UpdateCheck.scale))
-
+        settings = bpy.context.scene.urho_exportsettings
+        if UpdateCheck.request_save_scene and settings.outputPath:
+            UpdateCheck.timer-=tick
+            print("Check[%s]: %s=%s %s=%s %s=%s " %(UpdateCheck.timer,UpdateCheck.last_pos,UpdateCheck.pos,UpdateCheck.last_rot,UpdateCheck.rot,UpdateCheck.last_scale,UpdateCheck.scale))
+ 
 
             isTransSame = UpdateCheck.last_pos==UpdateCheck.pos and UpdateCheck.last_rot==UpdateCheck.rot and UpdateCheck.last_scale==UpdateCheck.scale
 
-            if isTransSame:
+            if not UpdateCheck.saving and isTransSame and UpdateCheck.timer<=0:
                 print("EXPORT EXPORT")
-                bpy.ops.urho.export(ignore_geo_skel_anim=True)
+                #ExecuteAddon(bpy.context,True,True)
+                if settings.runtimeAutoUpdateTransforms:
+                    bpy.ops.urho.exportcommand()
+                    #bpy.ops.urho.export(ignore_geo_skel_anim=True)
                 UpdateCheck.modified_obj=None
                 UpdateCheck.last_obj=None
                 UpdateCheck.last_pos=None
@@ -3166,6 +3184,7 @@ def call_execution_queue():
                 UpdateCheck.rot=None
                 UpdateCheck.scale=None
                 UpdateCheck.request_save_scene=False
+                UpdateCheck.timer=1.0
             else:
                 UpdateCheck.last_obj=UpdateCheck.modified_obj
                 UpdateCheck.last_pos=UpdateCheck.pos
@@ -3173,7 +3192,7 @@ def call_execution_queue():
                 UpdateCheck.last_scale=UpdateCheck.scale
 
 
-        request_save_scene=False
+        
 
     if PingData.ping_check_running:
         bpy.context.scene.view_settings.view_transform = 'Raw'
@@ -4086,6 +4105,8 @@ def ExecuteUrhoExport(context):
 
 
 def ExecuteAddon(context, silent=False, ignoreGeoAnim=False):
+    UpdateCheck.saving = True
+
     global_settings = bpy.data.worlds[0].global_settings
 
     if global_settings.file_id == -1:
@@ -4153,8 +4174,11 @@ def ExecuteAddon(context, silent=False, ignoreGeoAnim=False):
 
     log.info("Export ended in {:.4f} sec".format(time.time() - startTime) )
     
-    if not silent:
-        bpy.ops.urho.report('INVOKE_DEFAULT')
+    #if not silent:
+    #    bpy.ops.urho.report('INVOKE_DEFAULT')
+
+    UpdateCheck.saving = False
+
 
             
 if __name__ == "__main__":
