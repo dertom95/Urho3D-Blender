@@ -42,12 +42,22 @@ if "decompose" in locals():
     imp.reload(utils)
     if DEBUG and "testing" in locals(): imp.reload(testing)
 
+try:
+    from PIL import Image,ImageDraw
+except:
+    import bpy,subprocess
+    pybin = bpy.app.binary_path_python
+    subprocess.check_call([pybin, '-m', 'ensurepip'])
+    subprocess.check_call([pybin, '-m', 'pip', 'install', 'Pillow'])
+    from PIL import Image,ImageDraw
+
+from pathlib import Path
 from .decompose import TOptions, Scan
 from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, UrhoWriteAnimation, \
                          UrhoWriteTriggers, UrhoExport
 from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterialTrees
 from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem, getLodSetWithID,getObjectWithID, execution_queue, \
-                    PingData,set_found_blender_runtime,found_blender_runtime, PingForRuntime
+                    PingData,set_found_blender_runtime,found_blender_runtime, PingForRuntime, copy_file,CalcNodeHash
 
 from .networking import Start as StartNetwork
 StartNetwork()
@@ -1758,6 +1768,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         description="Create Default Material-Nodetree"
     )
 
+    create_nodetree_from_material: StringProperty(
+        name="Create Urho3D-Material from Blender-Material",
+        default="",
+        description="Try to create urho3d-material from blender materials"
+    )
+
     materialsList : BoolProperty(
             name = "Materials text list",
             description = "Write a txt file with the list of materials filenames",
@@ -1975,7 +1991,223 @@ def CreateInitialMaterialTree(nodetree):
         nodetree.links.new(matNode.outputs[0],techniqueNode.inputs[0])
         nodetree.links.new(matNode.outputs[0],standardNode.inputs[0])
 
+    nodetree.initialized=True
+
+
+def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
+    images=[]
+
+    def add_filename_to_urhotexnode(urho3dTexNode,filename):
+        categories = urho3dTexNode.customData['prop_Texture_cat']
+        categories['all'].append((filename,filename,filename,CalcNodeHash(filename)))
+        if "imported" not in categories:
+            categories["imported"]=[]
+        enum_id = CalcNodeHash(filename)
+        categories['imported'].append((filename,filename,filename,enum_id))
+        urho3dTexNode.prop_Texture=filename        
+
+    def copy_image_and_set(eeveeTexNode,urho3dTexNode):
+        settings = bpy.context.scene.urho_exportsettings
+        # copy image from eevveeNode to Textures-Folder and add this image to the image-categories to be able to set it
+        folder=os.path.join(settings.texturesPath,'')+"imported"
+        filename=os.path.join(folder,'')+bpy.path.basename(eeveeTexNode.image.filepath)
+
+        ext = os.path.splitext(eeveeTexNode.image.filepath)[1].lower()
+        if ext==".png" or ext==".jpg" or ext==".dds":
+            copy_file(eeveeTexNode.image.filepath,settings.outputPath+folder,True)
+            add_filename_to_urhotexnode(urho3dTexNode,filename)
+        else:
+            Path(settings.outputPath+folder).mkdir(parents=True, exist_ok=True)
+            withoutExt = os.path.splitext(filename)[0]
+            img = Image.open(bpy.path.abspath(eeveeTexNode.image.filepath),"r")
+            
+            new_resource_path = withoutExt+".png"
+            full_output_path = os.path.join(settings.outputPath,'')+new_resource_path
+            img.save(full_output_path)
+            add_filename_to_urhotexnode(urho3dTexNode,new_resource_path)
+        
+
+    def process_principled(bsdf):
+        nonlocal images
+
+        settings = bpy.context.scene.urho_exportsettings
+
+        matNode = nodetree.nodes.new("urho3dmaterials__materialNode")
+        matNode.location = Vector((0,200))
+
+        techniqueNode = nodetree.nodes.new("urho3dmaterials__techniqueNode")
+        techniqueNode.location = Vector((250,350))
+        #techniqueNode.prop_Technique = 'Techniques/NoTexture.xml'
+        techniqueNode.width = 500
+        nodetree.links.new(matNode.outputs[0],techniqueNode.inputs[0])
+
+
+        urho3d_color_tex   = None
+        urho3d_normal_tex  = None
+        urho3d_metallic_tex= None
+        urho3d_rough_tex   = None
+
+        base_color = (1,1,1,1)
+
+        
+        # base-color
+        in_basecolor = bsdf.inputs["Base Color"]
+        
+        if in_basecolor.is_linked:
+            basecol_node = in_basecolor.links[0].from_node
+            
+            if basecol_node.type=="TEX_IMAGE":
+                # texture node
+                urho3d_color_tex = nodetree.nodes.new("urho3dmaterials__textureNode")
+                urho3d_color_tex.location = Vector((450,100))
+
+                nodetree.links.new(matNode.outputs[0],urho3d_color_tex.inputs[0])                
+                copy_image_and_set(basecol_node,urho3d_color_tex)
+            else:
+                print("Unknown basecolor_input:%s" %basecol_node.type)
+                pass
+        else:
+            base_color = in_basecolor.default_value
+
+        #normal
+        in_normal = bsdf.inputs["Normal"]
+
+        if in_normal.is_linked:
+            normal_node = in_normal.links[0].from_node
+
+            if normal_node.type=="NORMAL_MAP":
+                in_normal_color = normal_node.inputs["Color"]
+                if in_normal_color.is_linked and in_normal_color.links[0].from_node.type=="TEX_IMAGE":
+                    normal_map_tex = in_normal_color.links[0].from_node
+
+                    urho3d_normal_tex = nodetree.nodes.new("urho3dmaterials__textureNode")
+                    urho3d_normal_tex.prop_unit='normal'
+                    urho3d_normal_tex.location = Vector((650,100))
+                    nodetree.links.new(matNode.outputs[0],urho3d_normal_tex.inputs[0])
+                    copy_image_and_set(normal_map_tex,urho3d_normal_tex)
+
+        # rough / metallic
+
+        rough_image = None
+        rough_channel = None
+        metal_image = None
+        metal_channel = None
+        composition_size = (0,0)
+        outputfilename = ""
+
+
+
+        in_rough = bsdf.inputs["Roughness"]
+        if in_rough.is_linked:
+            rough_node = in_rough.links[0].from_node
+
+            if rough_node.type=="SEPRGB":
+                rough_channel = in_rough.links[0].from_socket.name
+
+                in_rough_image = rough_node.inputs["Image"]
+
+                if in_rough_image.is_linked:
+                    rough_image_node = in_rough_image.links[0].from_node
+
+                    if rough_image_node.type=="TEX_IMAGE":
+                        rough_image = Image.open(bpy.path.abspath(rough_image_node.image.filepath),"r")
+                        if rough_image:
+                            composition_size = (rough_image.width,rough_image.height)
+                        outputfilename += os.path.splitext(bpy.path.basename(rough_image_node.image.filepath))[0]
+                    else:
+                        print("Unknown rough-image-node:%s" %rough_image.type)
+                        pass                        
+            else:
+                print("ROUGHNESS: Not supported input node:%s" %rough_node.type)
+
+
+        in_metallic = bsdf.inputs["Metallic"]
+        if in_metallic.is_linked:
+            metallic_node = in_metallic.links[0].from_node
+
+            if metallic_node.type=="SEPRGB":
+                metal_channel = in_metallic.links[0].from_socket.name
+
+                in_metal_image = rough_node.inputs["Image"]
+
+                if in_metal_image.is_linked:
+                    metal_image_node = in_metal_image.links[0].from_node
+
+                    if metal_image_node.type=="TEX_IMAGE":
+                        metal_image = Image.open(bpy.path.abspath(metal_image_node.image.filepath),"r")
+                        if metal_image.width > composition_size[0]:
+                            composition_size=(metal_image.width,metal_image.height)
+                        
+                        part2 = os.path.splitext(bpy.path.basename(metal_image_node.image.filepath))[0]
+                        if outputfilename!=part2:
+                            outputfilename+=part2 # only had 2nd part if both parts are from different files
+                    else:
+                        print("Unknown rough-image-node:%s" %rough_image.type)
+                        pass                        
+            else:
+                print("Metallic: Not supported input node:%s" %rough_node.type)
+
+        metallicroughness = rough_image or metal_image
+
+        if metallicroughness:
+            empty_image = Image.new("RGBA",composition_size,(0,0,0,255))
+            r,g,b,a = empty_image.split()
+
+            if rough_image:
+                if rough_image.width < composition_size[0] or rough_image.height < composition_size[1]:
+                    rough_image = rough_image.resize(composition_size)
+                r = rough_image.getchannel(rough_channel)
+
+            if metal_image:
+                if metal_image.width < composition_size[0] or metal_image.height < composition_size[1]:
+                    metal_image = metal_image.resize(composition_size)
+                b = metal_image.getchannel(metal_channel)
+
+            result = Image.merge("RGBA",(r,g,b,a))
+
+            resource_part = os.path.join(settings.texturesPath,'')+"imported/gen_rm_"+outputfilename+".png"
+            outputfile=os.path.join(settings.outputPath,'')+resource_part
+            result.save(outputfile)
+
+            urho3d_roughmetal_tex = nodetree.nodes.new("urho3dmaterials__textureNode")
+            urho3d_roughmetal_tex.prop_unit='specular'
+            urho3d_roughmetal_tex.location = Vector((850,100))
+            nodetree.links.new(matNode.outputs[0],urho3d_roughmetal_tex.inputs[0])
+
+            add_filename_to_urhotexnode(urho3d_roughmetal_tex,resource_part)
+
+        if pbr:
+            pbsNode = nodetree.nodes.new("urho3dmaterials__pbsParams")
+            pbsNode.prop_MatDiffColor=base_color
+            pbsNode.location = Vector((250,100))
+
+            nodetree.links.new(matNode.outputs[0],pbsNode.inputs[0])
+        else:
+            standardNode = nodetree.nodes.new("urho3dmaterials__standardParams")
+            standardNode.location = Vector((250,100))
+            nodetree.links.new(matNode.outputs[0],standardNode.inputs[0])
+
+
+
+
         nodetree.initialized=True
+        
+
+
+
+
+
+
+    if nodetree and material and material.node_tree:
+        found_bsdf = False
+        for node in material.node_tree.nodes:
+            if node.type=="BSDF_PRINCIPLED":
+                if found_bsdf:
+                    print("ERROR! multiple bsdf-nodes not supported") # is that even allowed on the blender side?
+                    break
+                process_principled(node)
+                found_bsdf = True
+                
 
 class UrhoExportMaterialsOnlyOperator(bpy.types.Operator):
     """ Start exporting """
@@ -2224,6 +2456,28 @@ class PackOutputFolder(bpy.types.Operator):
         PublishAction(self,context,"packagetool",data)
 
         return {'FINISHED'}
+
+class UrhoCreateNodetreeFromMaterial(bpy.types.Operator):
+    ''' Tries to create Urho3D-Material from eevee-material '''
+    bl_idname = "urho.createnodetree_from_material"
+    bl_label = "Create Urho3D-Material from Blender-Material"
+    
+    nodetreeName : bpy.props.StringProperty()
+
+    @classmethod
+    def poll(self, context):
+        return True
+
+    def execute(self, context):
+        settings = context.scene.urho_exportsettings
+        
+        if settings.create_nodetree_from_material and self.nodetreeName:
+            material = bpy.data.materials[settings.create_nodetree_from_material]
+            nodetree = bpy.data.node_groups[self.nodetreeName]
+            CreateMaterialFromNodetree(nodetree,material,True)
+
+        return {'FINISHED'}
+
 
 def ObjectUserData(obj,layout):
     box = layout.box()
@@ -2884,7 +3138,6 @@ def ObjectMaterialNodetree(obj,box):
         row.operator("object.material_slot_deselect", text="Deselect")                
 
 
-
 class UrhoExportNodetreePanel(bpy.types.Panel):
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
@@ -2902,6 +3155,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
 
             space_treetype = bpy.context.space_data.tree_type
             nodetree = bpy.context.space_data.node_tree
+            settings = bpy.context.scene.urho_exportsettings
 
             #print("TreeType:%s" % space_treetype )
             PingForRuntime()
@@ -2921,15 +3175,16 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             if space_treetype=="urho3dmaterials" and bpy.context.active_object.type=="MESH":
                 innerBox = box.box()
                 row = innerBox.row()
-                row.prop(bpy.context.scene.urho_exportsettings,"create_default_material_nodetree",text="auto-create nodetree for empty nodetrees")
+                row.prop(settings,"create_default_material_nodetree",text="auto-create nodetree for empty nodetrees")
                 if nodetree and len(bpy.context.selected_objects):
                     row = innerBox.row()
                     row.operator("urho_nodetrees.set_selected").material_nt_name=nodetree.name
 
+
                 ObjectMaterialNodetree(obj,box)
 
                 if nodetree and not nodetree.initialized:
-                    print("TRY TO INIT")
+                    #print("TRY TO INIT")
 
                     def QueuedExecution():
                         CreateInitialMaterialTree(nodetree)
@@ -2941,6 +3196,20 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
 
             row = layout.row()        
             row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
+
+            if nodetree and settings.runtimeUnstable:
+                row = layout.row()
+                row.label(text="Experimental")
+                innerBox = layout.box()
+                row = innerBox.row()
+                row.label(text="Create Nodes from Material:")
+                
+                row = innerBox.row()
+                row.prop_search(settings,"create_nodetree_from_material",bpy.data,"materials",text="")
+                row = innerBox.row()
+                op = row.operator("urho.createnodetree_from_material")
+                op.nodetreeName = nodetree.name
+
 
 
 
@@ -3410,6 +3679,7 @@ def register():
     bpy.utils.register_class(URHO_PT_mainmaterial)
     bpy.utils.register_class(URHO_PT_mainuserdata)
     bpy.utils.register_class(PackOutputFolder)
+    bpy.utils.register_class(UrhoCreateNodetreeFromMaterial)
     
 
     
@@ -3578,7 +3848,8 @@ def unregister():
     bpy.utils.unregister_class(URHO_PT_mainmaterial)
     bpy.utils.unregister_class(URHO_PT_maincomponent)
     bpy.utils.unregister_class(PackOutputFolder)
-    
+    bpy.utils.unregister_class(UrhoCreateNodetreeFromMaterial)
+
 
     try:
         bpy.utils.unregister_class(UrhoExportRenderPanel)

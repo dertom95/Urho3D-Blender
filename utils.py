@@ -7,7 +7,7 @@
 
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
-import os
+import os,shutil
 import struct
 import array
 import logging
@@ -328,7 +328,8 @@ def SDBMHash(key):
         hash = ord(key[i]) + (hash << 6) + (hash << 16) - hash
     return (hash & 0xFFFFFFFF)
 
-
+def CalcNodeHash(id):
+    return SDBMHash(id) % 10000000
 
 def getLodSetWithID(id,returnIdx=False):
     cnt=0
@@ -454,6 +455,13 @@ def PingForRuntime():
     PingData.ping_count = 0
     set_found_blender_runtime(False)
 
+def copy_file(from_filepath,to_folder,createFolderIfNotPresent=True):
+    if createFolderIfNotPresent:
+        from pathlib import Path
+        Path(to_folder).mkdir(parents=True, exist_ok=True)
 
+    shutil.copy(bpy.path.abspath(from_filepath), to_folder)
+
+    
 
 
