@@ -784,41 +784,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         sceneRoot = ET.Element('scene')
         sceneRoot.set("id", "1")
 
-        foundSceneNodeTree = False
-        try:
-#            print("SCENETREE CHECK: %s %s %s" % ( jsonNodetreeAvailable, str(blenderScene.nodetree is not None), blenderScene.nodetree.name)) 
-            if jsonNodetreeAvailable and blenderScene.nodetree:
-                # bypass nodeID and receive the new value
-                print("FOUND SCENE")
-                compoID = CreateNodeTreeXML(sceneRoot,blenderScene.nodetree,compoID)
-                foundSceneNodeTree = True
-        except Exception as e:
-            log.error("Cannot export scene nodetree {:s} " % str(e) )
-            log.critical("Couldn't export scene-nodetree. skipping nodetree and going on with default behaviour")
-            pass
-
-        if not foundSceneNodeTree:
-            add_component(sceneRoot,"Octree")
-            add_component(sceneRoot,"DebugRenderer")
-
-            # a["{:d}".format(m)] = ET.SubElement(sceneRoot, "component")
-            # a["{:d}".format(m)].set("type", "Octree")
-            # a["{:d}".format(m)].set("id", "1")
-
-            # a["{:d}".format(m+1)] = ET.SubElement(sceneRoot, "component")
-            # a["{:d}".format(m+1)].set("type", "DebugRenderer")
-            # a["{:d}".format(m+1)].set("id", "2")
-
-            # m += 2
-
-
-
-
-            if not sOptions.noPhysics:
-                a["{:d}".format(m)] = ET.SubElement(sceneRoot, "component")
-                a["{:d}".format(m)].set("type", "PhysicsWorld")
-                a["{:d}".format(m)].set("id", "4")
-                m += 1
+        add_component(sceneRoot,"Octree")
+        add_component(sceneRoot,"DebugRenderer")
+        if not sOptions.noPhysics:
+            a["{:d}".format(m)] = ET.SubElement(sceneRoot, "component")
+            a["{:d}".format(m)].set("type", "PhysicsWorld")
+            a["{:d}".format(m)].set("id", "4")
+            m += 1
 
         # Create Root node
         root = ET.SubElement(sceneRoot, "node")
@@ -830,6 +802,20 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     a["{:d}".format(m)] = ET.SubElement(root, "attribute")
     a["{:d}".format(m)].set("name", "Name")
     a["{:d}".format(m)].set("value", uScene.blenderSceneName)
+
+    foundSceneNodeTree = False
+    try:
+#            print("SCENETREE CHECK: %s %s %s" % ( jsonNodetreeAvailable, str(blenderScene.nodetree is not None), blenderScene.nodetree.name)) 
+        if jsonNodetreeAvailable and blenderScene.nodetree:
+            # bypass nodeID and receive the new value
+            print("FOUND SCENE")
+            compoID = CreateNodeTreeXML(root,blenderScene.nodetree,compoID)
+            foundSceneNodeTree = True
+    except Exception as e:
+        log.error("Cannot export scene nodetree {:s} " % str(e) )
+        log.critical("Couldn't export scene-nodetree. skipping nodetree and going on with default behaviour")
+        pass        
+
 
     if sOptions.SceneCreateZone:
         zone_attrs = {}

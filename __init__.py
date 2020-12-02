@@ -183,7 +183,7 @@ def PublishAction(self,context,action,dataDict):
 # publish runtime-settings (show_physics...) to runtime
 def PublishRuntimeSettings(self,context):
     settings={}
-    settings["export_path"]=self.outputPath
+    settings["export_path"]=bpy.path.abspath(self.outputPath)
     settings["show_physics"]=self.runtimeShowPhysics
     settings["show_physics_depth"]=self.runtimeShowPhysicsDepth
     settings["activate_physics"]=self.runtimeActivatePhysics
@@ -1016,7 +1016,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             print("OUTPUT")
             #addonPrefs.outputPath = self.outputPath
 
-            bpy.data.worlds[0].jsonNodes.path = "%s__blender_material.json" % self.outputPath
+            bpy.data.worlds[0].jsonNodes.path = "%s__blender_material.json" % bpy.path.abspath(self.outputPath)
             print("--")
 
 
@@ -2012,17 +2012,19 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
         folder=os.path.join(settings.texturesPath,'')+"imported"
         filename=os.path.join(folder,'')+bpy.path.basename(eeveeTexNode.image.filepath)
 
+        abs_outputPath = bpy.path.abspath(settings.outputPath)
+
         ext = os.path.splitext(eeveeTexNode.image.filepath)[1].lower()
         if ext==".png" or ext==".jpg" or ext==".dds":
-            copy_file(eeveeTexNode.image.filepath,settings.outputPath+folder,True)
+            copy_file(eeveeTexNode.image.filepath,abs_outputPath+folder,True)
             add_filename_to_urhotexnode(urho3dTexNode,filename)
         else:
-            Path(settings.outputPath+folder).mkdir(parents=True, exist_ok=True)
+            Path(+folder).mkdir(parents=True, exist_ok=True)
             withoutExt = os.path.splitext(filename)[0]
             img = Image.open(bpy.path.abspath(eeveeTexNode.image.filepath),"r")
             
             new_resource_path = withoutExt+".png"
-            full_output_path = os.path.join(settings.outputPath,'')+new_resource_path
+            full_output_path = os.path.join(abs_outputPath,'')+new_resource_path
             img.save(full_output_path)
             add_filename_to_urhotexnode(urho3dTexNode,new_resource_path)
         
@@ -2166,7 +2168,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
             result = Image.merge("RGBA",(r,g,b,a))
 
             resource_part = os.path.join(settings.texturesPath,'')+"imported/gen_rm_"+outputfilename+".png"
-            outputfile=os.path.join(settings.outputPath,'')+resource_part
+            outputfile=os.path.join( bpy.path.abspath(settings.outputPath),'')+resource_part
             result.save(outputfile)
 
             urho3d_roughmetal_tex = nodetree.nodes.new("urho3dmaterials__textureNode")
@@ -2450,8 +2452,8 @@ class PackOutputFolder(bpy.types.Operator):
     def execute(self, context):
         settings = context.scene.urho_exportsettings
         data={}
-        data["package_folder"]=settings.outputPath
-        data["package_name"]=settings.packPath
+        data["package_folder"]=bpy.path.abspath(settings.outputPath)
+        data["package_name"]=bpy.path.abspath(settings.packPath)
 
         PublishAction(self,context,"packagetool",data)
 
