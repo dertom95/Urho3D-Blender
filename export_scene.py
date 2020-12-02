@@ -1163,6 +1163,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(m)].set("value", currentModel)
             m += 1
 
+            if obj.hide_render:
+                a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
+                a["{:d}".format(m)].set("name", "Is Enabled")
+                a["{:d}".format(m)].set("value", "false")
+                m += 1
+
+
             a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
             a["{:d}".format(m)].set("name", "Material")
             currentMaterialValue = "Material" + materials
