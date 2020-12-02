@@ -3306,6 +3306,12 @@ class URHO_PT_maincomponent(bpy.types.Panel):
         layout = self.layout
         obj = bpy.context.active_object
         if obj:
+
+            box = layout.box()
+            row = box.row()
+            row.label(text="Object-Name:")
+            row = box.row()
+            row.prop(obj,"name",text="")
             ObjectUserData(obj,layout)
         
 
