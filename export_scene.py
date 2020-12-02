@@ -1195,7 +1195,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
                     a["{:d}".format(m)].set("name", "Cast Shadows")
                     a["{:d}".format(m)].set("value", "true")
-                    m += 1    
+                    m += 1
+                else:
+                    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
+                    a["{:d}".format(m)].set("name", "Cast Shadows")
+                    a["{:d}".format(m)].set("value", "false")
+                    m += 1
+
 
                 # if obj.receive_shadow:
                 #     a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
@@ -1343,9 +1349,13 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     col = ldata.color
                     light_attrs["Color"]="%s %s %s 1" % (col.r,col.g,col.b)
 
-                    if ldata.use_shadow:
-                        light_attrs["Cast Shadows"]="true"
-                    else:
+                    try:
+                        if ldata.cycles.cast_shadow:
+                            light_attrs["Cast Shadows"]="true"
+                        else:
+                            light_attrs["Cast Shadows"]="false"
+                    except:
+                        print("could not determin cast-shadow-value => false")
                         light_attrs["Cast Shadows"]="false"
 
                     add_component(a[modelNode],"Light",light_attrs)
