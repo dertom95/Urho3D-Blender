@@ -99,7 +99,9 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             "current_view_distance" : None,
             "export_path" : None,
             "pos" : None,
-            "dir" : None
+            "dir" : None,
+            "clip_start" : 0,
+            "clip_end" : 0
         }
 
         execution_queue.execute_or_queue_action(PingForRuntime)
@@ -256,6 +258,9 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
 
             data["width"] = region.width
             data["height"] = region.height
+            self.changes["clip_start"]=space_view3d.clip_start
+            self.changes["clip_end"]=space_view3d.clip_end
+            
             self.changes["resolution"]={ 'width' : region.width, 'height' : region.height }
 
             self.tag_redraw()

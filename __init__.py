@@ -3303,7 +3303,8 @@ class URHO_PT_maincomponent(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         obj = bpy.context.active_object
-        ObjectUserData(obj,layout)
+        if obj and obj.user_data:
+            ObjectUserData(obj,layout)
         
 
 
