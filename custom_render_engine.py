@@ -101,7 +101,8 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             "pos" : None,
             "dir" : None,
             "clip_start" : 0,
-            "clip_end" : 0
+            "clip_end" : 0,
+            "frame_current" : 0
         }
 
         execution_queue.execute_or_queue_action(PingForRuntime)
@@ -201,12 +202,12 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         pos = view3d_utils.region_2d_to_origin_3d(region, region3d, (region.width/2.0, region.height/2.0))
 
         if (self.forceUpdate or forceMatrix 
+                or data["frame_current"] != scene.frame_current
                 or data["current_view_matrix"] != region3d.view_matrix 
                 or data["pos"]!=pos or data["dir"]!=direction
                 or (region3d.view_perspective=="ORTHO" and data["current_view_distance"]!=region3d.view_distance)):
             data["current_view_matrix"] = region3d.view_matrix.copy()
             data["current_view_distance"] = region3d.view_distance
-
             data["dir"]=direction
             data["pos"]=pos
 
@@ -221,6 +222,10 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             self.changes["perspective_matrix"]=matrix2dict(region3d.perspective_matrix);
             self.changes["fov"]=fov
             self.changes["view_distance"]=region3d.view_distance
+    
+            if data["frame_current"] != scene.frame_current:
+                self.changes["scene_time"] = scene.frame_current / scene.render.fps
+            data["frame_current"] = scene.frame_current
 
             
 

@@ -10,7 +10,7 @@ from xml.etree import ElementTree as ET
 from mathutils import Vector, Quaternion, Matrix
 import bpy
 import os
-import logging
+import logging,traceback
 import math
 
 jsonNodetreeAvailable = True
@@ -621,7 +621,7 @@ def AddGroupInstanceComponent(a,m,groupFilename,offset,modelNode):
     return m
 
 ## add userdata-attributes 
-def ExportUserdata(a,m,obj,modelNode,includeCollectionTags=True):
+def ExportUserdata(a,m,obj,modelNode,includeCollectionTags=True,fOptions=None):
     print("EXPORT USERDATA")
     attribID = m
     a["{:d}".format(m)] = ET.SubElement(a[modelNode], "attribute")
@@ -630,15 +630,30 @@ def ExportUserdata(a,m,obj,modelNode,includeCollectionTags=True):
 
     tags = []
 
+    def add_userdata(key,value,type="String"):
+        nonlocal m,a
+        a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "variant")
+        a["{:d}".format(m)].set("hash", str(SDBMHash(key)))
+        a["{:d}".format(m)].set("type", type)
+        a["{:d}".format(m)].set("value", value)
+        m += 1
+
     for ud in obj.user_data:
         if ud.key.lower() != "tag":
-            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "variant")
-            a["{:d}".format(m)].set("hash", str(SDBMHash(ud.key)))
-            a["{:d}".format(m)].set("type", "String")
-            a["{:d}".format(m)].set("value", ud.value)
-            m += 1
+            add_userdata(ud.key,ud.value)
         else:
             tags.extend(ud.value.split(","))
+
+    if obj.parent and obj.parent.type=="ARMATURE" and obj.parent.animation_data:
+        animdata = obj.parent.animation_data
+        action_name=animdata.action.name
+
+        filepath = GetFilepath(PathType.ANIMATIONS, action_name, fOptions)
+
+        add_userdata("__runtime_animation",filepath[1])
+        current_time =  bpy.context.scene.frame_current / bpy.context.scene.render.fps
+        add_userdata("__runtime_animation_time",str(current_time),"Float")
+
 
     if includeCollectionTags:
         print("INCLUDE COLTAGS")
@@ -1139,7 +1154,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             m += 1
         
         if (sOptions.exportUserdata or sOptions.exportObjectCollectionAsTag) and obj:
-            m = ExportUserdata(a,m,obj,modelNode,sOptions.exportObjectCollectionAsTag)
+            m = ExportUserdata(a,m,obj,modelNode,sOptions.exportObjectCollectionAsTag,fOptions)
         
         if sOptions.exportGroupsAsObject and obj.instance_type == 'COLLECTION':
             grp = obj.instance_collection
@@ -1211,11 +1226,23 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
             finishedNodeTree = False
             try:
-                if jsonNodetreeAvailable and len(obj.nodetrees)>0:
+                if jsonNodetreeAvailable:
                     # keep track of already exported nodetrees to prevent one nodetree added multiple times
                     # TODO: prevent inconsistend data in the first place
                     handledNodetrees = []
                     
+                    # merge the nodetress on the armature on the mesh-object
+                    if obj.parent and obj.parent.type=="ARMATURE": 
+                        for nodetreeSlot in obj.parent.nodetrees:
+                            nt = nodetreeSlot.nodetreePointer
+                            if (nt not in handledNodetrees):
+                                compoID = CreateNodeTreeXML(a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode)
+                                handledNodetrees.append(nt)
+                            else:
+                                # we already added this nodetree! nothing more to do
+                                pass
+
+
                     for nodetreeSlot in obj.nodetrees:
                         nt = nodetreeSlot.nodetreePointer
                         if (nt not in handledNodetrees):
@@ -1226,6 +1253,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                             pass
                     finishedNodeTree = True
             except:
+                desired_trace = traceback.format_exc()
+                print("Unexpected error in jsonnodetree_register:", desired_trace)                
                 log.critical("Couldn't export nodetree. skipping nodetree and going on with default behaviour")
                 pass
 
