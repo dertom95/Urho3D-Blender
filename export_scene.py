@@ -651,7 +651,7 @@ def ExportUserdata(a,m,obj,modelNode,includeCollectionTags=True,fOptions=None):
         filepath = GetFilepath(PathType.ANIMATIONS, action_name, fOptions)
 
         add_userdata("__runtime_animation",filepath[1])
-        current_time =  bpy.context.scene.frame_current / bpy.context.scene.render.fps
+        current_time =  (bpy.context.scene.frame_current-1) / bpy.context.scene.render.fps
         add_userdata("__runtime_animation_time",str(current_time),"Float")
 
 

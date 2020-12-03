@@ -224,7 +224,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             self.changes["view_distance"]=region3d.view_distance
     
             if data["frame_current"] != scene.frame_current:
-                self.changes["scene_time"] = scene.frame_current / scene.render.fps
+                self.changes["scene_time"] = (scene.frame_current-1) / scene.render.fps
             data["frame_current"] = scene.frame_current
 
             
