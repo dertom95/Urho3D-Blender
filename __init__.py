@@ -2007,26 +2007,32 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
         urho3dTexNode.prop_Texture=filename        
 
     def copy_image_and_set(eeveeTexNode,urho3dTexNode):
+        image = eeveeTexNode.image
+
         settings = bpy.context.scene.urho_exportsettings
         # copy image from eevveeNode to Textures-Folder and add this image to the image-categories to be able to set it
         folder=os.path.join(settings.texturesPath,'')+"imported"
-        filename=os.path.join(folder,'')+bpy.path.basename(eeveeTexNode.image.filepath)
+        filename=os.path.join(folder,'')+bpy.path.basename(image.filepath)
+        abs_outputPath = os.path.join(bpy.path.abspath(settings.outputPath) ,'')
 
-        abs_outputPath = bpy.path.abspath(settings.outputPath)
-
-        ext = os.path.splitext(eeveeTexNode.image.filepath)[1].lower()
-        if ext==".png" or ext==".jpg" or ext==".dds":
-            copy_file(eeveeTexNode.image.filepath,abs_outputPath+folder,True)
+        if image.packed_file:
+            full_ouput_path=abs_outputPath+filename
+            image.save_render(full_ouput_path)
             add_filename_to_urhotexnode(urho3dTexNode,filename)
         else:
-            Path(+folder).mkdir(parents=True, exist_ok=True)
-            withoutExt = os.path.splitext(filename)[0]
-            img = Image.open(bpy.path.abspath(eeveeTexNode.image.filepath),"r")
-            
-            new_resource_path = withoutExt+".png"
-            full_output_path = os.path.join(abs_outputPath,'')+new_resource_path
-            img.save(full_output_path)
-            add_filename_to_urhotexnode(urho3dTexNode,new_resource_path)
+            ext = os.path.splitext(image.filepath)[1].lower()
+            if ext==".png" or ext==".jpg" or ext==".dds":
+                copy_file(image.filepath,abs_outputPath+folder,True)
+                add_filename_to_urhotexnode(urho3dTexNode,filename)
+            else:
+                Path(+folder).mkdir(parents=True, exist_ok=True)
+                withoutExt = os.path.splitext(filename)[0]
+                img = Image.open(bpy.path.abspath(image.filepath),"r")
+                
+                new_resource_path = withoutExt+".png"
+                full_output_path = abs_outputPath+new_resource_path
+                img.save(full_output_path)
+                add_filename_to_urhotexnode(urho3dTexNode,new_resource_path)
         
 
     def process_principled(bsdf):
@@ -2048,6 +2054,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
         urho3d_normal_tex  = None
         urho3d_metallic_tex= None
         urho3d_rough_tex   = None
+        urho3d_sepcular_tex= None
 
         base_color = (1,1,1,1)
 
@@ -2088,6 +2095,26 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
                     nodetree.links.new(matNode.outputs[0],urho3d_normal_tex.inputs[0])
                     copy_image_and_set(normal_map_tex,urho3d_normal_tex)
 
+        # specular-color
+        in_specularcolor = bsdf.inputs["Specular"]
+        
+        if in_specularcolor.is_linked:
+            specular_node = in_specularcolor.links[0].from_node
+            
+            if specular_node.type=="TEX_IMAGE":
+                # texture node
+                urho3d_sepcular_tex = nodetree.nodes.new("urho3dmaterials__textureNode")
+                urho3d_sepcular_tex.location = Vector((450,-200))
+                urho3d_sepcular_tex.prop_unit='specular'
+                nodetree.links.new(matNode.outputs[0],urho3d_sepcular_tex.inputs[0])                
+                copy_image_and_set(specular_node,urho3d_sepcular_tex)
+            else:
+                print("Unknown basecolor_input:%s" %basecol_node.type)
+                pass
+        else:
+            base_color = in_basecolor.default_value
+
+
         # rough / metallic
 
         rough_image = None
@@ -2110,18 +2137,17 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
 
                 if in_rough_image.is_linked:
                     rough_image_node = in_rough_image.links[0].from_node
-
-                    if rough_image_node.type=="TEX_IMAGE":
-                        rough_image = Image.open(bpy.path.abspath(rough_image_node.image.filepath),"r")
-                        if rough_image:
-                            composition_size = (rough_image.width,rough_image.height)
-                        outputfilename += os.path.splitext(bpy.path.basename(rough_image_node.image.filepath))[0]
-                    else:
-                        print("Unknown rough-image-node:%s" %rough_image.type)
-                        pass                        
             else:
-                print("ROUGHNESS: Not supported input node:%s" %rough_node.type)
+                rough_image_node = rough_node # maybe they connect the texture directly
 
+            if rough_image_node.type=="TEX_IMAGE":
+                rough_image = Image.open(bpy.path.abspath(rough_image_node.image.filepath),"r")
+                if rough_image:
+                    composition_size = (rough_image.width,rough_image.height)
+                outputfilename += os.path.splitext(bpy.path.basename(rough_image_node.image.filepath))[0]
+            else:
+                print("Unknown rough-image-node:%s" %rough_image.type)
+                pass                        
 
         in_metallic = bsdf.inputs["Metallic"]
         if in_metallic.is_linked:
@@ -2134,20 +2160,20 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
 
                 if in_metal_image.is_linked:
                     metal_image_node = in_metal_image.links[0].from_node
-
-                    if metal_image_node.type=="TEX_IMAGE":
-                        metal_image = Image.open(bpy.path.abspath(metal_image_node.image.filepath),"r")
-                        if metal_image.width > composition_size[0]:
-                            composition_size=(metal_image.width,metal_image.height)
-                        
-                        part2 = os.path.splitext(bpy.path.basename(metal_image_node.image.filepath))[0]
-                        if outputfilename!=part2:
-                            outputfilename+=part2 # only had 2nd part if both parts are from different files
-                    else:
-                        print("Unknown rough-image-node:%s" %rough_image.type)
-                        pass                        
             else:
-                print("Metallic: Not supported input node:%s" %rough_node.type)
+                metal_image_node=metallic_node # maybe they connect the texture directly
+
+            if metal_image_node.type=="TEX_IMAGE":
+                metal_image = Image.open(bpy.path.abspath(metal_image_node.image.filepath),"r")
+                if metal_image.width > composition_size[0]:
+                    composition_size=(metal_image.width,metal_image.height)
+                
+                part2 = os.path.splitext(bpy.path.basename(metal_image_node.image.filepath))[0]
+                if outputfilename!=part2:
+                    outputfilename+=part2 # only had 2nd part if both parts are from different files
+            else:
+                print("Unknown rough-image-node:%s" %rough_image.type)
+                pass                        
 
         metallicroughness = rough_image or metal_image
 
