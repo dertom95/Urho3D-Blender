@@ -2572,6 +2572,8 @@ class UrhoExportObjectPanel(bpy.types.Panel):
             box.label(text="Collection '%s'" % currentCollection.name)
             row = box.row()
             row.prop(currentCollection,"urhoExport",text="export as urho object")
+            row = box.row()
+            row.prop(currentCollection,"instance_offset",text="Offset")
             
             if len(currentCollection.children)>0:
                 row = box.row()

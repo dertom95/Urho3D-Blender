@@ -8,7 +8,7 @@ from .utils import PathType, GetFilepath, CheckFilepath, \
                    WriteXmlFile,WriteStringFile, SDBMHash, getLodSetWithID, getObjectWithID
 from xml.etree import ElementTree as ET
 from mathutils import Vector, Quaternion, Matrix
-import bpy
+import bpy,copy
 import os
 import logging,traceback
 import math
@@ -612,11 +612,11 @@ def AddGroupInstanceComponent(a,m,groupFilename,offset,modelNode):
     a["{:d}".format(m)].set("name", "groupFilename")
     a["{:d}".format(m)].set("value", groupFilename)
     
-    a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "attribute")
-    a["{:d}".format(m)].set("name", "groupOffset")
-    off = Vector3ToString(Vector( (offset.y,offset.z,offset.x) ))
-    print("EXPORT-OFFSET: %s : %s" % ( groupFilename,off ))
-    a["{:d}".format(m)].set("value", off )
+    # a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "attribute")
+    # a["{:d}".format(m)].set("name", "groupOffset")
+    # off = Vector3ToString(Vector( (offset.y,offset.z,offset.x) ))
+    # print("EXPORT-OFFSET: %s : %s" % ( groupFilename,off ))
+    # a["{:d}".format(m)].set("value", off )
     
     return m
 
@@ -1109,12 +1109,12 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         offset = group.instance_offset # Vector((0,0,0)) # no offset in blender 2.8 anymore
 
                         a[groupName] = ET.Element('node')
-                        a["{:d}".format(m)] = ET.SubElement(a[groupName], "attribute")
-                        a["{:d}".format(m)].set("name", "Position")
-                        a["{:d}".format(m)].set("value", "%s %s %s" % ( offset.y,-offset.z, -offset.x ) )
-                        m += 1
+                        # a["{:d}".format(m)] = ET.SubElement(a[groupName], "attribute")
+                        # a["{:d}".format(m)].set("name", "Position")
+                        # a["{:d}".format(m)].set("value", "%s %s %s" % ( offset.y,-offset.z, -offset.x ) )
+                        # m += 1
 
-                        groups.append({'xml':a[groupName],'obj':obj,'group':group })
+                        
                         # apply group offset
                         #offset = group.dupli_offset
                         
@@ -1125,7 +1125,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         colInstPos = Vector( (modelPos.x + offset.y, modelPos.y - offset.z, modelPos.z - offset.x) )
                         print("NEW Collection Instance POS %s: " % ( colInstPos ))
                         uSceneModel.colInstPosition = colInstPos
-                        
+
+                        groups.append({'xml':a[groupName],'obj':obj,'group':group, 'instance_offset_delta' : (offset.y,-offset.z,-offset.x) })
                     
                     # create root for the group object
                     print("a[%s].append(a[%s]" %(groupName,modelNode))
@@ -1456,7 +1457,24 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             filepath = GetFilepath(PathType.OBJECTS, GetGroupName(grp["group"].name), fOptions)
             if CheckFilepath(filepath[0], fOptions):
                 log.info( "!!Creating group-prefab {:s}".format(filepath[1]) )
-                WriteXmlFile(grp["xml"], filepath[0], fOptions)
+                dx,dy,dz=grp["instance_offset_delta"]
+                clone_data = copy.deepcopy(grp["xml"])
+                #rewrite positions of root-objects inside collection according to the collection-offset
+                for data in clone_data:
+                    print(data)
+                    if data.tag=="node":
+                        for idata in data:
+                            if idata.tag=="attribute" and idata.attrib["name"]=="Position":
+                                value = idata.attrib["value"]
+                                x,y,z=value.split(' ')
+                                
+                                new_x = float(x) + float(dx);   
+                                new_y = float(y) + float(dy);   
+                                new_z = float(z) + float(dz);   
+
+                                idata.attrib["value"]="%s %s %s" % (new_x,new_y,new_z)
+
+                WriteXmlFile(clone_data, filepath[0], fOptions)
 
     # Write collective and scene prefab files
     if not sOptions.mergeObjects:
