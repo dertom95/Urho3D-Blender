@@ -4491,22 +4491,16 @@ def ExecuteAddon(context, silent=False, ignoreGeoAnim=False):
 
     settings = bpy.context.scene.urho_exportsettings
 
+    before_export_geo =  settings.geometries
+    before_export_anim = settings.animations
+    before_export_skel = settings.skeletons
+    before_export_morph = settings.morphs
+
     if ignoreGeoAnim:
-        before_export_geo =  settings.geometries
-        before_export_anim = settings.animations
-        before_export_skel = settings.skeletons
-        before_export_morph = settings.morphs
         settings.geometries = False
         settings.animations = False
         #settings.skeletons = False
         settings.morphs = False
-    else:
-        settings.geometries = True
-        settings.animations = True
-        #settings.skeletons = False
-        settings.morphs = True
-
-
 
     before_export_selection = bpy.context.selected_objects
     before_export_active_obj = bpy.context.active_object
@@ -4542,12 +4536,11 @@ def ExecuteAddon(context, silent=False, ignoreGeoAnim=False):
     #bpy.ops.object.mode_set(mode=before_export_mode, toggle=False)
 
 
-    if ignoreGeoAnim:
-        settings.geometries = before_export_geo
-        settings.animations = before_export_anim
-        settings.skeletons = before_export_skel
-        settings.morphs = before_export_morph
-
+    settings.geometries = before_export_geo
+    settings.animations = before_export_anim
+    settings.skeletons = before_export_skel
+    settings.morphs = before_export_morph
+    
 
     log.info("Export ended in {:.4f} sec".format(time.time() - startTime) )
     
