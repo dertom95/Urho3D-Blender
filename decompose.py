@@ -806,7 +806,7 @@ def SetRestPosePosition(context, armatureObj):
     # Force the armature in the rest position (warning: https://developer.blender.org/T24674)
     # This should reset bones matrices ok, but for sure it is not resetting the mesh tessfaces
     # positions
-    savedPosePositionAndVisibility = [armatureObj.data.pose_position, armatureObj.visible_get()]
+    savedPosePositionAndVisibility = [armatureObj.data.pose_position, not armatureObj.visible_get()]
     armatureObj.data.pose_position = 'REST'
     armatureObj.hide_viewport = False
     

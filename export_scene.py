@@ -1006,8 +1006,9 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             if grpObj.type=="ARMATURE":
                 print("Found armature: adding children to group")
                 for child in grpObj.children:
-                    grpObjects.append(child)
-                    print("armature-child:%s" % child.name)
+                    if child not in grpObjects:
+                        grpObjects.append(child)
+                        print("armature-child:%s" % child.name)
                 continue
 
             if grpObj.name in groupObjMapping:
