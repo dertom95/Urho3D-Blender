@@ -2759,13 +2759,13 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         op.ignore_geo_skel_anim=False
         op.only_selected_mesh=False
         row = col.row()
-        op = row.operator("urho.export", icon='EXPORT',text='Export: SELECTED MESHES')
-        op.ignore_geo_skel_anim=False
-        op.only_selected_mesh=True
-        row = col.row()
         op = row.operator("urho.export", icon='EXPORT',text='Export: WITHOUT GEOMETRY')
         op.ignore_geo_skel_anim=True
         op.only_selected_mesh=False
+        row = col.row()
+        op = row.operator("urho.export", icon='EXPORT',text='Export: SELECTED MESHES')
+        op.ignore_geo_skel_anim=False
+        op.only_selected_mesh=True
         row = col.row()
         row.operator("urho.exportmaterials", icon='EXPORT', text='Export: ONLY MATERIAL')
 
@@ -4531,6 +4531,7 @@ def ExecuteAddon(context, silent=False, ignoreGeoAnim=False, onlySelectedMesh=Fa
         settings.source = "ONLY_SELECTED"
         settings.scenePrefab = False
         export_no_geo_afterwards = True
+        settings.geometries = True
 
     before_export_selection = bpy.context.selected_objects
     before_export_active_obj = bpy.context.active_object
