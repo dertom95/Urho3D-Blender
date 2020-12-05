@@ -1079,16 +1079,18 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         # Generate XML Content
         k += 1
         
+        # if in export only selected mode make sure those selections are put as root object
+        add_exception = obj.parent and urho_settings.source=="ONLY_SELECTED" and obj.parent not in bpy.context.selected_objects
 
         # Parenting: make sure parented objects are child of this in xml as well
-        print ( ("PARENT:%s type:%s") % (str(uSceneModel.parentObjectName),str(uSceneModel.type )))
-        if not isEmpty and uSceneModel.parentObjectName and (uSceneModel.parentObjectName in a):
+        print ( ("PARENT:%s type:%s") % (str(uSceneModel.parentObjectName),str(uSceneModel.type)))
+        if not add_exception and not isEmpty and uSceneModel.parentObjectName and (uSceneModel.parentObjectName in a):
             for usm in uScene.modelsList:
                 if usm.name == uSceneModel.parentObjectName:
                     a[modelNode] = ET.SubElement(a[usm.name], "node")
                     break
         else:
-            if not uSceneModel.parentObjectName:
+            if not uSceneModel.parentObjectName or add_exception:
                 a[modelNode] = ET.SubElement(root, "node")
                 parentObjects.append({'xml':a[modelNode],'uSceneModel':uSceneModel})
             else:

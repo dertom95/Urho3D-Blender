@@ -1967,9 +1967,10 @@ class UrhoExportOperator(bpy.types.Operator):
     bl_label = "Export"
 
     ignore_geo_skel_anim : bpy.props.BoolProperty(default=False)
+    only_selected_mesh : bpy.props.BoolProperty(default=False)
   
     def execute(self, context):
-        ExecuteAddon(context, not bpy.context.scene.urho_exportsettings.showLog, self.ignore_geo_skel_anim )
+        ExecuteAddon(context, not bpy.context.scene.urho_exportsettings.showLog, self.ignore_geo_skel_anim,self.only_selected_mesh)
         return {'FINISHED'}
  
     def invoke(self, context, event):
@@ -2754,9 +2755,17 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         
         col = outer_row.column()
         row = col.row()
-        row.operator("urho.export", icon='EXPORT',text='Export: ALL SCENE').ignore_geo_skel_anim=False
+        op = row.operator("urho.export", icon='EXPORT',text='Export: ALL SCENE')
+        op.ignore_geo_skel_anim=False
+        op.only_selected_mesh=False
         row = col.row()
-        row.operator("urho.export", icon='EXPORT',text='Export: WITHOUT GEOMETRY').ignore_geo_skel_anim=True
+        op = row.operator("urho.export", icon='EXPORT',text='Export: SELECTED MESHES')
+        op.ignore_geo_skel_anim=False
+        op.only_selected_mesh=True
+        row = col.row()
+        op = row.operator("urho.export", icon='EXPORT',text='Export: WITHOUT GEOMETRY')
+        op.ignore_geo_skel_anim=True
+        op.only_selected_mesh=False
         row = col.row()
         row.operator("urho.exportmaterials", icon='EXPORT', text='Export: ONLY MATERIAL')
 
@@ -3433,6 +3442,16 @@ def PostLoad(dummy):
     ctx=bpy.context
     PublishRuntimeSettings(settings,bpy.context)
 
+def has_non_objectmode_parent(obj):
+    current_parent=obj.parent
+    while current_parent:
+        try:
+            if current_parent.mode!="OBJECT":
+                return True
+        except:
+            return True # no mode, no relevant object => no object mode
+        current_parent = current_parent.parent
+    return False
 
 @persistent
 def on_depsgraph_update_post(self):
@@ -3444,6 +3463,10 @@ def on_depsgraph_update_post(self):
             try:
                 if update.is_updated_transform and hasattr(update.id,"type"):
                     obj = update.id
+                    
+                    if obj.mode!="OBJECT" or has_non_objectmode_parent(obj):
+                        continue
+                    
                     UpdateCheck.pos = obj.location
                     UpdateCheck.rot = obj.rotation_euler
                     UpdateCheck.scale = obj.scale
@@ -4481,10 +4504,12 @@ def ExecuteUrhoExport(context):
     return True
 
 
-def ExecuteAddon(context, silent=False, ignoreGeoAnim=False):
+def ExecuteAddon(context, silent=False, ignoreGeoAnim=False, onlySelectedMesh=False):
     UpdateCheck.saving = True
 
     global_settings = bpy.data.worlds[0].global_settings
+
+    export_no_geo_afterwards = False
 
     if global_settings.file_id == -1:
         global_settings.file_id = random.randrange(100,999)
@@ -4495,12 +4520,17 @@ def ExecuteAddon(context, silent=False, ignoreGeoAnim=False):
     before_export_anim = settings.animations
     before_export_skel = settings.skeletons
     before_export_morph = settings.morphs
+    before_export_source = settings.source
 
     if ignoreGeoAnim:
         settings.geometries = False
         settings.animations = False
         #settings.skeletons = False
         settings.morphs = False
+    elif onlySelectedMesh:
+        settings.source = "ONLY_SELECTED"
+        settings.scenePrefab = False
+        export_no_geo_afterwards = True
 
     before_export_selection = bpy.context.selected_objects
     before_export_active_obj = bpy.context.active_object
@@ -4540,7 +4570,12 @@ def ExecuteAddon(context, silent=False, ignoreGeoAnim=False):
     settings.animations = before_export_anim
     settings.skeletons = before_export_skel
     settings.morphs = before_export_morph
+    settings.source = before_export_source
+    settings.scenePrefab = True
     
+    if export_no_geo_afterwards:
+        ExecuteAddon(context, True, True, False)
+
 
     log.info("Export ended in {:.4f} sec".format(time.time() - startTime) )
     
