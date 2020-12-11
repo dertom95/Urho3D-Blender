@@ -644,13 +644,30 @@ def ExportUserdata(a,m,obj,modelNode,includeCollectionTags=True,fOptions=None):
         else:
             tags.extend(ud.value.split(","))
 
+    animation_object = None
+
+    node_animation = False
+
+
     if obj.parent and obj.parent.type=="ARMATURE" and obj.parent.animation_data:
-        animdata = obj.parent.animation_data
+        animation_object = obj.parent
+    elif obj and obj.animation_data:
+        animation_object = obj
+        node_animation = True
+
+
+    if animation_object:
+        animdata = animation_object.animation_data
         action_name=animdata.action.name
 
         filepath = GetFilepath(PathType.ANIMATIONS, action_name, fOptions)
+        animation_filename = filepath[1]
+        if node_animation:
+            add_userdata("__runtime_nodeanimation",animation_filename)
+            tags.append("__runtime_nodeanim")
+        else:
+            add_userdata("__runtime_animation",animation_filename)
 
-        add_userdata("__runtime_animation",filepath[1])
         current_time =  (bpy.context.scene.frame_current-1) / bpy.context.scene.render.fps
         add_userdata("__runtime_animation_time",str(current_time),"Float")
 

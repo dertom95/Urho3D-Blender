@@ -1312,7 +1312,7 @@ def DecomposeActions(scene, armatureObj, tData, tOptions):
             log.warning('Object {:s} has no animation to export'.format(armatureObj.name))
         return
     
-    global decomposedActions;
+    global decomposedActions
 
     for object in animationObjects:
         if (object in decomposedActions):

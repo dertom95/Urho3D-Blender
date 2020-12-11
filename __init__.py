@@ -2800,6 +2800,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
         row.separator()
         row.separator()
+        row.prop(settings,"runtimeAutoUpdateTransforms",text="Export on transform")
         row.prop(settings,"showLog")    
 
 
@@ -3463,7 +3464,11 @@ def on_depsgraph_update_post(self):
             try:
                 if update.is_updated_transform and hasattr(update.id,"type"):
                     obj = update.id
-                    
+
+                    if obj.type!="ARMATURE" and obj.animation_data:
+                        # object with object animation, don't save, otherwise transform would be reset according to the current animation
+                        continue
+
                     if obj.mode!="OBJECT" or has_non_objectmode_parent(obj):
                         continue
                     
