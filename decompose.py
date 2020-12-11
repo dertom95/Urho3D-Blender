@@ -2264,7 +2264,7 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             else:
                 keyBlocks = shapeKeys.key_blocks
 
-        # Decompose shape keys (morphs)
+        morphHasNewNormals = False
         for j, block in enumerate(keyBlocks):
             # Skip 'Basis' shape key
             if j == 0:
@@ -2277,90 +2277,60 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             
             log.info("Decomposing shape: {:s} ({:d} vertices)".format(block.name, len(block.data)) )
 
-            #Set the shape key to 100%
-            block.value = 1
-            #Make a tempory copy of the mesh at this shape.
-            dgraph = bpy.context.evaluated_depsgraph_get()
-            #meshObj = bpy.context.object.evaluated_get(dgraph)
+            # Check if vertex counts match
+            if len(mesh.vertices) != len(block.data):
+                log.error("Vertex count mismatch on shape {:s}.".format(block.name))
+                continue
+            
+            # Probably to use the old code where we set the shape key to 100% on the object, we need
+            # to use: evaluated_depsgraph_get + evaluated_get + to_mesh (exactly like done with mesh)
 
-            #eval_mesh = eval_obj.to_mesh()            
-            #TODO2.8: not sure about calc_undeformed. formerly there was 'PREVIEW' or 'RENDER'
-            #shapeMesh = meshObj.to_mesh(dgraph, (tOptions.applyModifiers and not onlyProcessMaterial) or meshObj.lodsetID==-2, calc_undeformed=False)
-#            shapeMesh = meshObj.to_mesh(dgraph, True, calc_undeformed=False)
-            shapeMesh = meshObj.evaluated_get(dgraph).to_mesh(preserve_all_data_layers=True,depsgraph=dgraph)
-            #shapeMesh = meshObj.to_mesh(preserve_all_data_layers=True,depsgraph=dgraph)
-            #Reset the shape key to 0%
-            block.value = 0
-
-
-            #Check if vertex counts match. If there is a mismatch, it's likely due to vertices fused together in the shape key.
-            if len(shapeMesh.vertices) != len(mesh.vertices):
-                #Try a fallback of converting shape key data directly to vertex data. If there is a vertex count mismatch, it's due to a modifier changing the vertex count (e.g. mirror).
-                if len(shapeMesh.vertices) != len(block.data):
-                    # Delete the temporary copy
-                    bpy.data.meshes.remove(shapeMesh)
-                    #TODO: Handling this requires a method for mapping original vertex points to their final points, which handles cases where the vertex count changes.
-                    log.error("Vertex count mismatch on shape {:s}.".format(block.name))
-                    continue
-                else:
-                    # Delete the temporary copy
-                    bpy.data.meshes.remove(shapeMesh)
-                    # Make a new temporary copy of the base mesh
-                    shapeMesh = mesh.copy()
-                    # Apply the shape
-                    for i, data in enumerate(block.data):
-                        shapeMesh.vertices[i].co = data.co
+            # Apply the shape
+            for i, data in enumerate(block.data):
+                mesh.vertices[i].co = data.co
 
             # Recalculate normals
-            shapeMesh.update(calc_edges = True, calc_loop_triangles = True)
+            mesh.update(calc_edges = True, calc_edges_loose = True)
 
             # Compute local space unit length split normals vectors
-            shapeMesh.calc_normals_split()
-            shapeMesh.calc_loop_triangles()
+            mesh.calc_normals_split()
+            mesh.calc_loop_triangles()
             
             # TODO: if set use 'vertex group' of the shape to filter affected vertices
-            # TODO: can we use mesh tessfaces and not shapeMesh tessfaces ?
-            #print("BEGIN MORPH: orig mesh: %s shape mesh:%s"%( meshObj.data.name,shapeMesh.name ))
-
-            #blender2.8: the whole procedure looks a bit strange. why iterate over the faces? wouldn't be iterating over
-            #            the base- and shape-vertices with equality check would be enough?
-            for face in shapeMesh.loop_triangles:
-                #blender2.8: some replacement?
-                #if face.hide:
-                #    continue
-
+            
+            for tri in mesh.loop_triangles:
                 # TODO: add only affected triangles not faces, use morphed as a mask
                 morphed = False
 
-                # In this list we store vertex index and morphed vertex of each face, we'll add them
-                # to the morph only if at least one vertex on the face is affected by the moprh
+                # In this list we store vertex index and morphed vertex of each triangle, we'll add them
+                # to the morph only if at least one vertex on the triangle is affected by the morph
                 tempList = []
                 
-                # For each Blender vertex index in the face
-                for i, vertexIndex in enumerate(face.vertices):
+                # For each Blender vertex index in the triangle
+                for i, vertexIndex in enumerate(tri.vertices):
 
                     # Get the Blender morphed vertex
-                    vertex = shapeMesh.vertices[vertexIndex]
+                    vertex = mesh.vertices[vertexIndex]
                     
                     position = posMatrix @ vertex.co
                     
                     if mesh.use_auto_smooth:
                         # if using Data->Normals->Auto Smooth, use split normal vector
-                        normal = Vector(face.split_normals[i])
-                    elif face.use_smooth:
-                        # if face is smooth, use vertex normal
+                        normal = Vector(tri.split_normals[i])
+                    elif tri.use_smooth:
+                        # if triangle is smooth, use vertex normal
                         normal = vertex.normal
                     else:
-                        # use face normal
-                        normal = face.normal
+                        # use triangle normal
+                        normal = tri.normal
                     normal = normalMatrix @ normal
 
                     # Try to find the TVertex index corresponding to this Blender vertex index
                     try:
-                        tVertexIndex = faceVertexMap[(face.index, vertexIndex)]
+                        tVertexIndex = faceVertexMap[(tri.index, vertexIndex)]
                     except KeyError:
-                        log.error("Cannot find vertex {:d} of face {:d} of shape {:s}."
-                                .format(vertexIndex, face.index, block.name) )
+                        log.error("Cannot find vertex {:d} of triangle {:d} of shape {:s}."
+                                .format(vertexIndex, tri.index, block.name) )
                         continue
 
                     # Get the original not morphed TVertex
@@ -2388,19 +2358,14 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                             tVertex.uv = Vector(0.0, 0.0)
                     
                     # Save vertex index and morphed vertex, to be added later if at least one
-                    # vertex in the face was morphed
+                    # vertex in the triangle was morphed
                     tempList.append((tVertexIndex, tMorphVertex))
                     
                     # Check if the morph has effect
                     if tMorphVertex.isMorphed(tVertex):
                         morphed = True
-                        print("###############MORPHED: %s => %s" %(tMorphVertex.pos,tVertex.pos))
-                    else:
-                        origCO = meshObj.data.vertices[vertexIndex].co
-                        morphCO = shapeMesh.vertices[vertexIndex].co
-                        print("NOT MORPHED: %s => %s  | %s => %s" %(tMorphVertex.pos,tVertex.pos,morphCO,origCO))
                 
-                # If at least one vertex in the face was morphed
+                # If at least one vertex in the triangle was morphed
                 if morphed:
                     # Add vertices to the morph
                     for i, (tVertexIndex, tMorphVertex) in enumerate(tempList):
@@ -2408,10 +2373,10 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
                             # Check if already present
                             oldTMorphVertex = tMorph.vertexMap[tVertexIndex]
                             if tMorphVertex != oldTMorphVertex:
-                                # log.error('Different vertex {:d} of face {:d} of shape {:s}.'
-                                #     .format(vertexIndex, face.index, block.name) )
-                                print('Different vertex {:d} of face {:d} of shape {:s}.'
-                                    .format(vertexIndex, face.index, block.name) )
+                                log.error('Different vertex {:d} of triangle {:d} of shape {:s}.'
+                                    .format(vertexIndex, tri.index, block.name) )
+                                if tMorphVertex.normal != oldTMorphVertex.normal:
+                                    morphHasNewNormals = True
                                 continue
                         except KeyError:
                             # Add a new morph vertex
@@ -2439,20 +2404,21 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             else:
                 log.warning('Empty shape {:s}.'.format(block.name))
 
-            # Delete the temporary copy 
-            #bpy.data.meshes.remove(shapeMesh)
+        # We can have "Different vertex" errors when some vertices are merged in the base morph because 
+        # positions and normals are the same, but in other morphs, the normals can diverge and this require 
+        # separated vertices. We could do a prepass on the shapes to find and avoid merging these vertices.
+        if morphHasNewNormals:
+            log.info("To solve the shapes errors try setting the faces to smooth")
 
-        #Restore shape keys
-        for j, block in enumerate(keyBlocks):
-            if j == 0:
-                continue
-            block.value = shapeKeysOldValues[j]
+        # Restore shape keys
+        for j, oldValue in enumerate(shapeKeysOldValues):
+            shapeKeys.key_blocks[j].value = oldValue
 
-    #bpy.data.meshes.remove(mesh)    
-    meshObj.select_set(beforeSelectstate)
-    bpy.ops.object.mode_set(mode=beforeMode)
+        # Delete the mesh
+        meshObj.to_mesh_clear()
 
-    return
+        return
+
 
 #--------------------
 # Scan objects

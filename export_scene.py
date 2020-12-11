@@ -654,6 +654,21 @@ def ExportUserdata(a,m,obj,modelNode,includeCollectionTags=True,fOptions=None):
         current_time =  (bpy.context.scene.frame_current-1) / bpy.context.scene.render.fps
         add_userdata("__runtime_animation_time",str(current_time),"Float")
 
+    if obj.type=="MESH" and obj.data.shape_keys:
+        result = ""
+        first=True
+        for block in obj.data.shape_keys.key_blocks:
+            if first or block.mute or block.value==0:
+                first=False
+                continue
+            
+            if result!="":
+                result+="|"
+            result+="%s~%s" %(block.name,block.value)
+
+        if result!="":
+            add_userdata("__runtime_shapekeys",result)
+
 
     if includeCollectionTags:
         print("INCLUDE COLTAGS")
