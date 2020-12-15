@@ -1,3 +1,18 @@
+v0.8.2:
+- convert blender-materials to urho3d (very experimental)
+  - base,normalmap-textures are copied into export-folder: Textures/import
+  - metallic/roughness-inputs generate a new texture that fit our shader (even more experimental)
+  - nodes are created and copied textures applied
+  - **manual-work**: select appropriate technique
+  - you need to create a new nodetree, on nodetree-sidebar, select material and hit 'Create Nodes from Material'
+  - **Notice**: For this feature to be visible check in Urho3D-Renderoption "Unstable features" 
+- runtime respects view-clipping-settings
+- scene-logic nodetree is added to root-node not the scene
+- added more 3d-viewport-panels (object,mesh)
+- collection-instance-offsets are directly applied to root objects of the collection (not added as transform on collection-node)
+- prevent auto-export in edit-mode or selected object has an object-animation, make auto-export optional
+- fix morph export
+ 
 v0.8.1:
 - stability, not so much crashes anymore
 - material's texture-category entries are fixed now. Before adding new folders in could lead to problems with reassigning the right image 
