@@ -5,7 +5,8 @@
 
 from .utils import PathType, GetFilepath, CheckFilepath, \
                    FloatToString, Vector3ToString, Vector4ToString, \
-                   WriteXmlFile,WriteStringFile, SDBMHash, getLodSetWithID, getObjectWithID
+                   WriteXmlFile,WriteStringFile, SDBMHash, getLodSetWithID, getObjectWithID,\
+                   PrepareSceneHeaderFile,WriteSceneHeaderFile
 from xml.etree import ElementTree as ET
 from mathutils import Vector, Quaternion, Matrix
 import bpy,copy
@@ -779,7 +780,7 @@ def HasComponent(a,name):
 
 # Export scene and nodes
 def UrhoExportScene(context, uScene, sOptions, fOptions):
-    usedMaterialTrees.clear();
+    usedMaterialTrees.clear()
 
     blenderScene = bpy.data.scenes[uScene.blenderSceneName]
     urho_settings = blenderScene.urho_exportsettings
@@ -794,8 +795,14 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     uScene.modelsList = orderedModelsList
     '''
 
+    fileid = bpy.data.worlds[0].global_settings.file_id
+    scene_hash = SDBMHash(bpy.context.scene.name)%100
+
+    k = fileid * 1000000 + scene_hash * 10000
+
+
     a = {}
-    k = 0x1000000   # node ID
+    #k = 0x1000000   # node ID
     compoID = k     # component ID
     m = 0           # internal counter
 
@@ -827,6 +834,9 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             m += 1
         compoID += 1
 
+    if urho_settings.generateSceneHeader:
+        header_data,header_objects = PrepareSceneHeaderFile(bpy.context.scene)
+    
 
     # Create scene components
     if sOptions.doScenePrefab:
@@ -1171,6 +1181,10 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 #a[modelNode] = ET.SubElement(a[groupName],'node') 
 
         a[modelNode].set("id", "{:d}".format(k))
+        
+        if urho_settings.generateSceneHeader:
+            header_obj_data = header_objects[obj]
+            header_obj_data["id"]=k
 
         a["{:d}".format(m)] = ET.SubElement(a[modelNode], "attribute")
         a["{:d}".format(m)].set("name", "Name")
@@ -1532,6 +1546,10 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             
             log.info( "Creating material {:s}".format(filepath[1]) )
             
-            UrhoWriteMaterialTrees(fOptions)                    
+            UrhoWriteMaterialTrees(fOptions)         
+    
+    if urho_settings.generateSceneHeader:
+        WriteSceneHeaderFile(header_data,os.path.join(bpy.path.abspath(urho_settings.sceneHeaderOutputPath),"")+("%s.h"%bpy.context.scene.name))
+           
 
             

@@ -51,6 +51,7 @@ except:
     subprocess.check_call([pybin, '-m', 'pip', 'install', 'Pillow'])
     from PIL import Image,ImageDraw
 
+import re
 from pathlib import Path
 from .decompose import TOptions, Scan
 from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, UrhoWriteAnimation, \
@@ -204,6 +205,11 @@ def PublishRuntimeSettings(self,context):
     data = str.encode(setJson)
 
     Publish("blender","settings","json",data)
+
+
+#    generateSceneHeader : BoolProperty(description="Export cpp-header to access scene-object name/id in code")
+
+#    sceneHeaderOutputPath : StringProperty(
 
 
 #--------------------
@@ -1387,7 +1393,16 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
 
     # --- Output settings ---
-    
+    generateSceneHeader : BoolProperty(description="Export cpp-header to access scene-object name/id in code")
+
+    sceneHeaderOutputPath : StringProperty(
+            name = "",
+            description = "Path where to generate the sceneHeader-file",
+            default = "", 
+            maxlen = 1024,
+            subtype = "DIR_PATH",
+            update = update_func)   
+
     outputPath : StringProperty(
             name = "",
             description = "Path where to export",
@@ -2806,6 +2821,13 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
         box = layout.box()
         
+        ibox = box.box()
+        row = ibox.row()
+        row.prop(settings,"generateSceneHeader")
+        if settings.generateSceneHeader:
+            row = ibox.row()
+            row.prop(settings,"sceneHeaderOutputPath")
+
         ibox = box.box()
         row = ibox.row()
         split = row.split(factor=0.7)

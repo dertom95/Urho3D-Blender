@@ -18,6 +18,7 @@ from threading import current_thread,main_thread
 from math import degrees
 from mathutils import Vector
 import traceback
+from addon_jsonnodetree import JSONNodetree
 
 
 # # -----------------------------------------
@@ -464,4 +465,139 @@ def copy_file(from_filepath,to_folder,createFolderIfNotPresent=True):
 
     
 
+def PrepareSceneHeaderFile(scene=None):
+    # store object-data
+    object_data={}
 
+    def get_or_create_objdata(obj):
+        if obj in object_data:
+            return object_data[obj]
+        
+        obj_data={
+            "name" : obj.name
+        }
+        object_data[obj]=obj_data
+        return obj_data
+
+    if not scene:
+        scene = bpy.context.scene
+
+    scene_name = scene.name
+
+    all_objects={}
+
+    result={}
+    scenedata=result[scene_name]={}
+    objects     = scenedata["objects"]={}
+    empties     = scenedata["empties"]={}
+    collections = scenedata["collections"]={}
+    tags        = scenedata["tags"]={}
+    lights      = scenedata["lights"]={}
+    cameras     = scenedata["cameras"]={}
+    meshobj     = scenedata["mesh_objects"]={}
+    animations  = scenedata["animations"]={}
+    textures    = scenedata["textures"]={}
+    textures["all"]={}
+    
+
+    # build data-structure
+    for obj in scene.objects:
+        obj_data = get_or_create_objdata(obj)
+        obj_name = obj.name
+        obj_name = re.sub('[^\w_.)( -]', '_', obj_name).replace('.','_')
+        
+        objects[obj_name]=obj_data
+        all_objects[obj]=obj_data
+
+        if obj.type=="MESH":
+            meshobj[obj_name]=obj_data
+        elif obj.type=="LIGHT":
+            lights[obj_name]=obj_data
+        elif obj.type=="CAMERA":
+            cameras[obj_name]=obj_data
+        elif obj.type=="EMPTY":
+            empties[obj_name]=obj_data
+        else:
+            print("obj-type:%s not categorized" % obj.type)
+        
+        for col in obj.users_collection:
+            collection_name = col.name
+            if collection_name not in collections:
+                collections[collection_name]={}
+            collections[collection_name][obj_name]=obj_data
+
+        for userdata in obj.user_data:
+            if userdata.key=="tag":
+                tag = userdata.value
+                if tag not in tags:
+                    tags[tag]={}
+                tags[tag][obj_name]=obj_data
+        
+        try:
+            for texture in JSONNodetree.globalData["textures"]:
+                tex_res_path  = texture["name"]
+                tex_name = bpy.path.basename(tex_res_path)
+                tex_name_normalized = re.sub('[^\w_.)( -]', '_', tex_name).replace('.','_')
+                folder = os.path.dirname(tex_res_path)
+
+                if folder not in textures:
+                    textures[folder]={}
+
+                data = {
+                    #"name" : os.path.splitext(tex_name)[0],
+                    "path" : tex_res_path
+                }
+
+                textures["all"][tex_name_normalized]=data
+                textures[folder][tex_name_normalized]=data
+        except:
+            print("could not read textures")
+
+        try:
+            for animation in JSONNodetree.globalData["animations"]:
+                anim_res_path  = animation["name"]
+                anim_name = bpy.path.basename(anim_res_path)
+                anim_name_normalized = re.sub('[^\w_.)( -]', '_', anim_name).replace('.','_')
+
+                data = {
+                    "name" : os.path.splitext(anim_name)[0],
+                    "path" : anim_res_path
+                }
+
+                animations[anim_name_normalized]=data
+        except:
+            print("could not read textures")            
+
+    return (result,all_objects)
+
+
+
+def WriteSceneHeaderFile(input,output_path):
+    def _WriteSceneHeader(input):
+        current_text=""
+        for key in input:
+            value=input[key]
+            if isinstance(value,dict):
+                namespace_name = re.sub('[^\w_.\.)( -]', '_', key).replace('.','_')
+                current_text+="namespace %s {\n%s\n}\n" % (namespace_name,_WriteSceneHeader(value))
+            elif isinstance(value,int):
+                current_text+="int %s=%s;\n" % (key,value)
+            elif isinstance(value,float):
+                current_text+="float %s=%sf;\n" % (key,value)
+            elif isinstance(value,str):
+                current_text+='const char* %s="%s";\n' % (key,value)
+            else:
+                print("unsupported type for %s[%s]:%s" % (key,value,type(value)))
+        return current_text
+
+    text="""
+#pragma once
+namespace res {
+namespace scenes {
+    """
+
+    text += _WriteSceneHeader(input)
+    text+="}}"
+    
+    print(text)
+    WriteStringFile(text,output_path,None)
