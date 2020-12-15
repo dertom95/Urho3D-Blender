@@ -658,18 +658,20 @@ def ExportUserdata(a,m,obj,modelNode,includeCollectionTags=True,fOptions=None):
 
     if animation_object:
         animdata = animation_object.animation_data
-        action_name=animdata.action.name
+        
+        if animdata.action:
+            action_name=animdata.action.name
 
-        filepath = GetFilepath(PathType.ANIMATIONS, action_name, fOptions)
-        animation_filename = filepath[1]
-        if node_animation:
-            add_userdata("__runtime_nodeanimation",animation_filename)
-            tags.append("__runtime_nodeanim")
-        else:
-            add_userdata("__runtime_animation",animation_filename)
+            filepath = GetFilepath(PathType.ANIMATIONS, action_name, fOptions)
+            animation_filename = filepath[1]
+            if node_animation:
+                add_userdata("__runtime_nodeanimation",animation_filename)
+                tags.append("__runtime_nodeanim")
+            else:
+                add_userdata("__runtime_animation",animation_filename)
 
-        current_time =  (bpy.context.scene.frame_current-1) / bpy.context.scene.render.fps
-        add_userdata("__runtime_animation_time",str(current_time),"Float")
+            current_time =  (bpy.context.scene.frame_current-1) / bpy.context.scene.render.fps
+            add_userdata("__runtime_animation_time",str(current_time),"Float")
 
     if obj.type=="MESH" and obj.data.shape_keys:
         result = ""
@@ -1164,7 +1166,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     
                     # create root for the group object
                     print("a[%s].append(a[%s]" %(groupName,modelNode))
-                    if a[modelNode] not in a[groupName]:
+                    if modelNode in a and a[modelNode] not in a[groupName]:
                         a[groupName].append(a[modelNode])
                 #a[modelNode] = ET.SubElement(a[groupName],'node') 
 
