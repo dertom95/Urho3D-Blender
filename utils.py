@@ -495,10 +495,6 @@ def PrepareSceneHeaderFile(scene=None):
     lights      = scenedata["lights"]={}
     cameras     = scenedata["cameras"]={}
     meshobj     = scenedata["mesh_objects"]={}
-    animations  = scenedata["animations"]={}
-    textures    = scenedata["textures"]={}
-    textures["all"]={}
-    
 
     # build data-structure
     for obj in scene.objects:
@@ -533,52 +529,84 @@ def PrepareSceneHeaderFile(scene=None):
                     tags[tag]={}
                 tags[tag][obj_name]=obj_data
         
-        try:
-            for texture in JSONNodetree.globalData["textures"]:
-                tex_res_path  = texture["name"]
-                tex_name = bpy.path.basename(tex_res_path)
-                tex_name_normalized = re.sub('[^\w_.)( -]', '_', tex_name).replace('.','_')
-                folder = os.path.dirname(tex_res_path)
-
-                if folder not in textures:
-                    textures[folder]={}
-
-                data = {
-                    #"name" : os.path.splitext(tex_name)[0],
-                    "path" : tex_res_path
-                }
-
-                textures["all"][tex_name_normalized]=data
-                textures[folder][tex_name_normalized]=data
-        except:
-            print("could not read textures")
-
-        try:
-            for animation in JSONNodetree.globalData["animations"]:
-                anim_res_path  = animation["name"]
-                anim_name = bpy.path.basename(anim_res_path)
-                anim_name_normalized = re.sub('[^\w_.)( -]', '_', anim_name).replace('.','_')
-
-                data = {
-                    "name" : os.path.splitext(anim_name)[0],
-                    "path" : anim_res_path
-                }
-
-                animations[anim_name_normalized]=data
-        except:
-            print("could not read textures")            
-
     return (result,all_objects)
 
 
+def PrepareGlobalHeader():
+    result={}
+    animations  = result["animations"]={}
+    scenes      = result["scenes"]={}
+    objects     = result["objects"]={}        
+    sounds      = result["sounds"]={}        
+    particles   = result["particles"]={}        
+    models      = result["models"]={}        
+    textures    = result["textures"]={}
+    textures["all"]={}
 
-def WriteSceneHeaderFile(input,output_path):
+    def PrepareDefault(globalDataName,bucket):
+        try:
+            for elem in JSONNodetree.globalData[globalDataName]:
+                res_path  = elem["name"]
+                name = bpy.path.basename(res_path)
+                name_normalized = re.sub('[_.)( -]', '_', name)
+                if name_normalized[0].isdigit():
+                    name_normalized = "_"+name_normalized
+
+                data = {
+                    "name" : os.path.splitext(name)[0],
+                    "path" : res_path
+                }
+
+                bucket[name_normalized]=data
+        except:
+            print("could not read animations")  
+
+    try:
+        for texture in JSONNodetree.globalData["textures"]:
+            tex_res_path  = texture["name"]
+            tex_name = bpy.path.basename(tex_res_path)
+            tex_name_normalized = re.sub('[_.)( -]', '_', tex_name)
+            folder = os.path.dirname(tex_res_path)
+
+            data = {
+                #"name" : os.path.splitext(tex_name)[0],
+                "path" : tex_res_path
+            }
+
+            textures["all"][tex_name_normalized]=data
+            current_dict=textures
+            skip=True # skip first
+            for f in folder.split('/'):
+                if skip:
+                    skip=False
+                    continue
+
+                if f not in current_dict:
+                    current_dict[f]={}
+                current_dict = current_dict[f]
+
+            if current_dict!=textures:
+                current_dict[tex_name_normalized]=data
+    except:
+        print("could not read textures")
+
+    PrepareDefault("animations",animations)
+    PrepareDefault("scenes",scenes)
+    PrepareDefault("objects",objects)
+    PrepareDefault("particles",particles)
+    PrepareDefault("sounds",sounds)
+    PrepareDefault("models",models)
+
+    return result
+
+
+def WriteSceneHeaderFile(topic,input,output_path):
     def _WriteSceneHeader(input):
         current_text=""
         for key in input:
             value=input[key]
             if isinstance(value,dict):
-                namespace_name = re.sub('[^\w_.\.)( -]', '_', key).replace('.','_')
+                namespace_name = re.sub('[_.\.)( -]', '_', key)
                 current_text+="namespace %s {\n%s\n}\n" % (namespace_name,_WriteSceneHeader(value))
             elif isinstance(value,int):
                 current_text+="int %s=%s;\n" % (key,value)
@@ -593,8 +621,8 @@ def WriteSceneHeaderFile(input,output_path):
     text="""
 #pragma once
 namespace res {
-namespace scenes {
-    """
+namespace %s {
+    """ % topic
 
     text += _WriteSceneHeader(input)
     text+="}}"

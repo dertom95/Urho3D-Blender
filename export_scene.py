@@ -6,7 +6,7 @@
 from .utils import PathType, GetFilepath, CheckFilepath, \
                    FloatToString, Vector3ToString, Vector4ToString, \
                    WriteXmlFile,WriteStringFile, SDBMHash, getLodSetWithID, getObjectWithID,\
-                   PrepareSceneHeaderFile,WriteSceneHeaderFile
+                   PrepareSceneHeaderFile,PrepareGlobalHeader,WriteSceneHeaderFile
 from xml.etree import ElementTree as ET
 from mathutils import Vector, Quaternion, Matrix
 import bpy,copy
@@ -836,6 +836,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
     if urho_settings.generateSceneHeader:
         header_data,header_objects = PrepareSceneHeaderFile(bpy.context.scene)
+        global_header_data = PrepareGlobalHeader()
     
 
     # Create scene components
@@ -1549,7 +1550,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             UrhoWriteMaterialTrees(fOptions)         
     
     if urho_settings.generateSceneHeader:
-        WriteSceneHeaderFile(header_data,os.path.join(bpy.path.abspath(urho_settings.sceneHeaderOutputPath),"")+("%s.h"%bpy.context.scene.name))
+        WriteSceneHeaderFile("scenes",header_data,os.path.join(bpy.path.abspath(urho_settings.sceneHeaderOutputPath),"")+("%s.h"%bpy.context.scene.name))
+        WriteSceneHeaderFile("global",global_header_data,os.path.join(bpy.path.abspath(urho_settings.sceneHeaderOutputPath),"")+("global_resources.h"))
            
 
             
