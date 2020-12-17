@@ -18,7 +18,7 @@ from threading import current_thread,main_thread
 from math import degrees
 from mathutils import Vector
 import traceback
-from addon_jsonnodetree import JSONNodetree
+from .addon_jsonnodetree import JSONNodetree
 
 
 # # -----------------------------------------
@@ -488,7 +488,7 @@ def PrepareSceneHeaderFile(scene=None):
 
     result={}
     scenedata=result[scene_name]={}
-    objects     = scenedata["objects"]={}
+    objects     = scenedata["all_obj"]={}
     empties     = scenedata["empties"]={}
     collections = scenedata["collections"]={}
     tags        = scenedata["tags"]={}
