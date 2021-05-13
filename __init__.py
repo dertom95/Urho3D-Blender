@@ -2041,7 +2041,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
                 copy_file(image.filepath,abs_outputPath+folder,True)
                 add_filename_to_urhotexnode(urho3dTexNode,filename)
             else:
-                Path(+folder).mkdir(parents=True, exist_ok=True)
+                Path(abs_outputPath+folder).mkdir(parents=True, exist_ok=True)
                 withoutExt = os.path.splitext(filename)[0]
                 img = Image.open(bpy.path.abspath(image.filepath),"r")
                 
@@ -3266,7 +3266,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
             row = layout.row()        
             row.prop(jsonNodes,"autoSelectObjectNodetree",text="autoselect object nodetree")
 
-            if nodetree and settings.runtimeUnstable:
+            if nodetree and settings.runtimeUnstable and nodetree.bl_idname=="urho3dmaterials":
                 row = layout.row()
                 row.label(text="Experimental")
                 innerBox = layout.box()
