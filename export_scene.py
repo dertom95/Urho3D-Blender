@@ -639,15 +639,22 @@ def ExportUserdata(a,m,obj,modelNode,includeCollectionTags=True,fOptions=None):
         a["{:d}".format(m)].set("value", value)
         m += 1
 
-    for ud in obj.user_data:
-        if ud.key.lower() != "tag":
-            add_userdata(ud.key,ud.value)
-        else:
-            tags.extend(ud.value.split(","))
+    def process_userdata(user_data):
+        for ud in user_data:
+            if ud.key.lower() != "tag":
+                add_userdata(ud.key,ud.value)
+            else:
+                tags.extend(ud.value.split(","))
+
+    process_userdata(obj.user_data)
 
     animation_object = None
 
     node_animation = False
+
+    if obj.parent and obj.parent.type=="ARMATURE":
+        # if parent is aramture, claim its userdata as this object is not represented in Urho
+        process_userdata(obj.parent.user_data)
 
 
     if obj.parent and obj.parent.type=="ARMATURE" and obj.parent.animation_data:
