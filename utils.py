@@ -488,6 +488,10 @@ def PrepareSceneHeaderFile(scene=None):
 
     result={}
     scenedata=result[scene_name]={}
+    scene_data = scenedata['scene']={
+        "name" : scene_name,
+        "path" : "Scenes/%s.xml" % scene_name
+    }
     objects     = scenedata["all_obj"]={}
     empties     = scenedata["empties"]={}
     collections = scenedata["collections"]={}

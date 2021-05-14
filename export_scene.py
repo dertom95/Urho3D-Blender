@@ -1558,7 +1558,10 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     
     if urho_settings.generateSceneHeader:
         WriteSceneHeaderFile("scenes",header_data,os.path.join(bpy.path.abspath(urho_settings.sceneHeaderOutputPath),"")+("%s.h"%bpy.context.scene.name))
-        WriteSceneHeaderFile("global",global_header_data,os.path.join(bpy.path.abspath(urho_settings.sceneHeaderOutputPath),"")+("global_resources.h"))
+        global_base_dir = os.path.basename(os.path.normpath(urho_settings.outputPath))
+        if not global_base_dir:
+            global_base_dir = "unknown"
+        WriteSceneHeaderFile(global_base_dir,global_header_data,os.path.join(bpy.path.abspath(urho_settings.sceneHeaderOutputPath),"")+("global_resources_%s.h" % global_base_dir))
            
 
             
