@@ -334,7 +334,20 @@ class UrhoAddonPreferences(bpy.types.AddonPreferences):
 ##############################################
 class KeyValue(bpy.types.PropertyGroup):
     key : bpy.props.StringProperty(name="key",default="key")
-    value : bpy.props.StringProperty(name="value",default="value")
+    value_type : bpy.props.EnumProperty(items=[
+        ("value", "string", "", 1), # due to backward compatibility, string is mapped to value
+        ("Float", "float", "", 2),
+        ("Int", "int", "", 3),
+        ("Bool", "bool", "", 4),
+        ("Vector3", "vec3", "", 5),
+        ("Color", "col4", "", 6),
+    ])
+    value : bpy.props.StringProperty(name="String")
+    Float  : bpy.props.FloatProperty(name="Float")
+    Int    : bpy.props.IntProperty(name="Int")
+    Bool   : bpy.props.BoolProperty(name="Bool")
+    Vector3   : bpy.props.FloatVectorProperty(name="Vector3",size=3)
+    Color   : bpy.props.FloatVectorProperty(name="Color",size=4,subtype='COLOR',min=0.0,max=1.0)
 
 class UL_URHO_LIST_USERDATA(bpy.types.UIList):
     """KeyValue UIList."""
@@ -342,8 +355,16 @@ class UL_URHO_LIST_USERDATA(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data,active_propname, index):
 
         # We could write some code to decide which icon to use here...
-        if item.key.lower()=="tag":
+        is_tag = item.key.lower()=="tag"
+        if is_tag:
             custom_icon = 'EVENT_T'
+            if item.value_type!="value":
+                def set_value_type_to_string():
+                    nonlocal item
+                    item.value_type="value"
+
+                execution_queue.queue_action(set_value_type_to_string)
+                
         else:
             custom_icon = 'TEXT'
 
@@ -351,8 +372,14 @@ class UL_URHO_LIST_USERDATA(bpy.types.UIList):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
 #            layout.label(item.key, icon = custom_icon)
  #           layout.label(item.value)
-            layout.prop(item,"key",  icon=custom_icon,text="")
-            layout.prop(item,"value",text="")
+
+            layout.prop(item, "key",  icon=custom_icon,text="")
+            val_type = item.value_type
+            layout.prop(item, val_type,text="")
+            
+
+            if not is_tag:
+                layout.prop(item,"value_type",text="")
 
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'

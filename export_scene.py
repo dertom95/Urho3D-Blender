@@ -636,14 +636,31 @@ def ExportUserdata(a,m,obj,modelNode,includeCollectionTags=True,fOptions=None):
         a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "variant")
         a["{:d}".format(m)].set("hash", str(SDBMHash(key)))
         a["{:d}".format(m)].set("type", type)
-        a["{:d}".format(m)].set("value", value)
+        if type == "Color":
+            a["{:d}".format(m)].set("value", "%s %s %s %s" % (value[0],value[1],value[2],value[3])  )
+        elif type == "Vector3":
+            a["{:d}".format(m)].set("value", "%s %s %s" % (value[0],value[1],value[2])  )
+        elif type == "Bool":
+            if value:
+                a["{:d}".format(m)].set("value", 'true')
+            else:
+                a["{:d}".format(m)].set("value", 'false')
+        else:
+            a["{:d}".format(m)].set("value", str(value))
+
         m += 1
 
     def process_userdata(user_data):
         for ud in user_data:
             if ud.key.lower() != "tag":
-                add_userdata(ud.key,ud.value)
+                value = eval("ud.%s" % ud.value_type)
+                value_type = ud.value_type
+                # due to backward compatibility string-type is called 'value'
+                if value_type=="value":
+                    value_type="String"
+                add_userdata(ud.key,value,value_type)
             else:
+                # info: tags are forced to be strings
                 tags.extend(ud.value.split(","))
 
     process_userdata(obj.user_data)
