@@ -325,81 +325,81 @@ def UrhoWriteMaterialTrees(fOptions,getUsedMaterials=False):
                 techniques.append(node);
             elif node.bl_idname=="urho3dmaterials__textureNode":
                 textureElem = ET.SubElement(materialElem, "texture")
-                textureElem.set("unit", node.prop_unit)
-                textureElem.set("name", node.prop_Texture)            
+                textureElem.set("unit", node.nodeData.prop_unit)
+                textureElem.set("name", node.nodeData.prop_Texture)            
             elif node.bl_idname=="urho3dmaterials__customParameterNode":
                 customParamElem = ET.SubElement(materialElem, "parameter")
-                customParamElem.set("name", node.prop_key)
-                customParamElem.set("value", node.prop_value )           
+                customParamElem.set("name", node.nodeData.prop_key)
+                customParamElem.set("value", node.nodeData.prop_value )           
             elif node.bl_idname=="urho3dmaterials__parameterNode":
                 customParamElem = ET.SubElement(materialElem, "parameter")
-                customParamElem.set("name", node.prop_name)
-                customParamElem.set("value", node.prop_value )           
+                customParamElem.set("name", node.nodeData.prop_name)
+                customParamElem.set("value", node.nodeData.prop_value )           
             elif node.bl_idname=="urho3dmaterials__standardParams" or node.bl_idname=="urho3dmaterials__pbsParams":
                 paramElement = ET.SubElement(materialElem, "parameter")
                 paramElement.set("name", "MatDiffColor")
-                paramElement.set("value", Vector4ToString(node.prop_MatDiffColor) )            
+                paramElement.set("value", Vector4ToString(node.nodeData.prop_MatDiffColor) )            
                 paramElement = ET.SubElement(materialElem, "parameter")
                 paramElement.set("name", "MatSpecColor")
-                paramElement.set("value", Vector4ToString(node.prop_MatSpecColor) )            
+                paramElement.set("value", Vector4ToString(node.nodeData.prop_MatSpecColor) )            
                 paramElement = ET.SubElement(materialElem, "parameter")
                 paramElement.set("name", "MatEmissiveColor")
-                paramElement.set("value", Vector3ToString(node.prop_MatEmissiveColor) )
+                paramElement.set("value", Vector3ToString(node.nodeData.prop_MatEmissiveColor) )
                 paramElement = ET.SubElement(materialElem, "parameter")
                 paramElement.set("name", "UOffset")
-                paramElement.set("value", "%s 0 0 0" % node.prop_UOffset) 
+                paramElement.set("value", "%s 0 0 0" % node.nodeData.prop_UOffset) 
                 paramElement = ET.SubElement(materialElem, "parameter")
                 paramElement.set("name", "VOffset")
-                paramElement.set("value", "0 %s 0 0" % node.prop_VOffset) 
+                paramElement.set("value", "0 %s 0 0" % node.nodeData.prop_VOffset) 
 
                 if node.bl_idname=="urho3dmaterials__pbsParams":
                     paramElement = ET.SubElement(materialElem, "parameter")
                     paramElement.set("name", "MatEnvMapColor")
-                    paramElement.set("value", Vector3ToString(node.prop_MatEnvMapColor) )                               
+                    paramElement.set("value", Vector3ToString(node.nodeData.prop_MatEnvMapColor) )                               
                     paramElement = ET.SubElement(materialElem, "parameter")
                     paramElement.set("name", "Metallic")
-                    paramElement.set("value", str(node.prop_Metallic)) 
+                    paramElement.set("value", str(node.nodeData.prop_Metallic)) 
                     paramElement = ET.SubElement(materialElem, "parameter")
                     paramElement.set("name", "Roughness")
-                    paramElement.set("value", str(node.prop_Roughness))
+                    paramElement.set("value", str(node.nodeData.prop_Roughness))
             elif node.bl_idname=="urho3dmaterials__materialNode":
                 paramElement = ET.SubElement(materialElem, "cull")
-                paramElement.set("value", node.prop_cull);
+                paramElement.set("value", node.nodeData.prop_cull);
                 paramElement = ET.SubElement(materialElem, "shadowcull")
-                paramElement.set("value", node.prop_shadowcull);
+                paramElement.set("value", node.nodeData.prop_shadowcull);
                 paramElement = ET.SubElement(materialElem, "fill")
-                paramElement.set("value", node.prop_fill);
+                paramElement.set("value", node.nodeData.prop_fill);
             elif node.bl_idname=="urho3dmaterials__DepthBiasNode":
                 paramElement = ET.SubElement(materialElem, "depth")
-                paramElement.set("constant", node.prop_constant);
-                paramElement.set("slopescaled", node.prop_slopescaled);
+                paramElement.set("constant", node.nodeData.prop_constant);
+                paramElement.set("slopescaled", node.nodeData.prop_slopescaled);
             elif node.bl_idname=="urho3dmaterials__advancedMaterial":
                 paramElement = ET.SubElement(materialElem, "alphatocoverage")
-                paramElement.set("value", str(node.prop_alphaToCoverage));
+                paramElement.set("value", str(node.nodeData.prop_alphaToCoverage));
                 paramElement = ET.SubElement(materialElem, "lineantialias")
-                paramElement.set("value", str(node.prop_lineAntialias));
+                paramElement.set("value", str(node.nodeData.prop_lineAntialias));
                 paramElement = ET.SubElement(materialElem, "renderorder")
-                paramElement.set("value", str(node.prop_renderOrder));                
+                paramElement.set("value", str(node.nodeData.prop_renderOrder));                
                 paramElement = ET.SubElement(materialElem, "occlusion")
-                paramElement.set("value", str(node.prop_occlusion)); 
-                if (node.prop_vsdefines!="" or node.prop_vsdefines!=""):
+                paramElement.set("value", str(node.nodeData.prop_occlusion)); 
+                if (node.prop_vsdefines!="" or node.nodeData.prop_vsdefines!=""):
                     shaderElement = ET.SubElement(materialElem, "shader")
                         
                     paramElement = ET.SubElement(shaderElement, "vsdefines")
-                    paramElement.set("value", node.prop_vsdefines);  
+                    paramElement.set("value", node.nodeData.prop_vsdefines);  
                     paramElement = ET.SubElement(shaderElement, "psdefines")
-                    paramElement.set("value", node.prop_psdefines);  
+                    paramElement.set("value", node.nodeData.prop_psdefines);  
             else:
                 print("Unknown MaterialNode: %s" % node.bl_idname)
 
         # sort the techniques according to their quality and distance
-        techniques = sorted(techniques,key = lambda x: (x.prop_distance,x.prop_quality),reverse=True)
+        techniques = sorted(techniques,key = lambda x: (x.nodeData.prop_distance,x.nodeData.prop_quality),reverse=True)
 
         for node in techniques:
             techniqueElem = ET.SubElement(materialElem, "technique")
-            techniqueElem.set("name", node.prop_Technique)
-            techniqueElem.set("quality",str(node.prop_quality))
-            techniqueElem.set("loddistance",str(node.prop_distance))
+            techniqueElem.set("name", node.nodeData.prop_Technique)
+            techniqueElem.set("quality",str(node.nodeData.prop_quality))
+            techniqueElem.set("loddistance",str(node.nodeData.prop_distance))
 
 
         # TODO: 2.8 create nodes for this:

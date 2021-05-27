@@ -482,9 +482,23 @@ def poll_material_nodetree(self,object):
 
 
 class NodetreeInfo(bpy.types.PropertyGroup):
-    nodetreePointer : bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_component_nodetree)
+    def Update(self,ctx):
+        a=0
+        if self.last_nodetree==self.nodetreePointer:
+            return # still the same, nothing to do
 
+        obj = ctx.active_object
+        if not obj:
+            return
+            
+        if self.last_nodetree:
+            JSONNodetreeUtils.TreeRemoveInstanceFromTree(self.last_nodetree,obj)
+        self.last_nodetree = self.nodetreePointer
+        JSONNodetreeUtils.TreeAddInstanceToTree(self.nodetreePointer,obj)
 
+    nodetreePointer : bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_component_nodetree,update=Update)
+    last_nodetree   : bpy.props.PointerProperty(type=bpy.types.NodeTree)
+    show_expose : bpy.props.BoolProperty()
 
 class UL_URHO_LIST_NODETREE(bpy.types.UIList):
     """KeyValue UIList."""
@@ -493,17 +507,25 @@ class UL_URHO_LIST_NODETREE(bpy.types.UIList):
         custom_icon = 'NODETREE'
         # Make sure your code supports all 3 layout types
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            c = layout.column()
-            row = c.row()
-            split = row.split(factor=0.05)
-            c = split.column()
-            c.label(text="")
+            row = layout.row()
 
-            split = split.split()
-            c= split.column()
-            #layout.label(item.nodetreeName, icon = custom_icon)
-            #c.prop_search(item,"nodetreeName",bpy.data,"node_groups",text="")
-            c.prop(item,"nodetreePointer")
+            icon = "TRIA_RIGHT"
+            if item.show_expose:
+                icon = "TRIA_DOWN"
+            row.prop(item,"show_expose",text="",icon=icon)
+
+            row.prop(item,"nodetreePointer")
+
+            
+            if item.show_expose:
+                row = layout.row()
+                row.label(text="abc")                
+
+            # if item.show_expose:
+            #     row = layout.row()
+            #     box = row.box()
+            #     box.prop(item,"show_expose")
+
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
             layout.label(text="", icon = custom_icon)
@@ -617,6 +639,7 @@ class UL_URHO_LIST_ITEM_MOVE_NODETREE(bpy.types.Operator):
 
 class MaterialNodetreeInfo(bpy.types.PropertyGroup):
     nodetreePointer : bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_material_nodetree)
+    show_expose : bpy.props.BoolProperty()
 
 ## TODO: this is actually unnecessary (same as for logic nodetrees)
 class UL_URHO_LIST_MATERIAL_NODETREE(bpy.types.UIList):
@@ -630,6 +653,8 @@ class UL_URHO_LIST_MATERIAL_NODETREE(bpy.types.UIList):
             row = c.row()
             split = row.split(factor=0.05)
             c = split.column()
+#            outer_row.prop(settings, "minimize", text="", icon=minimizeIcon, toggle=False)
+
             c.label(text="")
 
             split = split.split()
@@ -3171,6 +3196,38 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             # row.prop(settings, "shape")
             # row.label(text="", icon='GROUP')
 
+def OutputExposedValues(tree,obj,layout):
+    for node in tree.nodes:
+        for prop_name in node.propNames:
+            if eval("node.nodeData.%s_expose" % prop_name):
+                row = layout.row()
+                row.prop(node.nodeData,"%s_exposename" % prop_name,text="")
+                row.prop(node.nodeData,prop_name,text="")
+            
+
+
+def OutputNodetreeList(nt_list,layout,obj):
+    for item in nt_list:
+        row = layout.row()
+        
+        tree = item.nodetreePointer
+        if tree and tree.has_exposed_values:
+            icon = "TRIA_RIGHT"
+            if item.show_expose:
+                icon = "TRIA_DOWN"
+            row.prop(item,"show_expose",text="",icon=icon)
+        else:
+            row.label(text="",icon="BLANK1")
+            
+        row.prop(item,"nodetreePointer")
+
+        if tree:
+            row =layout.row()
+            box = row.box()
+            if item.show_expose:
+                # show exposed values
+                OutputExposedValues(tree,obj,box)
+
 
 def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     if not layout or not obj: 
@@ -3186,9 +3243,10 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     row = box.row()
 
     if len(obj.nodetrees)>0:
-        row = box.row()
-        row.template_list("UL_URHO_LIST_NODETREE", "The_List", obj,
-                        "nodetrees", obj, "list_index_nodetrees",rows=len(obj.nodetrees)+1)
+        OutputNodetreeList(obj.nodetrees,box,obj)
+        # row = box.row()
+        # row.template_list("UL_URHO_LIST_NODETREE", "The_List", obj,
+        #                 "nodetrees", obj, "list_index_nodetrees",rows=len(obj.nodetrees)+1)
     else:
         row = box.box()
         row.label(text="none")
