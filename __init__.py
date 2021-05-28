@@ -487,6 +487,18 @@ def poll_material_nodetree(self,object):
     return object.bl_idname=="urho3dmaterials"
 
 
+class URHO_OT_refresh_nodetreeinstances(bpy.types.Operator):
+    """Refresh nodetree-instances"""
+
+    bl_idname = "urho_nodetrees.refreshinstances"
+    bl_label = "Refresh Nodetree-Instances"
+
+
+    def execute(self, context):
+        JSONNodetreeUtils.CheckAllObjectNodetreeInstances()
+
+        return{'FINISHED'}
+
 class NodetreeInfo(bpy.types.PropertyGroup):
     def Update(self,ctx):
         a=0 
@@ -3216,6 +3228,7 @@ def OutputExposedValues(tree,obj,layout):
                 if eval("node.nodeData.%s_expose" % prop_name):
                     if not box_initalized:
                         layout = layout.box()
+                        box_initalized=True
 
                     def update(self,context):
                         nonlocal prop_name
@@ -3286,7 +3299,9 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
 
     ## object's nodetree-managment
     box = currentLayout.box()
-    row = box.label(text="Component Nodetrees")
+    row = box.row()
+    row.label(text="Component Nodetrees")
+    row.operator("urho_nodetrees.refreshinstances",icon="CON_FOLLOWPATH",text="")
 
     row = box.row()
 
@@ -3962,6 +3977,7 @@ def register():
     bpy.utils.register_class(UL_URHO_LIST_ITEM_USERDATA)
     bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_USERDATA)
     bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_USERDATA)
+    bpy.utils.register_class(URHO_OT_refresh_nodetreeinstances)
     
     
     bpy.utils.register_class(UL_URHO_LIST_CREATE_GENERIC)
@@ -4152,6 +4168,7 @@ def unregister():
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_LOD)
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE_LOD)
     bpy.utils.unregister_class(UrhoExportMeshPanel)
+    bpy.utils.unregister_class(URHO_OT_refresh_nodetreeinstances)
 
     
     del bpy.types.Scene.urho_exportsettings

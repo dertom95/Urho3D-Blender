@@ -454,9 +454,9 @@ def UrhoWriteMaterialsList(uScene, uModel, filepath):
 # Export scene and nodes
 #------------------------
 
-def CreateNodeTreeXML(xmlroot,nodetree,nodeID,currentModel=None,currentMaterial=None,xmlCurrentModel=None,nodeName=None):
+def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,currentMaterial=None,xmlCurrentModel=None,nodeName=None):
     print("CreateNodeTreeXML:%s" % nodetree.name)
-    exportNodeTree = JSONNodetree.exportNodes(nodetree,True)
+    exportNodeTree = JSONNodetree.exportNodes(treeOwner,nodetree,True)
     # a node is in urho3d a component
     for node in exportNodeTree["nodes"]:
         print("NODE: %s" % node["label"])
@@ -893,7 +893,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         if jsonNodetreeAvailable and blenderScene.nodetree:
             # bypass nodeID and receive the new value
             print("FOUND SCENE")
-            compoID = CreateNodeTreeXML(root,blenderScene.nodetree,compoID)
+            compoID = CreateNodeTreeXML(None,root,blenderScene.nodetree,compoID)
             foundSceneNodeTree = True
     except Exception as e:
         log.error("Cannot export scene nodetree {:s} " % str(e) )
@@ -1313,7 +1313,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         for nodetreeSlot in obj.parent.nodetrees:
                             nt = nodetreeSlot.nodetreePointer
                             if (nt not in handledNodetrees):
-                                compoID = CreateNodeTreeXML(a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode)
+                                compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode)
                                 handledNodetrees.append(nt)
                             else:
                                 # we already added this nodetree! nothing more to do
@@ -1323,7 +1323,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     for nodetreeSlot in obj.nodetrees:
                         nt = nodetreeSlot.nodetreePointer
                         if (nt not in handledNodetrees):
-                            compoID = CreateNodeTreeXML(a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode)
+                            compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode)
                             handledNodetrees.append(nt)
                         else:
                             # we already added this nodetree! nothing more to do
@@ -1409,7 +1409,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 for nodetreeSlot in obj.nodetrees:
                     nt = nodetreeSlot.nodetreePointer
                     if (nt and nt not in handledNodetrees):
-                        compoID = CreateNodeTreeXML(a[modelNode],nt,compoID)
+                        compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID)
                         handledNodetrees.append(id)
                     else:
                         # we already added this nodetree! nothing more to do
