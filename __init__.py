@@ -3208,6 +3208,9 @@ def OutputExposedValues(tree,obj,layout):
     for node in tree.nodes:
         instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,obj,False)
         if instance_data:
+            row = layout.row()
+            col = row.column()
+            irow = col.split()
             for prop_name in node.propNames:
                 if eval("node.nodeData.%s_expose" % prop_name):
                     def update(self,context):
@@ -3219,7 +3222,26 @@ def OutputExposedValues(tree,obj,layout):
                     row = layout.row()
                     # row.prop(node.nodeData,"%s_exposename" % prop_name,text="")
                     # row.prop(node.nodeData,prop_name,text="")
-                    row.prop(instance_data,"%s_exposename" % prop_name,text="")
+                    col = row.column()
+
+                    # row = col.split(factor=0.3)
+                    # expose_name = eval("instance_data.%s_exposename" % prop_name)
+                    # row.label(text=expose_name)
+                    # row = row.split(factor=0.7)
+                    # row.prop(instance_data,prop_name,text="")
+
+                    # value_changed = eval("instance_data.%s_expose" % prop_name)
+                    # if value_changed:
+                    #     row.prop(instance_data,"%s_expose" % prop_name,text="",icon="FILE_REFRESH")
+
+
+                    
+                    
+                    expose_name = eval("instance_data.%s_exposename" % prop_name)
+                   
+                    #box=row.box()
+                    #box.label(text=expose_name)
+                    row.prop(instance_data,"%s_exposename"%prop_name,text="")
                     row.prop(instance_data,prop_name,text="")
 
                     value_changed = eval("instance_data.%s_expose" % prop_name)
