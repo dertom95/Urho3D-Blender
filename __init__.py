@@ -474,8 +474,14 @@ class UL_URHO_LIST_ITEM_MOVE_USERDATA(bpy.types.Operator):
 ##############################################
 ##TODO: Try to unify the list handling (userdata,nodetree) 
 
-def poll_component_nodetree(self,object):
-    return object.bl_idname=="urho3dcomponents"
+def poll_component_nodetree(self,tree):
+    if tree.bl_idname!="urho3dcomponents":
+        return False
+    
+    # check if obj already has one instance of this nodetree
+    obj = bpy.context.active_object
+    has_instance = JSONNodetreeUtils.TreeHasInstanceForObject(tree,obj)
+    return not has_instance
 
 def poll_material_nodetree(self,object):
     return object.bl_idname=="urho3dmaterials"
@@ -483,18 +489,20 @@ def poll_material_nodetree(self,object):
 
 class NodetreeInfo(bpy.types.PropertyGroup):
     def Update(self,ctx):
-        a=0
+        a=0 
         if self.last_nodetree==self.nodetreePointer:
             return # still the same, nothing to do
 
         obj = ctx.active_object
         if not obj:
             return
-            
+
         if self.last_nodetree:
             JSONNodetreeUtils.TreeRemoveInstanceFromTree(self.last_nodetree,obj)
         self.last_nodetree = self.nodetreePointer
-        JSONNodetreeUtils.TreeAddInstanceToTree(self.nodetreePointer,obj)
+
+        if self.nodetreePointer:
+            JSONNodetreeUtils.TreeAddInstanceToTree(self.nodetreePointer,obj)
 
     nodetreePointer : bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_component_nodetree,update=Update)
     last_nodetree   : bpy.props.PointerProperty(type=bpy.types.NodeTree)
@@ -3198,11 +3206,26 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
 def OutputExposedValues(tree,obj,layout):
     for node in tree.nodes:
-        for prop_name in node.propNames:
-            if eval("node.nodeData.%s_expose" % prop_name):
-                row = layout.row()
-                row.prop(node.nodeData,"%s_exposename" % prop_name,text="")
-                row.prop(node.nodeData,prop_name,text="")
+        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,obj,False)
+        if instance_data:
+            for prop_name in node.propNames:
+                if eval("node.nodeData.%s_expose" % prop_name):
+                    def update(self,context):
+                        nonlocal prop_name
+                        nonlocal node
+                        # set instance value to the value of the node in the nodetree
+                        exec("self.%s=node.nodeData.%s" % (prop_name,prop_name))
+
+                    row = layout.row()
+                    # row.prop(node.nodeData,"%s_exposename" % prop_name,text="")
+                    # row.prop(node.nodeData,prop_name,text="")
+                    row.prop(instance_data,"%s_exposename" % prop_name,text="")
+                    row.prop(instance_data,prop_name,text="")
+
+                    value_changed = eval("instance_data.%s_expose" % prop_name)
+                    if value_changed:
+                        row.prop(instance_data,"%s_expose" % prop_name,text="",icon="FILE_REFRESH")
+
             
 
 
