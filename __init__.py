@@ -3205,6 +3205,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             # row.label(text="", icon='GROUP')
 
 def OutputExposedValues(tree,obj,layout):
+    box_initalized = False
     for node in tree.nodes:
         instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,obj,False)
         if instance_data:
@@ -3213,6 +3214,9 @@ def OutputExposedValues(tree,obj,layout):
             irow = col.split()
             for prop_name in node.propNames:
                 if eval("node.nodeData.%s_expose" % prop_name):
+                    if not box_initalized:
+                        layout = layout.box()
+
                     def update(self,context):
                         nonlocal prop_name
                         nonlocal node
@@ -3268,10 +3272,9 @@ def OutputNodetreeList(nt_list,layout,obj):
 
         if tree:
             row =layout.row()
-            box = row.box()
             if item.show_expose:
                 # show exposed values
-                OutputExposedValues(tree,obj,box)
+                OutputExposedValues(tree,obj,row)
 
 
 def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
