@@ -479,7 +479,12 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
                 value = value.replace(","," ")
                 print("V-Result:%s" % value)
             elif prop["type"]=="enum" and value=="__Node-Mesh": # not happy with this condtion, but must work for now
-                value = currentModel
+                if currentModel:
+                    value = currentModel
+                else:
+                    print("ERROR ERROR: TRIED TO SET __Node-Mesh for %s! Which seems not to have a model...." % nodetree.name)
+                    value = "Models;Models/ERROR.mdl"
+
             elif prop["type"]=="enum" and value=="__Node-Col-Mesh": # not happy with this condtion, but must work for now  
                 if nodeName:
                     value = "Models;Models/col_%s.mdl" % nodeName
