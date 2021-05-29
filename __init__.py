@@ -1047,6 +1047,8 @@ class UrhoExportMeshSettings(bpy.types.PropertyGroup):
     use_uv2 : bpy.props.BoolProperty(default=False) 
     manual_uv2_idx : bpy.props.EnumProperty(items=get_uvs) 
 
+    mesh_export_name : bpy.props.StringProperty()
+
 def PrefixFile(input):
     global_settings = bpy.data.worlds[0].global_settings
     scenename = bpy.context.scene.name
@@ -3531,6 +3533,13 @@ class URHO_PT_mainobject(bpy.types.Panel):
             row.label(text="Shadow Settings")
             row = layout.row()
             row.prop(obj,"cast_shadow")
+        if obj.type=="EMPTY":
+            row = layout.row()
+
+            if obj.instance_type=="COLLECTION":
+                # TODO: make sure you cannot disable inlining if altering collection nodetree-data
+                row.prop(obj,"inline_collection_instance",text="Inline into scene")
+
 
 class URHO_PT_mainmesh(bpy.types.Panel):
     bl_idname = "URHO_PT_MAINMESH"
@@ -3986,10 +3995,6 @@ def register():
     bpy.types.Scene.nodetree = bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_component_nodetree);
     bpy.types.NodeTree.initialized = bpy.props.BoolProperty(default=False)
 
-    bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
-    bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
-    bpy.types.Object.cast_shadow = bpy.props.BoolProperty(default=True)
-    bpy.types.Object.receive_shadow = bpy.props.BoolProperty(default=True)
     
     bpy.types.Light.use_pbr=bpy.props.BoolProperty()
     bpy.types.Light.brightness_mul=bpy.props.FloatProperty(min=0.0,max=90000.0,default=1.0)
@@ -4003,9 +4008,15 @@ def register():
     bpy.utils.register_class(LODData)
     bpy.utils.register_class(LODSet)
 
+    bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
+    bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
+    bpy.types.Object.cast_shadow = bpy.props.BoolProperty(default=True)
+    bpy.types.Object.receive_shadow = bpy.props.BoolProperty(default=True)
     bpy.types.Object.ID = bpy.props.IntProperty(default=-1)
     bpy.types.Object.lodsetID = bpy.props.IntProperty()
     bpy.types.Object.lodsetName = bpy.props.StringProperty(get=getLodSetName,set=setLodSetName,update=updateLodSetName)
+    bpy.types.Object.inline_collection_instance = bpy.props.BoolProperty()
+
     bpy.types.World.lodsets=bpy.props.CollectionProperty(type=LODSet)
     bpy.types.World.lodset_counter=bpy.props.IntProperty()
     bpy.types.World.meshid_counter=bpy.props.IntProperty()
@@ -4579,6 +4590,7 @@ def ExecuteUrhoExport(context):
 
                     if settings.generateModelNamePrefix:
                         uModel.meshName=PrefixFile(uModel.meshName)
+                obj.data.urho_export.mesh_export_name = uModel.meshName
 
             except:
                 uModel.meshName=uModel.name

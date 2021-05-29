@@ -13,6 +13,7 @@ import bpy,copy
 import os
 import logging,traceback
 import math
+from .export_urho import BoundingBox,UrhoModel
 
 jsonNodetreeAvailable = True
 log = logging.getLogger("ExportLogger")
@@ -1024,7 +1025,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         log.warning("To export objects transformations you should use Origin = Local")
 
     # Sort the models by parent-child relationship
-    uScene.SortModels()
+    # uScene.SortModels()
 
     # save the parent objects
     parentObjects = []
@@ -1065,11 +1066,38 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 collection = obj.instance_collection
                 
                 if collection.library:
-                    print("ignoring linked collection: %s" % collection.name)
+                    if obj.inline_collection_instance:
+                        print("Inlined collection: %s for object %s" % (collection.name,obj.name))
+                        for instance_object in collection.objects:
+                            _uModel = UrhoModel()
+                            _uModel.name = instance_object.name
+
+                            _uSceneModel = UrhoSceneModel()
+                            _uSceneModel.Load(None,_uModel,instance_object.name,sOptions)
+                            
+                            if not _uSceneModel.parentObjectName:
+                                _uSceneModel.parentObjectName=obj.name
+
+                            # _uSceneModel.blenderObjectName=instance_object.name
+                            # _uSceneModel.type="StaticModel"
+                            # _uSceneModel.boundingBox=BoundingBox()
+                            uScene.modelsList.append(_uSceneModel)
+            
+                            try:
+                                mesh_name = instance_object.data.urho_export.mesh_export_name
+                                filepath = GetFilepath(PathType.MODELS, mesh_name, fOptions)
+                                uScene.AddFile(PathType.MODELS, _uModel.name, filepath[1])
+                            except:
+                                print("ERROR in getting mesh for collection-instance-object: %s" % instance_object.name)
+                    else:
+                        print("ignoring linked collection: %s" % collection.name)
                     continue
                 
                 if not collection in instancedCollections:
                     instancedCollections.append(collection)
+
+    # Sort the models by parent-child relationship
+    uScene.SortModels()
 
     ## create a mapping to determine in which collection the corressponding object is contained
     for col in instancedCollections:
@@ -1158,6 +1186,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
         # Parenting: make sure parented objects are child of this in xml as well
         print ( ("PARENT:%s type:%s") % (str(uSceneModel.parentObjectName),str(uSceneModel.type)))
+        
         if not add_exception and not isEmpty and uSceneModel.parentObjectName and (uSceneModel.parentObjectName in a):
             for usm in uScene.modelsList:
                 if usm.name == uSceneModel.parentObjectName:
