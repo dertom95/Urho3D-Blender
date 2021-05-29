@@ -1078,6 +1078,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                             if not _uSceneModel.parentObjectName:
                                 _uSceneModel.parentObjectName=obj.name
 
+                                offset = collection.instance_offset # Vector((0,0,0)) # no offset in blender 2.8 anymore
+                                modelPos = _uSceneModel.position
+
+                                colInstPos = Vector( (modelPos.x + offset.y, modelPos.y - offset.z, modelPos.z - offset.x) )
+                                print("NEW Collection Instance POS %s: " % ( colInstPos ))
+                                #_uSceneModel.colInstPosition = colInstPos
+                                _uSceneModel.position = colInstPos
+
+
                             # _uSceneModel.blenderObjectName=instance_object.name
                             # _uSceneModel.type="StaticModel"
                             # _uSceneModel.boundingBox=BoundingBox()
@@ -1269,7 +1278,11 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         
         if sOptions.exportGroupsAsObject and obj.instance_type == 'COLLECTION':
             grp = obj.instance_collection
-            grpFilename = sOptions.objectsPath+"/"+GetGroupName(grp.name)+".xml"
+            if obj.inline_collection_instance:
+                grpFilename = ""
+            else:
+                grpFilename = sOptions.objectsPath+"/"+GetGroupName(grp.name)+".xml"
+
             m = AddGroupInstanceComponent(a,m,grpFilename,grp.instance_offset,modelNode)
 
         xmlCurrentModelNode = None
