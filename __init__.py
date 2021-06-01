@@ -94,6 +94,7 @@ from .addon_jsonnodetree import DeActivatePath2Timer as jsonnodetree_activateTim
 from .addon_jsonnodetree import drawJSONFileSettings as jsonnodetree_draw_ui
 from .addon_jsonnodetree import NODE_PT_json_nodetree_file
 from .addon_jsonnodetree import JSONNodetree
+from .addon_jsonnodetree.JSONProxyNodetree import GetCollectionInstanceDetail, EnsureProxyDataForCollectionRoot, CreateProxyNodetree
 
 class URHO3D_JSONNODETREE_REBRAND(NODE_PT_json_nodetree_file):
     bl_category = "Urho3D"
@@ -387,7 +388,6 @@ class UL_URHO_LIST_USERDATA(bpy.types.UIList):
 
 
 BUTTON_MAPPING={}
-
 
 class UL_URHO_LIST_CREATE_GENERIC(bpy.types.Operator):
     """Add a new item to the list."""
@@ -3218,12 +3218,22 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             # row.prop(settings, "shape")
             # row.label(text="", icon='GROUP')
 
-def OutputExposedValues(tree,obj,layout):
+def OutputExposedValues(tree,obj,layout,collection=None,collection_root=None):
     box_initalized = False
     for node in tree.nodes:
-        instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,obj,False)
+        if collection:
+            col_instance_data = EnsureProxyDataForCollectionRoot(collection_root,False)
+            if not col_instance_data:
+                layout.label(text="NO OVERRIDE DATA!")
+                return
+            linked_obj = obj # just to point out, that obj is the object being linked from within the collection
+            instance_data = GetCollectionInstanceDetail(col_instance_data,linked_obj,tree,node)
+        else:
+            instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,obj,False)
+
         if instance_data:
-            row = layout.row()
+          #  row = layout.row()
+            row = layout
             col = row.column()
             irow = col.split()
             for prop_name in node.propNames:
@@ -3267,14 +3277,25 @@ def OutputExposedValues(tree,obj,layout):
                     if value_changed:
                         row.prop(instance_data,"%s_expose" % prop_name,text="",icon="FILE_REFRESH")
 
-            
+# button-logic used within the generic-button
+def OpEnsureCollectionOverrideData(self,context):
+    obj = context.active_object
+    if obj and obj.instance_type=="COLLECTION":
+        EnsureProxyDataForCollectionRoot(obj)
+
+BUTTON_MAPPING["ensure_collection_override"]=OpEnsureCollectionOverrideData
 
 
-def OutputNodetreeList(nt_list,layout,obj):
+def OutputNodetreeList(nt_list,layout,obj,only_with_exposed=False):
     for item in nt_list:
-        row = layout.row()
         
         tree = item.nodetreePointer
+
+        if tree and not tree.has_exposed_values and only_with_exposed:
+            return
+
+        row = layout.row()
+
         if tree and tree.has_exposed_values:
             icon = "TRIA_RIGHT"
             if item.show_expose:
@@ -3285,11 +3306,55 @@ def OutputNodetreeList(nt_list,layout,obj):
             
         row.prop(item,"nodetreePointer")
 
-        if tree:
+        if tree and tree.has_exposed_values:
             row =layout.row()
             if item.show_expose:
                 # show exposed values
                 OutputExposedValues(tree,obj,row)
+
+def OutputNodetreeExposedChildData(root,layout,prefix=""):
+    iterate_children = []
+    for child in root.children:
+        for item in child.nodetrees:
+            tree = item.nodetreePointer
+
+            if tree and tree.has_exposed_values:
+                box = layout.box()
+                box.label(text="%s%s > %s" % (prefix,child.name,tree.name))
+                
+                OutputExposedValues(tree,child,box)
+
+        if len(child.children)>0:
+            iterate_children.append(child)
+    
+    if root.instance_type=="COLLECTION":
+        collection = root.instance_collection
+        for child in root.instance_collection.objects:
+            for item in child.nodetrees:
+                tree = item.nodetreePointer
+
+                if tree and tree.has_exposed_values:
+                    box = layout.box()
+                    box.label(text="%s%s > %s" % (prefix,child.name,tree.name))
+                    
+                    OutputExposedValues(tree,child,box,collection,root)
+
+            if len(child.children)>0:
+                iterate_children.append(child)
+
+
+    for child in iterate_children:
+        OutputNodetreeExposedChildData(child,layout,prefix+child.name+".")
+
+        # row = layout.row()
+
+        # row.prop(item,"nodetreePointer")
+
+        # if tree and tree.has_exposed_values:
+        #     row =layout.row()
+        #     if item.show_expose:
+        #         # show exposed values
+        #         OutputExposedValues(tree,obj,row)
 
 
 def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
@@ -3303,6 +3368,8 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     box = currentLayout.box()
     row = box.row()
     row.label(text="Component Nodetrees")
+    
+    row.operator("urho_button.generic",text="Ensure override data").typeName="ensure_collection_override"
     row.operator("urho_nodetrees.refreshinstances",icon="CON_FOLLOWPATH",text="")
 
     row = box.row()
@@ -3315,6 +3382,31 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     else:
         row = box.box()
         row.label(text="none")
+
+    row = box.row()
+    row.prop(obj,"show_nested_nodetrees",text="show nested nodetrees")
+
+    if obj.show_nested_nodetrees:
+        OutputNodetreeExposedChildData(obj,box)
+
+        # for child in obj.children:
+        #     if len(child.nodetrees)==0:
+        #         continue
+        #     found_tree_with_exposed_values=False
+        #     for nt in child.nodetrees:
+        #         tree = nt.nodetreePointer
+        #         if tree and tree.has_exposed_values:
+        #             found_tree_with_exposed_values=True
+        #             break
+
+        #     if not found_tree_with_exposed_values:
+        #         continue
+
+        #     row = box.row()
+        #     inner_box = row.box()        
+        #     inner_box.label(text=child.name)
+        #     row = box.row()
+        #     OutputNodetreeList(child.nodetrees,box,obj)
 
     row = box.row()
     row.operator('urho_nodetrees.new_item', text='Add')
@@ -3621,6 +3713,10 @@ def PostLoad(dummy):
     setup_json_nodetree()
     ctx=bpy.context
     PublishRuntimeSettings(settings,bpy.context)
+    try:
+        CreateProxyNodetree()
+    except:
+        pass
 
 def has_non_objectmode_parent(obj):
     current_parent=obj.parent
@@ -3994,7 +4090,6 @@ def register():
     bpy.types.Scene.urho_exportsettings = bpy.props.PointerProperty(type=UrhoExportSettings)
     bpy.types.Scene.nodetree = bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_component_nodetree);
     bpy.types.NodeTree.initialized = bpy.props.BoolProperty(default=False)
-
     
     bpy.types.Light.use_pbr=bpy.props.BoolProperty()
     bpy.types.Light.brightness_mul=bpy.props.FloatProperty(min=0.0,max=90000.0,default=1.0)
@@ -4016,6 +4111,7 @@ def register():
     bpy.types.Object.lodsetID = bpy.props.IntProperty()
     bpy.types.Object.lodsetName = bpy.props.StringProperty(get=getLodSetName,set=setLodSetName,update=updateLodSetName)
     bpy.types.Object.inline_collection_instance = bpy.props.BoolProperty()
+    bpy.types.Object.show_nested_nodetrees = bpy.props.BoolProperty()
 
     bpy.types.World.lodsets=bpy.props.CollectionProperty(type=LODSet)
     bpy.types.World.lodset_counter=bpy.props.IntProperty()

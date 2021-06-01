@@ -633,3 +633,4 @@ namespace %s {
     
     print(text)
     WriteStringFile(text,output_path,None)
+
