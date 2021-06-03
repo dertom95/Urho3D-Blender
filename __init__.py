@@ -3318,7 +3318,10 @@ def OutputNodetreeList(nt_list,layout,obj,only_with_exposed=False):
                 # show exposed values
                 OutputExposedValues(tree,obj,row)
 
-def OutputNodetreeExposedChildData(root,layout,prefix=""):
+def OutputNodetreeExposedChildData(root,layout,prefix="",collection_roots=[]):
+    if root.instance_type=="COLLECTION":
+        collection_roots.append((prefix,root))
+
     iterate_children = []
     for child in root.children:
         for item in child.nodetrees:
@@ -3332,25 +3335,9 @@ def OutputNodetreeExposedChildData(root,layout,prefix=""):
 
         if len(child.children)>0:
             iterate_children.append(child)
-    
-    if root.instance_type=="COLLECTION":
-        collection = root.instance_collection
-        for child in root.instance_collection.objects:
-            for item in child.nodetrees:
-                tree = item.nodetreePointer
-
-                if tree and tree.has_exposed_values:
-                    box = layout.box()
-                    box.label(text="%s%s > %s" % (prefix,child.name,tree.name))
-                    
-                    OutputExposedValues(tree,child,box,collection,root)
-
-            if len(child.children)>0:
-                iterate_children.append(child)
-
-
+        
     for child in iterate_children:
-        OutputNodetreeExposedChildData(child,layout,prefix+child.name+".")
+        OutputNodetreeExposedChildData(child,layout,prefix+child.name+".",collection_roots)
 
         # row = layout.row()
 
@@ -3361,6 +3348,31 @@ def OutputNodetreeExposedChildData(root,layout,prefix=""):
         #     if item.show_expose:
         #         # show exposed values
         #         OutputExposedValues(tree,obj,row)
+
+def OutputCollectionRootsStart(collection_roots,layout,prefix=""):
+    def OutputChildren(obj,layout,prefix,collection):
+        for item in obj.nodetrees:
+            tree = item.nodetreePointer
+
+            if tree and tree.has_exposed_values:
+                box = layout.box()
+                box.label(text="%s%s > %s" % (prefix,obj.name,tree.name))
+                
+                OutputExposedValues(tree,obj,box,collection,root)
+
+        for child in obj.children:
+            OutputChildren(child,layout, "%s%s." % (prefix,obj.name),collection)
+
+
+    for prefix,root in collection_roots:
+        if root.instance_type=="COLLECTION":
+            collection = root.instance_collection
+            for child in root.instance_collection.objects:
+                if not child.parent:
+                    OutputChildren(child,layout,"",collection)
+
+
+
 
 
 def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
@@ -3394,7 +3406,9 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     row.prop(obj,"show_nested_nodetrees",text="show nested nodetrees")
 
     if obj.show_nested_nodetrees:
-        OutputNodetreeExposedChildData(obj,box)
+        collection_roots=[]
+        OutputNodetreeExposedChildData(obj,box,"",collection_roots)
+        OutputCollectionRootsStart(collection_roots,box)
 
         # for child in obj.children:
         #     if len(child.nodetrees)==0:
