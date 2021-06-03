@@ -91,6 +91,7 @@ class UrhoSceneModel:
         self.scale = Vector((1.0, 1.0, 1.0))
 
         self.parent_bone = None
+        self.collection_root = None
 
     def Load(self, uExportData, uModel, objectName, sOptions):
         self.name = uModel.name
@@ -455,9 +456,9 @@ def UrhoWriteMaterialsList(uScene, uModel, filepath):
 # Export scene and nodes
 #------------------------
 
-def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,currentMaterial=None,xmlCurrentModel=None,nodeName=None):
+def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,currentMaterial=None,xmlCurrentModel=None,nodeName=None,collection_root=None):
     print("CreateNodeTreeXML:%s" % nodetree.name)
-    exportNodeTree = JSONNodetree.exportNodes(treeOwner,nodetree,True)
+    exportNodeTree = JSONNodetree.exportNodes(treeOwner,nodetree,True,collection_root)
     # a node is in urho3d a component
     for node in exportNodeTree["nodes"]:
         print("NODE: %s" % node["label"])
@@ -1085,6 +1086,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                                 print("NEW Collection Instance POS %s: " % ( colInstPos ))
                                 #_uSceneModel.colInstPosition = colInstPos
                                 _uSceneModel.position = colInstPos
+                            _uSceneModel.collection_root = obj
 
 
                             # _uSceneModel.blenderObjectName=instance_object.name
@@ -1370,7 +1372,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     for nodetreeSlot in obj.nodetrees:
                         nt = nodetreeSlot.nodetreePointer
                         if (nt not in handledNodetrees):
-                            compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode)
+                            compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode,uSceneModel.collection_root)
                             handledNodetrees.append(nt)
                         else:
                             # we already added this nodetree! nothing more to do
