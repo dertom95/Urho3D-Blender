@@ -94,7 +94,7 @@ from .addon_jsonnodetree import DeActivatePath2Timer as jsonnodetree_activateTim
 from .addon_jsonnodetree import drawJSONFileSettings as jsonnodetree_draw_ui
 from .addon_jsonnodetree import NODE_PT_json_nodetree_file
 from .addon_jsonnodetree import JSONNodetree
-from .addon_jsonnodetree.JSONProxyNodetree import GetCollectionInstanceDetail, EnsureProxyDataForCollectionRoot, CreateProxyNodetree
+from .addon_jsonnodetree.JSONProxyNodetree import GetCollectionInstanceDetail, EnsureProxyDataForCollectionRoot, CreateProxyNodetree, refresh_libraries
 
 class URHO3D_JSONNODETREE_REBRAND(NODE_PT_json_nodetree_file):
     bl_category = "Urho3D"
@@ -3285,6 +3285,12 @@ def OpEnsureCollectionOverrideData(self,context):
 
 BUTTON_MAPPING["ensure_collection_override"]=OpEnsureCollectionOverrideData
 
+def OpReloadLibraries(self,context):
+    refresh_libraries()
+    
+BUTTON_MAPPING["reload_libraries"]=OpReloadLibraries
+
+
 
 def OutputNodetreeList(nt_list,layout,obj,only_with_exposed=False):
     for item in nt_list:
@@ -3369,6 +3375,7 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     row = box.row()
     row.label(text="Component Nodetrees")
     
+    row.operator("urho_button.generic",text="reload libraries").typeName="reload_libraries"
     row.operator("urho_button.generic",text="Ensure override data").typeName="ensure_collection_override"
     row.operator("urho_nodetrees.refreshinstances",icon="CON_FOLLOWPATH",text="")
 
