@@ -1365,8 +1365,8 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
     # --- RUNTIME SETTINGS ---
     runtimeAutoUpdateTransforms : BoolProperty(
             name = "Auto Export on Transform",
-            description = "Auto Export on Transform",
-            default = True,
+            description = "Auto Export on Transform-Changes",
+            default = False,
             update=PublishRuntimeSettings) 
 
     runtimeUnstable : BoolProperty(
