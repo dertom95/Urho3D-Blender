@@ -1214,7 +1214,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         a[modelNode] = ET.SubElement(a[usm.name], "node")
                         break                    
 
-            if ObjInGroup(obj):
+            is_obj_in_group = ObjInGroup(obj)
+            if is_obj_in_group:
                 print("FOUND GROUP OBJ:%s",obj.name)
                 
                 for group in groupObjMapping[obj.name]:
@@ -1250,9 +1251,10 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         a[groupName].append(a[modelNode])
                 #a[modelNode] = ET.SubElement(a[groupName],'node') 
 
-        a[modelNode].set("id", "{:d}".format(k))
+        if not is_obj_in_group:
+            a[modelNode].set("id", "{:d}".format(k))
         
-        if urho_settings.generateSceneHeader:
+        if urho_settings.generateSceneHeader and not is_obj_in_group:
             header_obj_data = header_objects[obj]
             header_obj_data["id"]=k
 
@@ -1294,7 +1296,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(compID)] = ET.SubElement(a[modelNode], "component")
             xmlCurrentModelNode = a["{:d}".format(compID)]
             a["{:d}".format(compID)].set("type", uSceneModel.type)
-            a["{:d}".format(compID)].set("id", "{:d}".format(compoID))
+            if not is_obj_in_group:
+                a["{:d}".format(compID)].set("id", "{:d}".format(compoID))
             m += 1
 
             a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compID)], "attribute")
