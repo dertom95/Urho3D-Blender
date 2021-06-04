@@ -2691,7 +2691,7 @@ class UrhoExportObjectPanel(bpy.types.Panel):
             row = box.row()
             row.prop(obj,"cast_shadow")
             
-        elif context.object.type=="LIGHT":
+        elif obj.type=="LIGHT":
             light = obj.data
             row = layout.row()
             box = row.box()
@@ -3678,8 +3678,13 @@ class URHO_PT_mainobject(bpy.types.Panel):
             row.label(text="Shadow Settings")
             row = layout.row()
             row.prop(obj,"cast_shadow")
-        if obj.type=="EMPTY":
+        elif obj.type=="EMPTY":
             row = layout.row()
+        elif obj.type=="LIGHT":
+            light = obj.data
+            row = layout.row()
+            box = row.box()
+            box.prop(light,"use_pbr",text="Use Physical Values(PBR)")                
 
 class URHO_PT_mainmesh(bpy.types.Panel):
     bl_idname = "URHO_PT_MAINMESH"
