@@ -3295,6 +3295,9 @@ def OutputExposedValues(tree,obj,layout,collection=None,collection_root=None):
 def OpEnsureCollectionOverrideData(self,context):
     obj = context.active_object
     if obj:
+        obj.inline_collection_instance=True
+        obj.show_nested_nodetrees=True
+        
         if obj.instance_type=="COLLECTION":
             EnsureProxyDataForCollectionRoot(obj)
         else:
@@ -3457,6 +3460,10 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     if showAutoSelect:
         row = box.row()
         row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object-nodetree")
+    if obj.instance_type=="COLLECTION":
+        # TODO: make sure you cannot disable inlining if altering collection nodetree-data
+        row.prop(obj,"inline_collection_instance",text="Inline into scene")
+
 
 def ObjectMaterialNodetree(obj,box):
     box = box.box()
@@ -3668,11 +3675,6 @@ class URHO_PT_mainobject(bpy.types.Panel):
             row.prop(obj,"cast_shadow")
         if obj.type=="EMPTY":
             row = layout.row()
-
-            if obj.instance_type=="COLLECTION":
-                # TODO: make sure you cannot disable inlining if altering collection nodetree-data
-                row.prop(obj,"inline_collection_instance",text="Inline into scene")
-
 
 class URHO_PT_mainmesh(bpy.types.Panel):
     bl_idname = "URHO_PT_MAINMESH"
