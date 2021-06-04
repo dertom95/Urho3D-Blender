@@ -501,7 +501,8 @@ def get_panels():
               bpy.types.DATA_PT_vertex_colors,
               bpy.types.DATA_PT_context_mesh,
               bpy.types.CYCLES_LIGHT_PT_light,
-              bpy.types.DATA_PT_lens
+              bpy.types.DATA_PT_lens,
+              bpy.types.WORLD_PT_context_world
               ]
 
     return panels
