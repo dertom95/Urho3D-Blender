@@ -94,7 +94,7 @@ from .addon_jsonnodetree import DeActivatePath2Timer as jsonnodetree_activateTim
 from .addon_jsonnodetree import drawJSONFileSettings as jsonnodetree_draw_ui
 from .addon_jsonnodetree import NODE_PT_json_nodetree_file
 from .addon_jsonnodetree import JSONNodetree
-from .addon_jsonnodetree.JSONProxyNodetree import GetCollectionInstanceDetail, EnsureProxyDataForCollectionRoot, CreateProxyNodetree, refresh_libraries
+from .addon_jsonnodetree.JSONProxyNodetree import GetCollectionInstanceDetail, EnsureProxyDataForCollectionRoot, CreateProxyNodetree, refresh_libraries,EnsureProxyDataForLinkedNodetree
 
 class URHO3D_JSONNODETREE_REBRAND(NODE_PT_json_nodetree_file):
     bl_category = "Urho3D"
@@ -513,8 +513,13 @@ class NodetreeInfo(bpy.types.PropertyGroup):
             JSONNodetreeUtils.TreeRemoveInstanceFromTree(self.last_nodetree,obj)
         self.last_nodetree = self.nodetreePointer
 
-        if self.nodetreePointer:
-            JSONNodetreeUtils.TreeAddInstanceToTree(self.nodetreePointer,obj)
+        tree = self.nodetreePointer
+        if tree:
+            if tree.library:
+                # tree is linked
+                EnsureProxyDataForLinkedNodetree(tree,obj)
+            else:
+                JSONNodetreeUtils.TreeAddInstanceToTree(self.nodetreePointer,obj)
 
     nodetreePointer : bpy.props.PointerProperty(type=bpy.types.NodeTree,poll=poll_component_nodetree,update=Update)
     last_nodetree   : bpy.props.PointerProperty(type=bpy.types.NodeTree)
@@ -3227,9 +3232,18 @@ def OutputExposedValues(tree,obj,layout,collection=None,collection_root=None):
                 layout.label(text="NO OVERRIDE DATA!")
                 return
             linked_obj = obj # just to point out, that obj is the object being linked from within the collection
-            instance_data = GetCollectionInstanceDetail(col_instance_data,linked_obj,tree,node)
+            instance_data = GetCollectionInstanceDetail(col_instance_data,linked_obj.name,tree.name,node.name)
         else:
-            instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,obj,False)
+            if tree.library:
+                #linked nodetree
+                lnt_instance_data = EnsureProxyDataForLinkedNodetree(obj,tree,False)
+                if not lnt_instance_data:
+                    layout.label(text="NO OVERRIDE DATA!")
+                    return
+                linked_obj = obj # just to point out, that obj is the object being linked from within the collection
+                instance_data = GetCollectionInstanceDetail(lnt_instance_data,"linkedNT",tree.name,node.name)
+            else:                
+                instance_data = JSONNodetreeUtils.TreeEnsureInstanceForNode(node,obj,False)
 
         if instance_data:
           #  row = layout.row()
@@ -3280,8 +3294,14 @@ def OutputExposedValues(tree,obj,layout,collection=None,collection_root=None):
 # button-logic used within the generic-button
 def OpEnsureCollectionOverrideData(self,context):
     obj = context.active_object
-    if obj and obj.instance_type=="COLLECTION":
-        EnsureProxyDataForCollectionRoot(obj)
+    if obj:
+        if obj.instance_type=="COLLECTION":
+            EnsureProxyDataForCollectionRoot(obj)
+        else:
+            for nt in obj.nodetrees:
+                tree = nt.nodetreePointer
+                if tree.library:
+                    EnsureProxyDataForLinkedNodetree(obj,tree)
 
 BUTTON_MAPPING["ensure_collection_override"]=OpEnsureCollectionOverrideData
 
@@ -3737,7 +3757,7 @@ def PostLoad(dummy):
     try:
         CreateProxyNodetree()
     except:
-        pass
+        print("CreateProxyNodetree error:", sys.exc_info()[0])
 
 def has_non_objectmode_parent(obj):
     current_parent=obj.parent
