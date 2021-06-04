@@ -3462,7 +3462,8 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
         row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object-nodetree")
     if obj.instance_type=="COLLECTION":
         # TODO: make sure you cannot disable inlining if altering collection nodetree-data
-        row.prop(obj,"inline_collection_instance",text="Inline into scene")
+        box=row.box()
+        box.prop(obj,"inline_collection_instance",text="Inline into scene")
 
 
 def ObjectMaterialNodetree(obj,box):
