@@ -1146,6 +1146,10 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
         self.updatingProperties = False
 
+    def update_outputPath_make_absolute(self,context):
+        self.outputPath = abs_outputPath = os.path.join(bpy.path.abspath(self.outputPath) ,'')
+        self.update_func(context)
+
 
     def ExportNoGeo(self,context):
         #ExecuteAddon(context, True, True )
@@ -1488,7 +1492,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = "", 
             maxlen = 1024,
             subtype = "DIR_PATH",
-            update = update_func)   
+            update = update_outputPath_make_absolute)   
 
     packPath : StringProperty(
             name = "",
@@ -2099,7 +2103,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
             categories["imported"]=[]
         enum_id = CalcNodeHash(filename)
         categories['imported'].append((filename,filename,filename,enum_id))
-        urho3dTexNode.prop_Texture=filename        
+        urho3dTexNode.nodeData.prop_Texture=filename        
 
     def copy_image_and_set(eeveeTexNode,urho3dTexNode):
         image = eeveeTexNode.image
@@ -2185,7 +2189,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
                     normal_map_tex = in_normal_color.links[0].from_node
 
                     urho3d_normal_tex = nodetree.nodes.new("urho3dmaterials__textureNode")
-                    urho3d_normal_tex.prop_unit='normal'
+                    urho3d_normal_tex.nodeData.prop_unit='normal'
                     urho3d_normal_tex.location = Vector((650,100))
                     nodetree.links.new(matNode.outputs[0],urho3d_normal_tex.inputs[0])
                     copy_image_and_set(normal_map_tex,urho3d_normal_tex)
@@ -2200,7 +2204,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
                 # texture node
                 urho3d_sepcular_tex = nodetree.nodes.new("urho3dmaterials__textureNode")
                 urho3d_sepcular_tex.location = Vector((450,-200))
-                urho3d_sepcular_tex.prop_unit='specular'
+                urho3d_sepcular_tex.nodeData.prop_unit='specular'
                 nodetree.links.new(matNode.outputs[0],urho3d_sepcular_tex.inputs[0])                
                 copy_image_and_set(specular_node,urho3d_sepcular_tex)
             else:
@@ -2293,7 +2297,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
             result.save(outputfile)
 
             urho3d_roughmetal_tex = nodetree.nodes.new("urho3dmaterials__textureNode")
-            urho3d_roughmetal_tex.prop_unit='specular'
+            urho3d_roughmetal_tex.nodeData.prop_unit='specular'
             urho3d_roughmetal_tex.location = Vector((850,100))
             nodetree.links.new(matNode.outputs[0],urho3d_roughmetal_tex.inputs[0])
 
@@ -2301,7 +2305,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
 
         if pbr:
             pbsNode = nodetree.nodes.new("urho3dmaterials__pbsParams")
-            pbsNode.prop_MatDiffColor=base_color
+            pbsNode.nodeData.prop_MatDiffColor=base_color
             pbsNode.location = Vector((250,100))
 
             nodetree.links.new(matNode.outputs[0],pbsNode.inputs[0])
@@ -2686,6 +2690,12 @@ class UrhoExportObjectPanel(bpy.types.Panel):
             row.label(text="Shadow Settings")
             row = box.row()
             row.prop(obj,"cast_shadow")
+            
+        elif context.object.type=="LIGHT":
+            light = obj.data
+            row = layout.row()
+            box = row.box()
+            box.prop(light,"use_pbr",text="Use Physical Values(PBR)")            
         # row = box.row()
         # row.prop(obj,"receive_shadow")
 
@@ -2796,13 +2806,7 @@ class UrhoExportMeshPanel(bpy.types.Panel):
         scene = context.scene
         settings = scene.urho_exportsettings
 
-        if context.object.type=="LIGHT":
-            light = obj.data
-            row = layout.row()
-            box = row.box()
-            box.prop(light,"use_pbr",text="Use Physical Values(PBR)")
-
-        elif context.object.type=="MESH":
+        if context.object.type=="MESH":
             MeshUI(self,context)
         
 # The export panel, here we draw the panel using properties we have created earlier
