@@ -3388,13 +3388,17 @@ def OutputNodetreeExposedChildData(root,layout,prefix="",collection_roots=[]):
         #         # show exposed values
         #         OutputExposedValues(tree,obj,row)
 
-def OutputCollectionRootsStart(collection_roots,layout,prefix=""):
+def OutputCollectionRootsStart(collection_roots,layout,prefix="",inline_col_inst=True):
     def OutputChildren(obj,layout,prefix,collection):
+        nonlocal inline_col_inst
+        
         for item in obj.nodetrees:
             tree = item.nodetreePointer
 
             if tree and tree.has_exposed_values:
                 box = layout.box()
+                if tree.library and not inline_col_inst:
+                    box.enabled=False
                 box.label(text="%s%s > %s" % (prefix,obj.name,tree.name))
                 
                 OutputExposedValues(tree,obj,box,collection,root)
@@ -3447,7 +3451,7 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     if obj.show_nested_nodetrees:
         collection_roots=[]
         OutputNodetreeExposedChildData(obj,box,"",collection_roots)
-        OutputCollectionRootsStart(collection_roots,box)
+        OutputCollectionRootsStart(collection_roots,box,"",obj.inline_collection_instance)
 
         # for child in obj.children:
         #     if len(child.nodetrees)==0:
