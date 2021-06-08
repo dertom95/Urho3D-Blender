@@ -292,10 +292,12 @@ class UrhoScene:
 
 
     def SortModels(self):
+        # sort models by the amount of parents (this should ensure that all parents are already processed if the next layer starts exporting)
         result = sorted(self.modelsList,key=lambda m: m.amount_parents)
         self.modelsList = result
         # self.modelsList.sort(key=lambda x: (len(x.split())>1, x if len(x.split())==1 else int(x.split()[-1]) ) )
 
+        # old approach
         # # Sort by parent-child relation
         # names_tree = Tree()
         # for model in self.modelsList:
@@ -926,6 +928,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         if jsonNodetreeAvailable and blenderScene.nodetree:
             # bypass nodeID and receive the new value
             print("FOUND SCENE")
+            #treeOwner,xmlroot,nodetree,nodeID,currentModel=None,currentMaterial=None,xmlCurrentModel=None,nodeName=None,collection_root=None)
             compoID = CreateNodeTreeXML(None,root,blenderScene.nodetree,compoID)
             foundSceneNodeTree = True
     except Exception as e:
@@ -1410,7 +1413,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         for nodetreeSlot in obj.parent.nodetrees:
                             nt = nodetreeSlot.nodetreePointer
                             if (nt not in handledNodetrees):
-                                compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode)
+                                compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode,uSceneModel.collection_root)
                                 handledNodetrees.append(nt)
                             else:
                                 # we already added this nodetree! nothing more to do
@@ -1506,7 +1509,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 for nodetreeSlot in obj.nodetrees:
                     nt = nodetreeSlot.nodetreePointer
                     if (nt and nt not in handledNodetrees):
-                        compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID)
+                        compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID,None,None,None,modelNode,uSceneModel.collection_root)
                         handledNodetrees.append(id)
                     else:
                         # we already added this nodetree! nothing more to do
