@@ -501,9 +501,9 @@ class URHO_OT_refresh_nodetreeinstances(bpy.types.Operator):
 
 class NodetreeInfo(bpy.types.PropertyGroup):
     def Update(self,ctx):
-        a=0 
-        if self.last_nodetree==self.nodetreePointer:
-            return # still the same, nothing to do
+        # a=0 
+        # if self.last_nodetree==self.nodetreePointer:
+        #     return # still the same, nothing to do
 
         obj = ctx.active_object
         if not obj:
@@ -514,6 +514,7 @@ class NodetreeInfo(bpy.types.PropertyGroup):
         self.last_nodetree = self.nodetreePointer
 
         tree = self.nodetreePointer
+
         if tree:
             if tree.library:
                 # tree is linked
@@ -3309,6 +3310,8 @@ def OpEnsureCollectionOverrideData(self,context):
                 tree = nt.nodetreePointer
                 if tree.library:
                     EnsureProxyDataForLinkedNodetree(obj,tree)
+                else:
+                    JSONNodetreeUtils.TreeAddInstanceToTree(nt,obj)
 
 BUTTON_MAPPING["ensure_collection_override"]=OpEnsureCollectionOverrideData
 
@@ -3326,6 +3329,14 @@ def OutputNodetreeList(nt_list,layout,obj,only_with_exposed=False):
 
         if tree and not tree.has_exposed_values and only_with_exposed:
             return
+        
+        if tree and not tree.library:
+            found = JSONNodetreeUtils.TreeHasInstanceForObject(tree,obj)
+            if not found:
+                def SetTreeInstanceData():
+                    nonlocal tree,obj
+                    JSONNodetreeUtils.TreeAddInstanceToTree(tree,obj)
+                execution_queue.queue_action(SetTreeInstanceData)
 
         row = layout.row()
 
@@ -3337,8 +3348,9 @@ def OutputNodetreeList(nt_list,layout,obj,only_with_exposed=False):
         else:
             row.label(text="",icon="BLANK1")
             
-        row.prop(item,"nodetreePointer")
 
+        row.prop(item,"nodetreePointer")
+        
         if tree and tree.has_exposed_values:
             row =layout.row()
             if item.show_expose:
@@ -3415,7 +3427,7 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     row.label(text="Component Nodetrees")
     
     row.operator("urho_button.generic",text="reload libraries").typeName="reload_libraries"
-    row.operator("urho_button.generic",text="Ensure override data").typeName="ensure_collection_override"
+    row.operator("urho_button.generic",text="create override data").typeName="ensure_collection_override"
     row.operator("urho_nodetrees.refreshinstances",icon="CON_FOLLOWPATH",text="")
 
     row = box.row()

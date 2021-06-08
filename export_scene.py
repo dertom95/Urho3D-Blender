@@ -22,7 +22,15 @@ from .addon_jsonnodetree import JSONNodetree
 from .addon_jsonnodetree import JSONNodetreeUtils
 
 usedMaterialTrees = []
- 
+
+def count_amount_parents(obj):
+    amount=0
+    while obj.parent:
+        amount=amount+1
+        obj=obj.parent
+    return amount
+
+
 #-------------------------
 # Scene and nodes classes
 #-------------------------
@@ -92,13 +100,14 @@ class UrhoSceneModel:
 
         self.parent_bone = None
         self.collection_root = None
+        self.amount_parents = 0
 
     def Load(self, uExportData, uModel, objectName, sOptions):
         self.name = uModel.name
 
         self.blenderObjectName = objectName
         object = bpy.data.objects[objectName]
-
+        self.amount_parents = count_amount_parents(object)
         if objectName:
 
             transObject = object
@@ -213,13 +222,14 @@ def GetQuatenion(obj):
 
 # Hierarchical sorting (based on a post by Hyperboreus at SO)
 class Node:
-    def __init__(self, name):
+    def __init__(self, name,orig):
         self.name = name
+        self.orig = orig
         self.children = []
         self.parent = None
 
     def to_list(self):
-        names = [self.name]
+        names = [self.orig]
         for child in self.children:
             names.extend(child.to_list())
         return names
@@ -229,12 +239,12 @@ class Tree:
     	self.nodes = {}
 
     def push(self, item):
-        name, parent = item
+        name, parent, orig = item
         if name not in self.nodes:
-        	self.nodes[name] = Node(name)
+        	self.nodes[name] = Node(name,orig)
         if parent:
             if parent not in self.nodes:
-                self.nodes[parent] = Node(parent)
+                self.nodes[parent] = Node(parent,None)
             if parent != name:
                 self.nodes[name].parent = self.nodes[parent]
                 self.nodes[parent].children.append(self.nodes[name])
@@ -280,23 +290,39 @@ class UrhoScene:
             uSceneModel.Load(uExportData, uModel, objectName, sOptions)
             self.modelsList.append(uSceneModel)
 
+
     def SortModels(self):
-        # Sort by parent-child relation
-        names_tree = Tree()
-        for model in self.modelsList:
-            ##names_tree.push((model.objectName, model.parentObjectName))
-            names_tree.push((model.name, model.parentObjectName))
-        # Rearrange the model list in the new order
-        orderedModelsList = []
-        for name in names_tree.to_list():
-            for model in self.modelsList:
-                ##if model.objectName == name:
-                if model.name == name:
-                    orderedModelsList.append(model)
-                    # No need to reverse the list, we break straightway
-                    self.modelsList.remove(model)
-                    break
-        self.modelsList = orderedModelsList
+        result = sorted(self.modelsList,key=lambda m: m.amount_parents)
+        self.modelsList = result
+        # self.modelsList.sort(key=lambda x: (len(x.split())>1, x if len(x.split())==1 else int(x.split()[-1]) ) )
+
+        # # Sort by parent-child relation
+        # names_tree = Tree()
+        # for model in self.modelsList:
+        #     ##names_tree.push((model.objectName, model.parentObjectName))
+        #     model_name = model.name
+        #     parent_name = model.parentObjectName
+        #     if model.collection_root:
+        #         model_name=model_name+"_"+model.collection_root.name
+                
+        #         if parent_name:
+        #             parent = bpy.data.objects[parent_name]
+        #             if parent.library: # is parent also a linked one
+        #                 parent_name=parent_name+"_"+model.collection_root.name
+
+        #     names_tree.push((model_name, parent_name,model,parent))
+        # # Rearrange the model list in the new order
+        # orderedModelsList = []
+        # result=names_tree.to_list()
+        # for name in result:
+        #     for model in self.modelsList:
+        #         ##if model.objectName == name:
+        #         if model.name == name:
+        #             orderedModelsList.append(model)
+        #             # No need to reverse the list, we break straightway
+        #             self.modelsList.remove(model)
+        #             break
+        # self.modelsList = orderedModelsList
 
 #------------------------
 # Export materials
@@ -488,8 +514,8 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
                     value = "Models;Models/ERROR.mdl"
 
             elif prop["type"]=="enum" and value=="__Node-Col-Mesh": # not happy with this condtion, but must work for now  
-                if nodeName:
-                    value = "Models;Models/col_%s.mdl" % nodeName
+                if treeOwner:
+                    value = "Models;Models/col_%s.mdl" % treeOwner.name
                 else:
                     print("ERROR ERROR: TRIED TO SET NODE_COL_MESH for %s" % nodetree.name)
                     value = "Models;Models/ERROR.mdl"
@@ -1038,7 +1064,6 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     # list of collections that get instanced in the scene
     instancedCollections = []
 
-
     # Export each decomposed object
     def ObjInGroup(obj):
         return obj.name in groupObjMapping
@@ -1075,6 +1100,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
                             _uSceneModel = UrhoSceneModel()
                             _uSceneModel.Load(None,_uModel,instance_object.name,sOptions)
+
                             
                             if not _uSceneModel.parentObjectName:
                                 _uSceneModel.parentObjectName=obj.name
@@ -1087,6 +1113,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                                 #_uSceneModel.colInstPosition = colInstPos
                                 _uSceneModel.position = colInstPos
                             _uSceneModel.collection_root = obj
+                            _uSceneModel.amount_parents = 1 + _uSceneModel.amount_parents + count_amount_parents(obj)
 
 
                             # _uSceneModel.blenderObjectName=instance_object.name
@@ -1133,11 +1160,14 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         
     for uSceneModel in uScene.modelsList:
         modelNode = uSceneModel.name
+        if uSceneModel.collection_root:
+            modelNode = modelNode +"_"+ uSceneModel.collection_root.name #special case for inlined collections. since those have the same object names that would overwrite in the XML-mapping..
+
         log.info ("Process %s" % modelNode)
         isEmpty = False
         obj = None
         try:
-            obj = bpy.data.objects[modelNode]
+            obj = bpy.data.objects[uSceneModel.name]
 
             if obj.type=="ARMATURE":
                 continue
@@ -1156,7 +1186,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         materials = None
         if not isEmpty:
             # Get model file relative path
-            modelFile = uScene.FindFile(PathType.MODELS, modelNode)
+            modelFile = uScene.FindFile(PathType.MODELS, uSceneModel.name)
             # Gather materials
             materials = ""
             if jsonNodetreeAvailable and obj.data.materialNodetrees:
@@ -1201,7 +1231,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         if not add_exception and not isEmpty and uSceneModel.parentObjectName and (uSceneModel.parentObjectName in a):
             for usm in uScene.modelsList:
                 if usm.name == uSceneModel.parentObjectName:
-                    a[modelNode] = ET.SubElement(a[usm.name], "node")
+                    if usm.collection_root and not usm.collection_root==uSceneModel.collection_root:
+                        continue   
+
+                    lookup_name = usm.name
+                    if usm.collection_root:
+                        lookup_name = lookup_name + "_" + usm.collection_root.name
+                    
+
+                    a[modelNode] = ET.SubElement(a[lookup_name], "node")
                     break
         else:
             if not uSceneModel.parentObjectName or add_exception:
@@ -1210,8 +1248,15 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             else:
                 for usm in uScene.modelsList:
                     if usm.name == uSceneModel.parentObjectName:
+                        if usm.collection_root and not usm.collection_root==uSceneModel.collection_root:
+                            continue
                         print("name:%s parentName:%s" % ( uSceneModel.objectName,uSceneModel.parentObjectName ))
-                        a[modelNode] = ET.SubElement(a[usm.name], "node")
+                        
+                        lookup_name = usm.name
+                        if usm.collection_root:
+                            lookup_name = lookup_name + "_" + usm.collection_root.name
+                        
+                        a[modelNode] = ET.SubElement(a[lookup_name], "node")
                         break                    
 
             is_obj_in_group = ObjInGroup(obj)
@@ -1374,7 +1419,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
                     for nodetreeSlot in obj.nodetrees:
                         nt = nodetreeSlot.nodetreePointer
-                        if (nt not in handledNodetrees):
+                        if (nt and nt not in handledNodetrees):
                             compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode,uSceneModel.collection_root)
                             handledNodetrees.append(nt)
                         else:
