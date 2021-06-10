@@ -3234,7 +3234,8 @@ def OutputExposedValues(tree,obj,layout,collection=None,collection_root=None):
         if collection:
             col_instance_data = EnsureProxyDataForCollectionRoot(collection_root,False)
             if not col_instance_data:
-                layout.label(text="NO OVERRIDE DATA!")
+                layout.operator("urho_button.generic",text="create override data").typeName="ensure_collection_override"
+                #layout.label(text="NO OVERRIDE DATA!")
                 return
             linked_obj = obj # just to point out, that obj is the object being linked from within the collection
             instance_data = GetCollectionInstanceDetail(col_instance_data,linked_obj.name,tree.name,node.name)
@@ -3243,7 +3244,8 @@ def OutputExposedValues(tree,obj,layout,collection=None,collection_root=None):
                 #linked nodetree
                 lnt_instance_data = EnsureProxyDataForLinkedNodetree(obj,tree,False)
                 if not lnt_instance_data:
-                    layout.label(text="NO OVERRIDE DATA!")
+                    layout.operator("urho_button.generic",text="create override data").typeName="ensure_collection_override"
+                    #layout.label(text="NO OVERRIDE DATA!")
                     return
                 linked_obj = obj # just to point out, that obj is the object being linked from within the collection
                 instance_data = GetCollectionInstanceDetail(lnt_instance_data,"linkedNT",tree.name,node.name)
@@ -3431,7 +3433,6 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     row.label(text="Component Nodetrees")
     
     row.operator("urho_button.generic",text="reload libraries").typeName="reload_libraries"
-    row.operator("urho_button.generic",text="create override data").typeName="ensure_collection_override"
     row.operator("urho_nodetrees.refreshinstances",icon="CON_FOLLOWPATH",text="")
 
     row = box.row()
