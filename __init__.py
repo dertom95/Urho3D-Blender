@@ -612,16 +612,19 @@ class UL_URHO_LIST_ITEM_DEL_NODETREE(bpy.types.Operator):
     bl_idname = "urho_nodetrees.delete_item"
     bl_label = "Deletes an item"
 
+    index : bpy.props.IntProperty()
+
     @classmethod
     def poll(cls, context):
-        return context.active_object and context.active_object.type=="MESH" and context.active_object.nodetrees
+        return context.active_object and context.active_object.nodetrees
 
     def execute(self, context):
         currentlist = context.active_object.nodetrees
-        index = context.active_object.list_index_nodetrees
+        if self.index==-1:
+            self.index = context.active_object.list_index_nodetrees
 
-        currentlist.remove(index)
-        context.active_object.list_index_nodetrees = min(max(0, index - 1), len(currentlist) - 1)
+        currentlist.remove(self.index)
+        context.active_object.list_index_nodetrees = min(max(0, self.index - 1), len(currentlist) - 1)
 
         return{'FINISHED'}
 
@@ -718,7 +721,7 @@ class UL_URHO_LIST_ITEM_DEL_MATERIAL_NODETREE(bpy.types.Operator):
 
     def execute(self, context):
         currentlist = context.active_object.data.materialNodetrees
-        index = context.active_object.data.list_index_nodetrees
+        index = context.active_object.active_material_index
 
         currentlist.remove(index)
         
@@ -3325,7 +3328,7 @@ BUTTON_MAPPING["reload_libraries"]=OpReloadLibraries
 
 
 def OutputNodetreeList(nt_list,layout,obj,only_with_exposed=False):
-    for item in nt_list:
+    for idx,item in enumerate(nt_list):
         
         tree = item.nodetreePointer
 
@@ -3352,6 +3355,10 @@ def OutputNodetreeList(nt_list,layout,obj,only_with_exposed=False):
             
 
         row.prop(item,"nodetreePointer")
+        try:
+            row.operator('urho_nodetrees.delete_item', icon='CANCEL', text="").index=idx
+        except:
+            pass
         
         if tree and tree.has_exposed_values:
             row =layout.row()
@@ -3475,7 +3482,7 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
 
     row = box.row()
     row.operator('urho_nodetrees.new_item', text='Add')
-    row.operator('urho_nodetrees.delete_item', text='Del')
+    row.operator('urho_nodetrees.delete_item', text='Del').index=-1
     row.operator('urho_nodetrees.move_item', icon="TRIA_UP",text='').direction = 'UP'
     row.operator('urho_nodetrees.move_item', icon="TRIA_DOWN",text='').direction = 'DOWN'
     if showAutoSelect:
