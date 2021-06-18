@@ -13,6 +13,7 @@ cd temp
 git clone https://github.com/dertom95/urho3d-blender-runtime-ver2
 cd urho3d-blender-runtime-ver2/
 git checkout dev
+git submodule update --init
 ./tools/build_win_lin.sh
 
 cd $HOME
@@ -20,7 +21,7 @@ cd $HOME
 cp -R -L temp/urho3d-blender-runtime-ver2/build/linux/bin/* runtimes
 cp temp/urho3d-blender-runtime-ver2/build/mingw/bin/urho3d-blender-runtime.exe runtimes
 
-rm -Rf temp
+#rm -Rf temp
 rm -Rf __pycache__
 
 cd ..
