@@ -494,7 +494,8 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
         #bodyElem.set("type", node["name"])
         bodyElem.set("type", node["label"])
         nodeID += 1
-        bodyElem.set("id", "{:d}".format(nodeID))
+        if not node["is_replicated"]:
+            bodyElem.set("id", "{:d}".format(nodeID))
 
         # node-properties are the component-attributes
         for prop in node["props"]:
@@ -640,7 +641,7 @@ def AddGroupInstanceComponent(a,m,groupFilename,offset,modelNode):
     attribID = m
     a["{:d}".format(m)] = ET.SubElement(a[modelNode], "component")
     a["{:d}".format(m)].set("type", "GroupInstance")
-    a["{:d}".format(m)].set("id", str(m))
+   # a["{:d}".format(m)].set("id", str(m))
     
     m += 1
 
@@ -874,7 +875,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(m)].set("value", str(attributes[key]))
             m += 1
 
-    def add_component(parent,componentType,attributes=[]):
+    def add_component(parent,componentType,attributes=[],is_replicated=False):
         nonlocal compoID
         nonlocal m
         
@@ -883,7 +884,9 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         a["{:d}".format(compoID)] = ET.SubElement(parent, "component")
         a["{:d}".format(compoID)]
         a["{:d}".format(compoID)].set("type", componentType)
-        a["{:d}".format(compoID)].set("id", "{:d}".format(compoID))
+        if not is_replicated:
+            a["{:d}".format(compoID)].set("id", "{:d}".format(compoID))
+
         m += 1
 
         for key in attributes:
@@ -1299,7 +1302,9 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                         a[groupName].append(a[modelNode])
                 #a[modelNode] = ET.SubElement(a[groupName],'node') 
 
-        if not is_obj_in_group:
+        # if not is_obj_in_group:
+        #     a[modelNode].set("id", "{:d}".format(k))
+        if not obj.is_replicated:
             a[modelNode].set("id", "{:d}".format(k))
         
         if urho_settings.generateSceneHeader and not is_obj_in_group:
@@ -1344,6 +1349,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(compID)] = ET.SubElement(a[modelNode], "component")
             xmlCurrentModelNode = a["{:d}".format(compID)]
             a["{:d}".format(compID)].set("type", uSceneModel.type)
+            # TODO: check for node replicated-state
             if not is_obj_in_group:
                 a["{:d}".format(compID)].set("id", "{:d}".format(compoID))
             m += 1

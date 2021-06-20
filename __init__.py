@@ -3695,6 +3695,15 @@ class URHO_PT_mainobject(bpy.types.Panel):
             return
 
         layout = self.layout
+
+        icon = "EVENT_R"
+        text = "REPLICATED"
+        if not obj.is_replicated:
+            icon = "EVENT_L"
+            text = "LOCAL"
+        row = layout.row()
+        row.prop(obj,"is_replicated",text=text,icon=icon)
+
         if obj.type=="MESH":
             row = layout.row()
             row.prop(obj,"hide_render",text="Invisibile", toggle=False)
@@ -4180,6 +4189,7 @@ def register():
     bpy.utils.register_class(LODData)
     bpy.utils.register_class(LODSet)
 
+    #yes, I really should have created a dedictated PropertyGroup... it happend over time...mea culpa
     bpy.types.Object.user_data = bpy.props.CollectionProperty(type=KeyValue)
     bpy.types.Object.list_index_userdata = IntProperty(name = "Index for key value list",default = 0)
     bpy.types.Object.cast_shadow = bpy.props.BoolProperty(default=True)
@@ -4189,6 +4199,7 @@ def register():
     bpy.types.Object.lodsetName = bpy.props.StringProperty(get=getLodSetName,set=setLodSetName,update=updateLodSetName)
     bpy.types.Object.inline_collection_instance = bpy.props.BoolProperty()
     bpy.types.Object.show_nested_nodetrees = bpy.props.BoolProperty()
+    bpy.types.Object.is_replicated = bpy.props.BoolProperty()
 
     bpy.types.World.lodsets=bpy.props.CollectionProperty(type=LODSet)
     bpy.types.World.lodset_counter=bpy.props.IntProperty()
@@ -4375,6 +4386,7 @@ def unregister():
     bpy.utils.unregister_class(NodetreeInfo)
     del bpy.types.Object.nodetrees
     del bpy.types.Object.list_index_nodetrees
+    del bpy.types.Object.is_replicated
 
     bpy.utils.unregister_class(UrhoExportNodetreePanel)
     bpy.utils.unregister_class(UrhoExportScenePanel)
