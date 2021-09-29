@@ -489,18 +489,32 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
     exportNodeTree = JSONNodetree.exportNodes(treeOwner,nodetree,True,collection_root)
     # a node is in urho3d a component
     for node in exportNodeTree["nodes"]:
+        is_dot_net = node["dotnetType"]!=None
+
         print("NODE: %s" % node["label"])
+
         bodyElem = ET.SubElement(xmlroot, "component")
+        if is_dot_net:
+            bodyElem.set("type", "component")
+        else:                    
         #bodyElem.set("type", node["name"])
-        bodyElem.set("type", node["label"])
+            bodyElem.set("type", node["label"])
+        
         nodeID += 1
         if not node["is_replicated"]:
             bodyElem.set("id", "{:d}".format(nodeID))
 
+            
+
         # node-properties are the component-attributes
         for prop in node["props"]:
-            modelElem = ET.SubElement(bodyElem, "attribute")
-            modelElem.set("name", prop["name"])
+            modelElem = None
+            if not is_dot_net:
+                modelElem = ET.SubElement(bodyElem, "attribute")
+                modelElem.set("name", prop["name"])
+            else:
+                bodyElem.set("SharpTypeName",node["dotnetType"])
+
             value = prop["value"]
             print ("Name:%s TYPE:%s StartVal:%s" % (prop["name"],prop["type"],prop["value"]) )
             if prop["type"].startswith("vector") or prop["type"].startswith("color"):
@@ -523,7 +537,10 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
                     print("ERROR ERROR: TRIED TO SET NODE_COL_MESH for %s" % nodetree.name)
                     value = "Models;Models/ERROR.mdl"
 
-            modelElem.set("value", value)
+            if not is_dot_net:
+                modelElem.set("value", value)
+            else:
+                bodyElem.set(prop["name"],value)
 
         if node["label"]=="StaticModel" or node["label"]=="AnimatedModel":
             modelElem = ET.SubElement(bodyElem, "attribute")
