@@ -21,7 +21,7 @@ cd $HOME
 cp -R -L temp/urho3d-blender-runtime-ver2/build/linux/bin/* runtimes
 cp temp/urho3d-blender-runtime-ver2/build/mingw/bin/urho3d-blender-runtime.exe runtimes
 
-#rm -Rf temp
+rm -Rf temp
 rm -Rf __pycache__
 
 cd ..

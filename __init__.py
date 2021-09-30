@@ -1481,7 +1481,13 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
     # --- Output settings ---
     generateSceneHeader : BoolProperty(description="Export cpp-header to access scene-object name/id in code")
-
+    sceneHeaderType : EnumProperty(
+        name = "sceneHeaderType",
+        description = "type of asset-file",
+        items=(('cpp', "cpp", "cpp"),
+                ('cs', "cs", "cs")),
+        default='cpp')
+        
     sceneHeaderOutputPath : StringProperty(
             name = "",
             description = "Path where to generate the sceneHeader-file",
@@ -2911,6 +2917,7 @@ class UrhoExportRenderPanel(bpy.types.Panel):
         ibox = box.box()
         row = ibox.row()
         row.prop(settings,"generateSceneHeader")
+        row.prop(settings,"sceneHeaderType",text="")
         if settings.generateSceneHeader:
             row = ibox.row()
             row.prop(settings,"sceneHeaderOutputPath")

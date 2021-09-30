@@ -552,7 +552,7 @@ def PrepareGlobalHeader():
             for elem in JSONNodetree.globalData[globalDataName]:
                 res_path  = elem["name"]
                 name = bpy.path.basename(res_path)
-                name_normalized = re.sub('[_.)( -]', '_', name)
+                name_normalized = re.sub('[_.)( -]|@', '_', name)
                 if name_normalized[0].isdigit():
                     name_normalized = "_"+name_normalized
 
@@ -569,7 +569,7 @@ def PrepareGlobalHeader():
         for texture in JSONNodetree.globalData["textures"]:
             tex_res_path  = texture["name"]
             tex_name = bpy.path.basename(tex_res_path)
-            tex_name_normalized = re.sub('[_.)( -]', '_', tex_name)
+            tex_name_normalized = re.sub('[_.)( -]|@', '_', tex_name)
             folder = os.path.dirname(tex_res_path)
 
             data = {
@@ -634,3 +634,31 @@ namespace %s {
     print(text)
     WriteStringFile(text,output_path,None)
 
+def WriteSceneHeaderFileDotNet(topic,input,output_path):
+    def _WriteSceneHeader(input):
+        current_text=""
+        for key in input:
+            value=input[key]
+            if isinstance(value,dict):
+                namespace_name = re.sub('[_.\.)( -]', '_', key)
+                current_text+="public partial class %s {\n%s\n}\n" % (namespace_name,_WriteSceneHeader(value))
+            elif isinstance(value,int):
+                current_text+="public const int %s=%s;\n" % (key,value)
+            elif isinstance(value,float):
+                current_text+="public const float %s=%sf;\n" % (key,value)
+            elif isinstance(value,str):
+                current_text+='public const string %s="%s";\n' % (key,value)
+            else:
+                print("unsupported type for %s[%s]:%s" % (key,value,type(value)))
+        return current_text
+
+    text="""
+namespace Assets {
+namespace %s {
+    """ % topic
+
+    text += _WriteSceneHeader(input)
+    text+="}}"
+    
+    print(text)
+    WriteStringFile(text,output_path,None)
