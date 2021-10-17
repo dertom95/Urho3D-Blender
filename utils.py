@@ -545,6 +545,7 @@ def PrepareGlobalHeader():
     particles   = result["particles"]={}        
     models      = result["models"]={}        
     textures    = result["textures"]={}
+    materials   = result["materials"]={}
     textures["all"]={}
 
     def PrepareDefault(globalDataName,bucket):
@@ -600,6 +601,7 @@ def PrepareGlobalHeader():
     PrepareDefault("particles",particles)
     PrepareDefault("sounds",sounds)
     PrepareDefault("models",models)
+    PrepareDefault("materials",materials)
 
     return result
 

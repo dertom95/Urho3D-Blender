@@ -14,6 +14,8 @@ import os
 import logging,traceback
 import math
 from .export_urho import BoundingBox,UrhoModel
+                
+
 
 jsonNodetreeAvailable = True
 log = logging.getLogger("ExportLogger")
@@ -504,7 +506,9 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
         if not node["is_replicated"]:
             bodyElem.set("id", "{:d}".format(nodeID))
 
-            
+        if is_dot_net:
+            bodyElem.set("SharpTypeName",node["dotnetType"])
+
 
         # node-properties are the component-attributes
         for prop in node["props"]:
@@ -512,8 +516,6 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
             if not is_dot_net:
                 modelElem = ET.SubElement(bodyElem, "attribute")
                 modelElem.set("name", prop["name"])
-            else:
-                bodyElem.set("SharpTypeName",node["dotnetType"])
 
             value = prop["value"]
             print ("Name:%s TYPE:%s StartVal:%s" % (prop["name"],prop["type"],prop["value"]) )
@@ -653,13 +655,17 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
 
 
 
-def AddGroupInstanceComponent(a,m,groupFilename,offset,modelNode):
+def AddGroupInstanceComponent(a,m,groupFilename,offset,modelNode,is_dotnet=False):
 
     attribID = m
     a["{:d}".format(m)] = ET.SubElement(a[modelNode], "component")
     a["{:d}".format(m)].set("type", "GroupInstance")
    # a["{:d}".format(m)].set("id", str(m))
-    
+
+    if is_dotnet:
+        a["{:d}".format(m)].set("SharpTypeName", "GroupInstance, Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null")
+        a["{:d}".format(m)].set("groupFilename", groupFilename)            
+
     m += 1
 
     a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(attribID)], "attribute")
@@ -892,7 +898,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             a["{:d}".format(m)].set("value", str(attributes[key]))
             m += 1
 
-    def add_component(parent,componentType,attributes=[],is_replicated=False):
+    def add_component(parent,componentType,attributes=[],is_replicated=False,is_dotnet=False):
         nonlocal compoID
         nonlocal m
         
@@ -904,13 +910,29 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         if not is_replicated:
             a["{:d}".format(compoID)].set("id", "{:d}".format(compoID))
 
-        m += 1
+        if is_dotnet:
+            a["{:d}".format(compoID)].set("SharpTypeName", "%s, Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" % componentType)
+            
 
-        for key in attributes:
-            a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compoID)], "attribute")
-            a["{:d}".format(m)].set("name", str(key))
-            a["{:d}".format(m)].set("value", str(attributes[key]))
+        if attributes:
             m += 1
+            for key in attributes:
+                a["{:d}".format(m)] = ET.SubElement(a["{:d}".format(compoID)], "attribute")
+                a["{:d}".format(m)].set("name", str(key))
+                a["{:d}".format(m)].set("value", str(attributes[key]))
+                m += 1
+            
+            if is_dotnet:
+                for key in attributes:
+                    value = attributes[key]
+                    if type(value)==bool:
+                        if value:
+                            a["{:d}".format(compoID)].set(str(key), "true")
+                        else:
+                            a["{:d}".format(compoID)].set(str(key), "false")
+                    else:
+                        a["{:d}".format(compoID)].set(str(key), str(value))                
+
         compoID += 1
 
     if urho_settings.generateSceneHeader:
@@ -1038,7 +1060,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
         "FXAA2" : urho_settings.runtimeUseFXAA2,
         "sRGB" : urho_settings.runtimeShowSRGB
     }
-    add_component(root,"RenderData",attrs)
+    add_component(root,"RenderData",attrs,False,urho_settings.exportLangType=="cs")
 
 
     # Create physics stuff for the root node
@@ -1321,8 +1343,9 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
         # if not is_obj_in_group:
         #     a[modelNode].set("id", "{:d}".format(k))
-        if not obj.is_replicated:
-            a[modelNode].set("id", "{:d}".format(k))
+        if not ObjInGroup(obj):
+            if not obj.is_replicated:
+                a[modelNode].set("id", "{:d}".format(k))
         
         if urho_settings.generateSceneHeader and not is_obj_in_group:
             header_obj_data = header_objects[obj]
@@ -1357,7 +1380,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             else:
                 grpFilename = sOptions.objectsPath+"/"+GetGroupName(grp.name)+".xml"
 
-            m = AddGroupInstanceComponent(a,m,grpFilename,grp.instance_offset,modelNode)
+            m = AddGroupInstanceComponent(a,m,grpFilename,grp.instance_offset,modelNode,urho_settings.exportLangType=="cs")
 
         xmlCurrentModelNode = None
 
@@ -1395,7 +1418,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 attrs={
                     "boneName" : obj.parent_bone
                 }
-                add_component(a[modelNode],"ParentBone",attrs)
+                add_component(a[modelNode],"ParentBone",attrs,False,urho_settings.exportLangType=="cs")
 
 
             if obj.type=="MESH":
@@ -1542,11 +1565,12 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 attrs={
                     "boneName" : obj.parent_bone
                 }
-                add_component(a[modelNode],"ParentBone",attrs)
+                add_component(a[modelNode],"ParentBone",attrs,False,urho_settings.exportLangType=="cs")
 
             if obj.type == "LIGHT": #simple shadow-settings-export. For more control use LightNode
                 if not HasComponent(a[modelNode],"RotationFix"):
-                    add_component(a[modelNode],"RotationFix")
+                    add_component(a[modelNode],"RotationFix",None,False,urho_settings.exportLangType=="cs")
+                    # SharpTypeName="TheOne.DotTestComponent, Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
 
                 # check if
                 if not HasComponent(a[modelNode],"Light"):
@@ -1587,7 +1611,8 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             # export camera
             if obj.type == "CAMERA":
                 if not HasComponent(a[modelNode],"RotationFix"):
-                    add_component(a[modelNode],"RotationFix")
+                    # TODO: why is replicated here always false?
+                    add_component(a[modelNode],"RotationFix",None,False,urho_settings.exportLangType=="cs")
 
                 # check if there is a camera-component already (created by nodetree)
                 if HasComponent(a[modelNode],"Camera"):
@@ -1614,7 +1639,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     camera_data["Far Clip"]=blender_cam.clip_end
 
 
-                    add_component(a[modelNode],"Camera",camera_data);
+                    add_component(a[modelNode],"Camera",camera_data)
 
 
                     # for key in camera_data:
@@ -1698,7 +1723,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     
     if urho_settings.generateSceneHeader:
         filename, file_extension = os.path.splitext(urho_settings.sceneHeaderOutputPath)
-        if urho_settings.sceneHeaderType=="cpp":
+        if urho_settings.exportLangType=="cpp":
             WriteSceneHeaderFile("scenes",header_data,os.path.join(bpy.path.abspath(urho_settings.sceneHeaderOutputPath),"")+("%s.h"%bpy.context.scene.name))
             global_base_dir = os.path.basename(os.path.normpath(urho_settings.outputPath))
             if not global_base_dir:
