@@ -1136,7 +1136,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                 # found an instanced collection
                 collection = obj.instance_collection
                 
-                if collection.library:
+                if collection.library or collection.urhoExport:
                     if obj.inline_collection_instance:
                         print("Inlined collection: %s for object %s" % (collection.name,obj.name))
                         for instance_object in collection.objects:

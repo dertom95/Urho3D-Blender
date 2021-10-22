@@ -500,6 +500,7 @@ def PrepareSceneHeaderFile(scene=None):
     cameras     = scenedata["cameras"]={}
     meshobj     = scenedata["mesh_objects"]={}
 
+
     # build data-structure
     for obj in scene.objects:
         obj_data = get_or_create_objdata(obj)
@@ -546,6 +547,8 @@ def PrepareGlobalHeader():
     models      = result["models"]={}        
     textures    = result["textures"]={}
     materials   = result["materials"]={}
+    fonts       = result["fonts"]={}
+    postprocess = result["postprocess"]={}    
     textures["all"]={}
 
     def PrepareDefault(globalDataName,bucket):
@@ -602,7 +605,8 @@ def PrepareGlobalHeader():
     PrepareDefault("sounds",sounds)
     PrepareDefault("models",models)
     PrepareDefault("materials",materials)
-
+    PrepareDefault("postprocess",postprocess)    
+    PrepareDefault("fonts",fonts)
     return result
 
 
