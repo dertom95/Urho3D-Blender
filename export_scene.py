@@ -32,6 +32,12 @@ def count_amount_parents(obj):
         obj=obj.parent
     return amount
 
+# what object in what collection
+groupObjMapping = {}
+def ObjInGroup(obj):
+    return obj.name in groupObjMapping
+def GetGroupName(grpName):
+    return "col_"+grpName    
 
 #-------------------------
 # Scene and nodes classes
@@ -503,7 +509,7 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
             bodyElem.set("type", node["label"])
         
         nodeID += 1
-        if not node["is_replicated"]:
+        if not node["is_replicated"] and not ObjInGroup(treeOwner):
             bodyElem.set("id", "{:d}".format(nodeID))
 
         if is_dot_net:
@@ -519,7 +525,7 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
 
             value = prop["value"]
             print ("Name:%s TYPE:%s StartVal:%s" % (prop["name"],prop["type"],prop["value"]) )
-            if prop["type"].startswith("vector") or prop["type"].startswith("color"):
+            if prop["type"].startswith("vector") or prop["type"].startswith("color") or prop["type"].startswith("intvector"):
                 print("VECTOR!")
                 value = value.replace("(","")
                 value = value.replace(")","")
@@ -1102,18 +1108,12 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
     # save the parent objects
     parentObjects = []
 
-    # what object in what collection
-    groupObjMapping = {}
     # list to contain xml-data for each collection to be exported
     groups=[]
     # list of collections that get instanced in the scene
     instancedCollections = []
 
     # Export each decomposed object
-    def ObjInGroup(obj):
-        return obj.name in groupObjMapping
-    def GetGroupName(grpName):
-        return "col_"+grpName    
 
 
     # add all collections that are marked as "export as urho object" to the export-collection list
@@ -1469,7 +1469,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     for nodetreeSlot in obj.nodetrees:
                         nt = nodetreeSlot.nodetreePointer
                         if (nt and nt not in handledNodetrees):
-                            compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode,uSceneModel.collection_root)
+                            compoID = CreateNodeTreeXML(obj,a[modelNode],nt,compoID,currentModel,currentMaterialValue,xmlCurrentModelNode,modelNode,uSceneModel.collection_root,)
                             handledNodetrees.append(nt)
                         else:
                             # we already added this nodetree! nothing more to do
