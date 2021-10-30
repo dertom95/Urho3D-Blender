@@ -623,6 +623,10 @@ class UL_URHO_LIST_ITEM_DEL_NODETREE(bpy.types.Operator):
         if self.index==-1:
             self.index = context.active_object.list_index_nodetrees
 
+        tree_to_remove_from = currentlist[self.index]
+        if tree_to_remove_from.nodetreePointer:
+            JSONNodetreeUtils.TreeRemoveInstanceFromTree(tree_to_remove_from.nodetreePointer,context.active_object)
+
         currentlist.remove(self.index)
         context.active_object.list_index_nodetrees = min(max(0, self.index - 1), len(currentlist) - 1)
 
@@ -3815,6 +3819,8 @@ def PostLoad(dummy):
         CreateProxyNodetree()
     except:
         print("CreateProxyNodetree error:", sys.exc_info()[0])
+    
+    JSONNodetreeUtils.CheckAllObjectNodetreeInstances()
 
 def has_non_objectmode_parent(obj):
     current_parent=obj.parent
