@@ -509,7 +509,7 @@ def CreateNodeTreeXML(treeOwner,xmlroot,nodetree,nodeID,currentModel=None,curren
             bodyElem.set("type", node["label"])
         
         nodeID += 1
-        if not node["is_replicated"] and not ObjInGroup(treeOwner):
+        if not node["is_replicated"] and treeOwner and not ObjInGroup(treeOwner):
             bodyElem.set("id", "{:d}".format(nodeID))
 
         if is_dot_net:
