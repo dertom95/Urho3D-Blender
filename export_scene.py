@@ -134,7 +134,7 @@ class UrhoSceneModel:
                     old_parent = object.parent
                     old_parent_matrix = object.matrix_parent_inverse.copy()
                     self.parent_bone = object.parent_bone
-
+                    self.amount_parents += 1 # experimenting
                     print("FOUND PARENT Bone parenting!")
                     print("FOUND PARENT Armature!")
                     print("FOUND PARENT Armature!")
