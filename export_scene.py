@@ -1306,7 +1306,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
 
             is_obj_in_group = ObjInGroup(obj)
             if is_obj_in_group:
-                print("FOUND GROUP OBJ:%s",obj.name)
+                print("FOUND GROUP OBJ:%s" % obj.name)
                 
                 for group in groupObjMapping[obj.name]:
                     groupName = GetGroupName(group.name)
@@ -1340,7 +1340,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     if modelNode in a and a[modelNode] not in a[groupName]:
                         if (obj.parent):
                             print("                        if not %s or groupObjMapping[%s]!=groupObjMapping[%s]:" %(obj.parent,obj.parent.name,obj.name))
-                        if not obj.parent or groupObjMapping[obj.parent.name]!=groupObjMapping[obj.name]:
+                        if not obj.parent or groupObjMapping.get(obj.parent.name)!=groupObjMapping[obj.name]:
                             a[groupName].append(a[modelNode])
                 #a[modelNode] = ET.SubElement(a[groupName],'node') 
 
