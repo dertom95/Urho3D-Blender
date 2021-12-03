@@ -7,12 +7,13 @@ from bpy_extras import view3d_utils
 from threading import current_thread
 import weakref
 from mathutils import Vector
+import sys
 
 try:
     from PIL import Image,ImageDraw
 except:
     import bpy,subprocess
-    pybin = bpy.app.binary_path_python
+    pybin = sys.executable
     subprocess.check_call([pybin, '-m', 'ensurepip'])
     subprocess.check_call([pybin, '-m', 'pip', 'install', 'Pillow'])
     from PIL import Image,ImageDraw

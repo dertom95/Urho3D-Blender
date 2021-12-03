@@ -45,8 +45,8 @@ if "decompose" in locals():
 try:
     from PIL import Image,ImageDraw
 except:
-    import bpy,subprocess
-    pybin = bpy.app.binary_path_python
+    import bpy,subprocess,sys
+    pybin = sys.executable
     subprocess.check_call([pybin, '-m', 'ensurepip'])
     subprocess.check_call([pybin, '-m', 'pip', 'install', 'Pillow'])
     from PIL import Image,ImageDraw
