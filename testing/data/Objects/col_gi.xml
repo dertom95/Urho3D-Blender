@@ -1,0 +1,18 @@
+<node>
+	<node>
+		<attribute name="Name" value="Suzanne"/>
+		<attribute name="Position" value="0.0 0.0 0.0"/>
+		<attribute name="Rotation" value="1 -0 -0 -0"/>
+		<attribute name="Scale" value="2.32473 2.32473 2.32473"/>
+		<attribute name="Variables"/>
+		<attribute name="Tags">
+			<string value="gi"/>
+			<string value="gi_recursive"/>
+		</attribute>
+		<component type="StaticModel">
+			<attribute name="Model" value="Model;Models/663-Scene-Suzanne.mdl"/>
+			<attribute name="Material" value="Material;"/>
+			<attribute name="Cast Shadows" value="true"/>
+		</component>
+	</node>
+</node>

@@ -12,7 +12,6 @@ cd temp
 
 git clone https://github.com/dertom95/urho3d-blender-runtime-ver2
 cd urho3d-blender-runtime-ver2/
-git checkout dev
 git submodule update --init
 ./tools/build_win_lin.sh
 
