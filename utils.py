@@ -647,6 +647,8 @@ def WriteSceneHeaderFileDotNet(topic,input,output_path):
             value=input[key]
             if isinstance(value,dict):
                 namespace_name = re.sub('[_.\.)( -]', '_', key)
+                if namespace_name[0].isdigit():
+                    namespace_name="_"+namespace_name
                 current_text+="public partial class %s {\n%s\n}\n" % (namespace_name,_WriteSceneHeader(value))
             elif isinstance(value,int):
                 current_text+="public const int %s=%s;\n" % (key,value)
