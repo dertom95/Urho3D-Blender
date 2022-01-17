@@ -1381,6 +1381,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             default = False,
             update=PublishRuntimeSettings) 
 
+
+    runtimeAutostart : BoolProperty(
+            name = "Autostart Runtime",
+            description = "Autostart Runtime after 2secs no ping",
+            default = True
+            )             
     runtimeUnstable : BoolProperty(
             name = "Unstable Features",
             description = "activate (even more) unstable features",
@@ -2983,7 +2989,9 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             # row.prop(settings,"runtimeFlags")            
             row = box.row()
             row.operator("urho.start_runtime",icon="GHOST_ENABLED")
-
+            row.prop(settings,"runtimeAutostart",text="")
+            #row.prop(settings,"runtimeUnstable")
+            
             row = box.row()
             row.prop(settings,"enableRuntime2")
             if (settings.enableRuntime2):
@@ -3986,13 +3994,14 @@ def call_execution_queue():
             PingData.ping_runtime_timer -= tick
 
         if PingData.ping_count > 2 and not found_blender_runtime():
-            print("auto start runtime")
-            try:
-                bpy.ops.urho.start_runtime()
-            except:
-                pass
-            set_found_blender_runtime(True)
-            PingData.ping_check_running = True
+            if bpy.context.scene.urho_exportsettings.runtimeAutostart:
+                print("auto start runtime")
+                try:
+                    bpy.ops.urho.start_runtime()
+                except:
+                    pass
+                set_found_blender_runtime(True)
+                PingData.ping_check_running = True
     
 
     return tick
