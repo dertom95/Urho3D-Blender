@@ -2164,6 +2164,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
 
         techniqueNode = nodetree.nodes.new("urho3dmaterials__techniqueNode")
         techniqueNode.location = Vector((250,350))
+        techniqueNode.nodeData.prop_Technique="Techniques/Diff.xml"
         #techniqueNode.prop_Technique = 'Techniques/NoTexture.xml'
         techniqueNode.width = 500
         nodetree.links.new(matNode.outputs[0],techniqueNode.inputs[0])
@@ -2231,7 +2232,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
                 print("Unknown basecolor_input:%s" %basecol_node.type)
                 pass
         else:
-            base_color = in_basecolor.default_value
+            base_color = in_specularcolor.default_value
 
 
         # rough / metallic
@@ -2296,43 +2297,46 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
 
         metallicroughness = rough_image or metal_image
 
-        if metallicroughness:
-            empty_image = Image.new("RGBA",composition_size,(0,0,0,255))
-            r,g,b,a = empty_image.split()
+        try:
+            if metallicroughness:
+                empty_image = Image.new("RGBA",composition_size,(0,0,0,255))
+                r,g,b,a = empty_image.split()
 
-            if rough_image:
-                if rough_image.width < composition_size[0] or rough_image.height < composition_size[1]:
-                    rough_image = rough_image.resize(composition_size)
-                r = rough_image.getchannel(rough_channel)
+                if rough_image:
+                    if rough_image.width < composition_size[0] or rough_image.height < composition_size[1]:
+                        rough_image = rough_image.resize(composition_size)
+                    r = rough_image.getchannel(rough_channel)
 
-            if metal_image:
-                if metal_image.width < composition_size[0] or metal_image.height < composition_size[1]:
-                    metal_image = metal_image.resize(composition_size)
-                b = metal_image.getchannel(metal_channel)
+                if metal_image:
+                    if metal_image.width < composition_size[0] or metal_image.height < composition_size[1]:
+                        metal_image = metal_image.resize(composition_size)
+                    b = metal_image.getchannel(metal_channel)
 
-            result = Image.merge("RGBA",(r,g,b,a))
+                result = Image.merge("RGBA",(r,g,b,a))
 
-            resource_part = os.path.join(settings.texturesPath,'')+"imported/gen_rm_"+outputfilename+".png"
-            outputfile=os.path.join( bpy.path.abspath(settings.outputPath),'')+resource_part
-            result.save(outputfile)
+                resource_part = os.path.join(settings.texturesPath,'')+"imported/gen_rm_"+outputfilename+".png"
+                outputfile=os.path.join( bpy.path.abspath(settings.outputPath),'')+resource_part
+                result.save(outputfile)
 
-            urho3d_roughmetal_tex = nodetree.nodes.new("urho3dmaterials__textureNode")
-            urho3d_roughmetal_tex.nodeData.prop_unit='specular'
-            urho3d_roughmetal_tex.location = Vector((850,100))
-            nodetree.links.new(matNode.outputs[0],urho3d_roughmetal_tex.inputs[0])
+                urho3d_roughmetal_tex = nodetree.nodes.new("urho3dmaterials__textureNode")
+                urho3d_roughmetal_tex.nodeData.prop_unit='specular'
+                urho3d_roughmetal_tex.location = Vector((850,100))
+                nodetree.links.new(matNode.outputs[0],urho3d_roughmetal_tex.inputs[0])
 
-            add_filename_to_urhotexnode(urho3d_roughmetal_tex,resource_part)
+                add_filename_to_urhotexnode(urho3d_roughmetal_tex,resource_part)
 
-        if pbr:
-            pbsNode = nodetree.nodes.new("urho3dmaterials__pbsParams")
-            pbsNode.nodeData.prop_MatDiffColor=base_color
-            pbsNode.location = Vector((250,100))
+            if pbr:
+                pbsNode = nodetree.nodes.new("urho3dmaterials__pbsParams")
+                pbsNode.nodeData.prop_MatDiffColor=base_color
+                pbsNode.location = Vector((250,100))
 
-            nodetree.links.new(matNode.outputs[0],pbsNode.inputs[0])
-        else:
-            standardNode = nodetree.nodes.new("urho3dmaterials__standardParams")
-            standardNode.location = Vector((250,100))
-            nodetree.links.new(matNode.outputs[0],standardNode.inputs[0])
+                nodetree.links.new(matNode.outputs[0],pbsNode.inputs[0])
+            else:
+                standardNode = nodetree.nodes.new("urho3dmaterials__standardParams")
+                standardNode.location = Vector((250,100))
+                nodetree.links.new(matNode.outputs[0],standardNode.inputs[0])
+        except:
+            print("Something went wrong with MetallicRoughness-Conversion")
 
 
 
