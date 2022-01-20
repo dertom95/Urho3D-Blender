@@ -2112,6 +2112,27 @@ def CreateInitialMaterialTree(nodetree):
 
     nodetree.initialized=True
 
+def CreateObjectUrhoMaterialsFromBlender(obj,pbr):
+    # clear slots
+    obj.data.materialNodetrees.clear()
+
+    for blender_slot in obj.material_slots:
+        mat = blender_slot.material
+        
+        urho_slot = obj.data.materialNodetrees.add()
+        
+        if mat.name in bpy.data.node_groups:
+            # there is already a nodetree with this name, reuse it
+            urho_slot.nodetreePointer=bpy.data.node_groups[mat.name]
+            continue
+        # create a new nodetree
+        nt_new = bpy.data.node_groups.new(mat.name,'urho3dmaterials')
+        try:
+            CreateMaterialFromNodetree(nt_new,mat,pbr,True)
+            urho_slot.nodetreePointer=nt_new
+        except:
+            print("Something went wrong creating material:%s for object:%s" % (mat.name,obj.name))
+
 
 def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
     images=[]
@@ -2177,6 +2198,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
         urho3d_sepcular_tex= None
 
         base_color = (1,1,1,1)
+        specular_color = (0.5,0.5,0.5,1)
 
         
         # base-color
@@ -2232,7 +2254,7 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
                 print("Unknown basecolor_input:%s" %basecol_node.type)
                 pass
         else:
-            base_color = in_specularcolor.default_value
+            specular_color = (in_specularcolor.default_value,in_specularcolor.default_value,in_specularcolor.default_value,1)
 
 
         # rough / metallic
@@ -2324,19 +2346,21 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
                 nodetree.links.new(matNode.outputs[0],urho3d_roughmetal_tex.inputs[0])
 
                 add_filename_to_urhotexnode(urho3d_roughmetal_tex,resource_part)
-
-            if pbr:
-                pbsNode = nodetree.nodes.new("urho3dmaterials__pbsParams")
-                pbsNode.nodeData.prop_MatDiffColor=base_color
-                pbsNode.location = Vector((250,100))
-
-                nodetree.links.new(matNode.outputs[0],pbsNode.inputs[0])
-            else:
-                standardNode = nodetree.nodes.new("urho3dmaterials__standardParams")
-                standardNode.location = Vector((250,100))
-                nodetree.links.new(matNode.outputs[0],standardNode.inputs[0])
         except:
             print("Something went wrong with MetallicRoughness-Conversion")
+
+        if pbr:
+            pbsNode = nodetree.nodes.new("urho3dmaterials__pbsParams")
+            pbsNode.nodeData.prop_MatDiffColor=base_color
+            pbsNode.location = Vector((250,100))
+
+            nodetree.links.new(matNode.outputs[0],pbsNode.inputs[0])
+        else:
+            standardNode = nodetree.nodes.new("urho3dmaterials__standardParams")
+            standardNode.location = Vector((250,100))
+            standardNode.nodeData.prop_MatDiffColor = base_color
+            standardNode.nodeData.prop_MatSpecColor = specular_color
+            nodetree.links.new(matNode.outputs[0],standardNode.inputs[0])
 
 
 
@@ -2625,9 +2649,26 @@ class UrhoCreateNodetreeFromMaterial(bpy.types.Operator):
         if settings.create_nodetree_from_material and self.nodetreeName:
             material = bpy.data.materials[settings.create_nodetree_from_material]
             nodetree = bpy.data.node_groups[self.nodetreeName]
-            CreateMaterialFromNodetree(nodetree,material,True)
+            CreateMaterialFromNodetree(nodetree,material,False)
 
         return {'FINISHED'}
+
+class UrhoSetAndCreateNodetreesFromBlenderMaterials(bpy.types.Operator):
+    ''' Tries to convert objects blender objects to urho-objects '''
+    bl_idname = "urho.setnodetrees_from_blender"
+    bl_label = "Blender>Urho-Materials"
+    
+    @classmethod
+    def poll(self, context):
+        return context.active_object is not None
+
+    def execute(self, context):
+        settings = context.scene.urho_exportsettings
+        
+        obj = context.active_object
+        CreateObjectUrhoMaterialsFromBlender(obj,False)
+
+        return {'FINISHED'}        
 
 
 def ObjectUserData(obj,layout):
@@ -3625,6 +3666,8 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
                 row = innerBox.row()
                 op = row.operator("urho.createnodetree_from_material")
                 op.nodetreeName = nodetree.name
+                row = innerBox.row()
+                op = row.operator("urho.setnodetrees_from_blender")
 
 
 
@@ -4187,6 +4230,7 @@ def register():
     bpy.utils.register_class(URHO_PT_mainuserdata)
     bpy.utils.register_class(PackOutputFolder)
     bpy.utils.register_class(UrhoCreateNodetreeFromMaterial)
+    bpy.utils.register_class(UrhoSetAndCreateNodetreesFromBlenderMaterials)
     bpy.utils.register_class(URHO_PT_mainobject)
     bpy.utils.register_class(URHO_PT_mainmesh)
     
@@ -4363,6 +4407,7 @@ def unregister():
     bpy.utils.unregister_class(URHO_PT_mainmaterial)
     bpy.utils.unregister_class(URHO_PT_maincomponent)
     bpy.utils.unregister_class(PackOutputFolder)
+    bpy.utils.unregister_class(UrhoSetAndCreateNodetreesFromBlenderMaterials)
     bpy.utils.unregister_class(UrhoCreateNodetreeFromMaterial)
     bpy.utils.unregister_class(URHO_PT_mainobject)
     bpy.utils.unregister_class(URHO_PT_mainmesh)

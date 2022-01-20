@@ -1729,6 +1729,19 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
     geometriesList = tData.geometriesList
     materialsList = tData.materialsList
     materialGeometryMap = tData.materialGeometryMap
+
+    def CreateGeometry(materialName,geometriesList,materialGeometryMap):
+        geometryIndex = len(geometriesList)
+        newGeometry = TGeometry()
+        newGeometry.materialName = materialName
+        geometriesList.append(newGeometry)
+        materialGeometryMap[materialName] = geometryIndex
+        log.info("New Geometry{:d} created for material {!s}".format(geometryIndex, materialName))
+
+
+
+        #init map with all materials
+
     morphsList = tData.morphsList
     bonesMap = tData.bonesMap
     meshIndex = errorsMem.SecondIndex(meshObj.name)
@@ -1776,6 +1789,16 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
         mesh = meshObj.data
 
     log.info("Decomposing mesh: {:s} ({:d} vertices)".format(meshObj.name, len(mesh.vertices)) )
+
+    if len(materialGeometryMap)==0:
+        # create geometries according to its index. 
+        for slot in mesh.materialNodetrees:
+            nt = slot.nodetreePointer
+            materialName="default_materialtree"
+            if nt is not None:
+                materialName = nt.name
+
+            CreateGeometry(materialName,geometriesList,materialGeometryMap)
 
     # Compute local space unit length split normals vectors
     mesh.calc_normals_split()
