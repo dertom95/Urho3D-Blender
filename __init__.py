@@ -699,7 +699,6 @@ class UL_URHO_LIST_MATERIAL_NODETREE(bpy.types.UIList):
             layout.alignment = 'CENTER'
             layout.label(text="", icon = custom_icon)
 
-
 class UL_URHO_LIST_ITEM_MATERIAL_NODETREE(bpy.types.Operator):
     """Add a new item to the list."""
 
@@ -709,6 +708,27 @@ class UL_URHO_LIST_ITEM_MATERIAL_NODETREE(bpy.types.Operator):
 
     def execute(self, context):
         context.active_object.data.materialNodetrees.add()
+
+        return{'FINISHED'}
+
+
+class UL_URHO_APPLY_MATERIALS_TO_SELECTED(bpy.types.Operator):
+    """Apply materials to selected"""
+
+    bl_idname = "urho_material_nodetrees.apply_material_to_selected"
+    bl_label = "apply to selected"
+
+
+    def execute(self, context):
+        current = bpy.context.active_object
+        for obj in bpy.context.selected_objects:
+            if obj==current:
+                continue
+
+            obj.data.materialNodetrees.clear()
+            for nt in current.data.materialNodetrees:
+                new_nt=obj.data.materialNodetrees.add()
+                new_nt.nodetreePointer=nt.nodetreePointer # assign nodetree-slot from current to new nodetree slot of selected object
 
         return{'FINISHED'}
 
@@ -3592,7 +3612,12 @@ def ObjectMaterialNodetree(obj,box):
         row = box.row(align=True)
         row.operator("object.material_slot_assign", text="Assign")
         row.operator("object.material_slot_select", text="Select")
-        row.operator("object.material_slot_deselect", text="Deselect")                
+        row.operator("object.material_slot_deselect", text="Deselect")  
+
+    row = box.row()
+    if len(bpy.context.selected_objects)>0:
+        box.operator("urho_material_nodetrees.apply_material_to_selected",text="Apply to selected")
+          
 
 
 class UrhoExportNodetreePanel(bpy.types.Panel):
@@ -4307,6 +4332,8 @@ def register():
     bpy.utils.register_class(UL_URHO_LIST_ITEM_MATERIAL_NODETREE)
     bpy.utils.register_class(UL_URHO_LIST_ITEM_DEL_MATERIAL_NODETREE)
     bpy.utils.register_class(UL_URHO_LIST_ITEM_MOVE_MATERIAL_NODETREE)
+    bpy.utils.register_class(UL_URHO_APPLY_MATERIALS_TO_SELECTED)    
+
     bpy.utils.register_class(MaterialNodetreeInfo)
     bpy.types.Mesh.materialNodetrees = bpy.props.CollectionProperty(type=MaterialNodetreeInfo)
     bpy.types.Mesh.list_index_nodetrees = IntProperty(name = "Index for nodetree list",default = 0)
@@ -4455,6 +4482,7 @@ def unregister():
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MATERIAL_NODETREE)
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_DEL_MATERIAL_NODETREE)
     bpy.utils.unregister_class(UL_URHO_LIST_ITEM_MOVE_MATERIAL_NODETREE)
+    bpy.utils.unregister_class(UL_URHO_APPLY_MATERIALS_TO_SELECTED)
     bpy.utils.unregister_class(MaterialNodetreeInfo)
     del bpy.types.Mesh.materialNodetrees
     del bpy.types.Mesh.list_index_nodetrees
