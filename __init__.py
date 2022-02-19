@@ -26,12 +26,12 @@ bl_info = {
     "name": "Urho3D export",
     "description": "Urho3D export",
     "author": "reattiva, dertom",
-    "version": (0, 8, 1),
+    "version": (0, 9, 3),
     "blender": (2, 80, 0),
     "location": "Properties > Render > Urho export",
-    "warning": "",
+    "warning": "this tool has some advanced features, but be warned about unstable behaviour here and there. Feel free to contact me via github-issue with expressive issue-explanation including test-file.",
     "wiki_url": "",
-    "tracker_url": "",
+    "tracker_url": "https://github.com/dertom95/Urho3D-Blender/issues",
     "category": "Import-Export"}
 
 if "decompose" in locals():
@@ -58,7 +58,7 @@ from .export_urho import UrhoExportData, UrhoExportOptions, UrhoWriteModel, Urho
                          UrhoWriteTriggers, UrhoExport
 from .export_scene import SOptions, UrhoScene, UrhoExportScene, UrhoWriteMaterialTrees
 from .utils import PathType, FOptions, GetFilepath, CheckFilepath, ErrorsMem, getLodSetWithID,getObjectWithID, execution_queue, \
-                    PingData,set_found_blender_runtime,found_blender_runtime, PingForRuntime, copy_file,CalcNodeHash
+                    PingData,set_found_blender_runtime,found_blender_runtime, PingForRuntime, copy_file,CalcNodeHash,export_image
 
 from .networking import Start as StartNetwork
 StartNetwork()
@@ -2130,7 +2130,11 @@ def CreateInitialMaterialTree(nodetree):
         nodetree.links.new(matNode.outputs[0],techniqueNode.inputs[0])
         nodetree.links.new(matNode.outputs[0],standardNode.inputs[0])
 
-    nodetree.initialized=True
+    try:
+        nodetree.initialized=True
+    except Exception as ex:
+        print("CreateInitialMaterialTree: problem initalizing[%s]"%ex)
+    
 
 def CreateObjectUrhoMaterialsFromBlender(obj,pbr):
     # clear slots
@@ -2168,31 +2172,9 @@ def CreateMaterialFromNodetree(nodetree,material,pbr,copy_images=True):
 
     def copy_image_and_set(eeveeTexNode,urho3dTexNode):
         image = eeveeTexNode.image
+        new_resource_path = utils.export_image(image)
+        add_filename_to_urhotexnode(urho3dTexNode,new_resource_path)
 
-        settings = bpy.context.scene.urho_exportsettings
-        # copy image from eevveeNode to Textures-Folder and add this image to the image-categories to be able to set it
-        folder=os.path.join(settings.texturesPath,'')+"imported"
-        filename=os.path.join(folder,'')+bpy.path.basename(image.filepath)
-        abs_outputPath = os.path.join(bpy.path.abspath(settings.outputPath) ,'')
-
-        if image.packed_file:
-            full_ouput_path=abs_outputPath+filename
-            image.save_render(full_ouput_path)
-            add_filename_to_urhotexnode(urho3dTexNode,filename)
-        else:
-            ext = os.path.splitext(image.filepath)[1].lower()
-            if ext==".png" or ext==".jpg" or ext==".dds":
-                copy_file(image.filepath,abs_outputPath+folder,True)
-                add_filename_to_urhotexnode(urho3dTexNode,filename)
-            else:
-                Path(abs_outputPath+folder).mkdir(parents=True, exist_ok=True)
-                withoutExt = os.path.splitext(filename)[0]
-                img = Image.open(bpy.path.abspath(image.filepath),"r")
-                
-                new_resource_path = withoutExt+".png"
-                full_output_path = abs_outputPath+new_resource_path
-                img.save(full_output_path)
-                add_filename_to_urhotexnode(urho3dTexNode,new_resource_path)
         
 
     def process_principled(bsdf):
@@ -3595,16 +3577,7 @@ def ObjectMaterialNodetree(obj,box):
     row = box.row()
     row.operator('urho_material_nodetrees.new_item', text='NEW')
     row.operator('urho_material_nodetrees.delete_item', text='REMOVE')
-    # no movement of the materialtree-slots, as I dont know how to stabely swap the change in the mesh
-    # maybe using blender's material operators: 
-    #row.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
-    #row.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'                
-
-
-    #row.operator('urho_material_nodetrees.move_item', text='UP').direction = 'UP'
-    #row.operator('urho_material_nodetrees.move_item', text='DOWN').direction = 'DOWN'
-
-    #bpy.ops.wm.read_homefile('INVOKE_DEFAULT')                
+               
     row = box.row()
     row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object-nodetree")
 
@@ -3617,7 +3590,9 @@ def ObjectMaterialNodetree(obj,box):
     row = box.row()
     if len(bpy.context.selected_objects)>0:
         box.operator("urho_material_nodetrees.apply_material_to_selected",text="Apply to selected")
-          
+    
+    row = box.row()
+    op = row.operator("urho.setnodetrees_from_blender")
 
 
 class UrhoExportNodetreePanel(bpy.types.Panel):
@@ -3691,8 +3666,7 @@ class UrhoExportNodetreePanel(bpy.types.Panel):
                 row = innerBox.row()
                 op = row.operator("urho.createnodetree_from_material")
                 op.nodetreeName = nodetree.name
-                row = innerBox.row()
-                op = row.operator("urho.setnodetrees_from_blender")
+
 
 
 

@@ -1751,7 +1751,11 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
 
     meshObj.select_set(True)
     bpy.context.view_layer.objects.active = meshObj
-    bpy.ops.object.mode_set(mode="OBJECT")
+    try:
+        bpy.ops.object.mode_set(mode="OBJECT")
+    except Exception as ex:
+        log.info("something went wrong decomposing:%s! ignoring it[%s]" % (meshObj.name,ex))
+        return
 
     verticesMap = {}
     

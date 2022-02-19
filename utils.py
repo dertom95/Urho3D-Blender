@@ -19,6 +19,16 @@ from math import degrees
 from mathutils import Vector
 import traceback
 from .addon_jsonnodetree import JSONNodetree
+from pathlib import Path
+
+try:
+    from PIL import Image,ImageDraw
+except:
+    import bpy,subprocess,sys
+    pybin = sys.executable
+    subprocess.check_call([pybin, '-m', 'ensurepip'])
+    subprocess.check_call([pybin, '-m', 'pip', 'install', 'Pillow'])
+    from PIL import Image,ImageDraw
 
 
 # # -----------------------------------------
@@ -463,7 +473,35 @@ def copy_file(from_filepath,to_folder,createFolderIfNotPresent=True):
 
     shutil.copy(bpy.path.abspath(from_filepath), to_folder)
 
-    
+def export_image(image):
+    settings = bpy.context.scene.urho_exportsettings
+    # copy image from eevveeNode to Textures-Folder and add this image to the image-categories to be able to set it
+    folder=os.path.join(settings.texturesPath,'')+"imported"
+    filename=os.path.join(folder,'')+bpy.path.basename(image.filepath)
+    abs_outputPath = os.path.join(bpy.path.abspath(settings.outputPath) ,'')
+
+    newPath = None
+    if image.packed_file:
+        full_ouput_path=abs_outputPath+filename
+        image.save_render(full_ouput_path)
+        newPath = filename
+    else:
+        ext = os.path.splitext(image.filepath)[1].lower()
+        if ext==".png" or ext==".jpg" or ext==".dds":
+            copy_file(image.filepath,abs_outputPath+folder,True)
+            newPath = filename
+        else:
+            # convert other fileformats to png
+            Path(abs_outputPath+folder).mkdir(parents=True, exist_ok=True)
+            withoutExt = os.path.splitext(filename)[0]
+            img = Image.open(bpy.path.abspath(image.filepath),"r")
+            
+            new_resource_path = withoutExt+".png"
+            full_output_path = abs_outputPath+new_resource_path
+            img.save(full_output_path)
+            newPath = new_resource_path
+    return newPath 
+
 
 def PrepareSceneHeaderFile(scene=None):
     # store object-data
