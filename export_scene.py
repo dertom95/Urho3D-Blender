@@ -1340,7 +1340,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
                     if modelNode in a and a[modelNode] not in a[groupName]:
                         if (obj.parent):
                             print("                        if not %s or groupObjMapping[%s]!=groupObjMapping[%s]:" %(obj.parent,obj.parent.name,obj.name))
-                        if not obj.parent or groupObjMapping.get(obj.parent.name)!=groupObjMapping[obj.name]:
+                        if not obj.parent or (obj.parent_type!="BONE" and groupObjMapping.get(obj.parent.name)!=groupObjMapping[obj.name]):
                             a[groupName].append(a[modelNode])
                 #a[modelNode] = ET.SubElement(a[groupName],'node') 
 
