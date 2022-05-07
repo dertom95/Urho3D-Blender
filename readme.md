@@ -20,6 +20,7 @@ Wanna give it a try? **Download the latest release from the [release section](ht
 
 
 **Additional**  
+[Installation](https://youtu.be/JYdHgyHWyOo)  
 [Getting Started Video](https://www.youtube.com/watch?v=vyP0dXvh9Aw)  
 [Video Playlist](https://www.youtube.com/playlist?list=PL3dUhaUzMSSq0ngtTH6f_cj7jKKRhtzdM)  
    
@@ -37,7 +38,7 @@ Caution: This version is highly experimental. Consider it proof of concept and W
 Also install and activate [addon_jsonnodetree](https://github.com/dertom95/addon_jsonnodetree) for support of setting components and adding materials 
 
 Videos:
-- [Install](https://www.youtube.com/watch?v=o-1RMIwQZMY)
+- [Install](https://youtu.be/JYdHgyHWyOo)
 - [Exporter Options](https://www.youtube.com/watch?v=VtZk6FipkdU)
 - [runtime and material-nodes](https://www.youtube.com/watch?v=utLNqfxZ_KE)
 - [materialnodes and textures](https://www.youtube.com/watch?v=13jslwWhUSk)
