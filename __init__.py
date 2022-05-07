@@ -1131,6 +1131,8 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
             bpy.data.worlds[0].jsonNodes.path = "%s__blender_material.json" % bpy.path.abspath(self.outputPath)
             print("--")
+            addon_jsonnodetree.processNodetreeFromFile()
+
 
 
         # Skeleton implies weights    
@@ -1175,7 +1177,10 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
         self.updatingProperties = False
 
     def update_outputPath_make_absolute(self,context):
-        self.outputPath = abs_outputPath = os.path.join(bpy.path.abspath(self.outputPath) ,'')
+        abs_outputPath = os.path.join(bpy.path.abspath(self.outputPath) ,'')
+        if abs_outputPath != self.outputPath:
+            self.outputPath = abs_outputPath
+
         self.update_func(context)
 
 
