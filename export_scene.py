@@ -1393,7 +1393,7 @@ def UrhoExportScene(context, uScene, sOptions, fOptions):
             xmlCurrentModelNode = a["{:d}".format(compID)]
             a["{:d}".format(compID)].set("type", uSceneModel.type)
             # TODO: check for node replicated-state
-            if not is_obj_in_group:
+            if not ObjInGroup(obj):
                 a["{:d}".format(compID)].set("id", "{:d}".format(compoID))
             m += 1
 

@@ -3309,10 +3309,12 @@ class UrhoExportRenderPanel(bpy.types.Panel):
 
 def OutputExposedValues(tree,obj,layout,collection=None,collection_root=None):
     box_initalized = False
+    settings = bpy.context.scene.urho_exportsettings
+    
     for node in tree.nodes:
         if collection:
             col_instance_data = EnsureProxyDataForCollectionRoot(collection_root,False)
-            if not col_instance_data:
+            if not col_instance_data and settings.runtimeUnstable:
                 layout.operator("urho_button.generic",text="create override data").typeName="ensure_collection_override"
                 #layout.label(text="NO OVERRIDE DATA!")
                 return
@@ -3322,7 +3324,7 @@ def OutputExposedValues(tree,obj,layout,collection=None,collection_root=None):
             if tree.library:
                 #linked nodetree
                 lnt_instance_data = EnsureProxyDataForLinkedNodetree(obj,tree,False)
-                if not lnt_instance_data:
+                if not lnt_instance_data and settings.runtimeUnstable:
                     layout.operator("urho_button.generic",text="create override data").typeName="ensure_collection_override"
                     #layout.label(text="NO OVERRIDE DATA!")
                     return
@@ -3563,6 +3565,9 @@ def ObjectComponentSubpanel(obj,layout,currentLayout=None, showAutoSelect=True):
     row.operator('urho_nodetrees.move_item', icon="TRIA_DOWN",text='').direction = 'DOWN'
     if showAutoSelect:
         row = box.row()
+        if len(bpy.data.worlds)==0:
+            bpy.data.worlds.new("default_world")
+
         row.prop(bpy.data.worlds[0].jsonNodes,"autoSelectObjectNodetree",text="autoselect object-nodetree")
     if obj.instance_type=="COLLECTION":
         # TODO: make sure you cannot disable inlining if altering collection nodetree-data
@@ -3771,13 +3776,16 @@ class URHO_PT_mainobject(bpy.types.Panel):
 
         layout = self.layout
 
-        icon = "EVENT_R"
-        text = "REPLICATED"
-        if not obj.is_replicated:
-            icon = "EVENT_L"
-            text = "LOCAL"
-        row = layout.row()
-        row.prop(obj,"is_replicated",text=text,icon=icon)
+        settings = bpy.context.scene.urho_exportsettings
+
+        if settings.runtimeUnstable:
+            icon = "EVENT_R"
+            text = "REPLICATED"
+            if not obj.is_replicated:
+                icon = "EVENT_L"
+                text = "LOCAL"
+            row = layout.row()
+            row.prop(obj,"is_replicated",text=text,icon=icon)
 
         if obj.type=="MESH":
             row = layout.row()
@@ -4278,7 +4286,7 @@ def register():
     bpy.types.Object.lodsetName = bpy.props.StringProperty(get=getLodSetName,set=setLodSetName,update=updateLodSetName)
     bpy.types.Object.inline_collection_instance = bpy.props.BoolProperty()
     bpy.types.Object.show_nested_nodetrees = bpy.props.BoolProperty()
-    bpy.types.Object.is_replicated = bpy.props.BoolProperty()
+    bpy.types.Object.is_replicated = bpy.props.BoolProperty(default=True)
 
     bpy.types.World.lodsets=bpy.props.CollectionProperty(type=LODSet)
     bpy.types.World.lodset_counter=bpy.props.IntProperty()
@@ -4964,6 +4972,9 @@ def ExecuteUrhoExport(context):
 def ExecuteAddon(context, silent=False, ignoreGeoAnim=False, onlySelectedMesh=False):
     UpdateCheck.saving = True
 
+    if len(bpy.data.worlds)==0:
+        bpy.data.worlds.new("default_world")
+        
     global_settings = bpy.data.worlds[0].global_settings
 
     export_no_geo_afterwards = False
