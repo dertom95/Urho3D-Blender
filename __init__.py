@@ -26,7 +26,7 @@ bl_info = {
     "name": "Urho3D export",
     "description": "Urho3D export",
     "author": "reattiva, dertom",
-    "version": (0, 9, 3),
+    "version": (0, 9, 4),
     "blender": (2, 80, 0),
     "location": "Properties > Render > Urho export",
     "warning": "this tool has some advanced features, but be warned about unstable behaviour here and there. Feel free to contact me via github-issue with expressive issue-explanation including test-file.",
