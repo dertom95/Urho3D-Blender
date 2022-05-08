@@ -1515,7 +1515,7 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
 
 
     # --- Output settings ---
-    generateSceneHeader : BoolProperty(description="Export cpp-header to access scene-object name/id in code")
+    generateSceneHeader : BoolProperty(description="Export cpp or cs-info to access scene-object name/id in code")
     exportLangType : EnumProperty(
         name = "exportLangType",
         description = "Used in urho3d-cpp or urho.net",
@@ -2989,16 +2989,17 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             row = ibox.row()
             row.prop(settings,"sceneHeaderOutputPath")
 
-        ibox = box.box()
-        row = ibox.row()
-        split = row.split(factor=0.7)
-        col = split.column()
-        col.label(text="Pack Destination:")
-        split = split.split()
-        col = split.column()
-        pack_op = col.operator("urho.pack_exportfolder")
-        col.enabled=settings.packPath!=""
-        ibox.prop(settings,"packPath")
+        if unstable_enabled():
+            ibox = box.box()
+            row = ibox.row()
+            split = row.split(factor=0.7)
+            col = split.column()
+            col.label(text="Pack Destination:")
+            split = split.split()
+            col = split.column()
+            pack_op = col.operator("urho.pack_exportfolder")
+            col.enabled=settings.packPath!=""
+            ibox.prop(settings,"packPath")
 
         row = box.row()
         row.label(text="Modelname:")
@@ -3602,7 +3603,8 @@ def ObjectMaterialNodetree(obj,box):
         box.operator("urho_material_nodetrees.apply_material_to_selected",text="Apply to selected")
     
     row = box.row()
-    op = row.operator("urho.setnodetrees_from_blender")
+    if unstable_enabled():
+        op = row.operator("urho.setnodetrees_from_blender")
 
 
 class UrhoExportNodetreePanel(bpy.types.Panel):
@@ -4015,7 +4017,7 @@ def call_execution_queue():
             if not UpdateCheck.saving and isTransSame and UpdateCheck.timer<=0:
                 print("EXPORT EXPORT")
                 #ExecuteAddon(bpy.context,True,True)
-                if settings.runtimeAutoUpdateTransforms:
+                if settings.runtimeAutoUpdateTransforms and unstable_enabled():
                     bpy.ops.urho.exportcommand()
                     #bpy.ops.urho.export(ignore_geo_skel_anim=True)
                 UpdateCheck.modified_obj=None
@@ -4116,6 +4118,8 @@ def setup_json_nodetree():
     bpy.data.worlds[0].jsonNodes.show_object_mapping = False
     print("--ok--")
 
+def unstable_enabled():
+    return bpy.context.scene.urho_exportsettings.runtimeUnstable
 
 def register():
     try:

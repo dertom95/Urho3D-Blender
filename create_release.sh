@@ -4,6 +4,7 @@ FOLDER=${PWD##*/}
 rm -Rf runtimes
 rm -Rf temp
 rm urho3d-blender-exporter.zip
+rm urho3d-blender-cs-integration.zip
 
 mkdir -p runtimes
 mkdir temp
@@ -24,5 +25,6 @@ rm -Rf temp
 rm -Rf __pycache__
 
 cd ..
-zip -r $HOME/urho3d-blender-exporter.zip $FOLDER -x '*.git*' -x '*pycache*'
+zip -r $HOME/urho3d-blender-exporter.zip $FOLDER -x '*.git*' -x '*pycache*' -x 'testing' 
+cd $HOME/integration/cs && zip -r $HOME/urho3d-blender-cs-integration.zip blenderIntegration
 cd $HOME
