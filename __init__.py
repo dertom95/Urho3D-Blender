@@ -1128,10 +1128,12 @@ class UrhoExportSettings(bpy.types.PropertyGroup):
             # REMOVE THIS?
             print("OUTPUT")
             #addonPrefs.outputPath = self.outputPath
-
+            execution_queue.execute_or_queue_action(PingForRuntime)
             bpy.data.worlds[0].jsonNodes.path = "%s__blender_material.json" % bpy.path.abspath(self.outputPath)
             print("--")
-            addon_jsonnodetree.processNodetreeFromFile()
+            #addon_jsonnodetree.processNodetreeFromFile()
+            settings = context.scene.urho_exportsettings
+            PublishRuntimeSettings(settings,context)
 
 
 
@@ -3069,13 +3071,14 @@ class UrhoExportRenderPanel(bpy.types.Panel):
             if settings.runtimeShowPhysics:
                 row.prop(settings,"runtimeShowPhysicsDepth",text="use depth test")
 
-            row = innerbox.row()
-            row.prop(settings,"runtimeExportComponents")
-            if settings.runtimeExportComponents:
-                row.prop(settings,"runtimeExportComponentsMode",text="")
+            if unstable_enabled():
+                row = innerbox.row()
+                row.prop(settings,"runtimeExportComponents")
+                if settings.runtimeExportComponents:
+                    row.prop(settings,"runtimeExportComponentsMode",text="")
 
-            row = innerbox.row()
-            row.prop(settings,"runtimeRenderPath")
+                row = innerbox.row()
+                row.prop(settings,"runtimeRenderPath")
 
             #row = innerbox.row()
             #row.prop(settings,"runtimeActivatePhysics",text="activate physics")
