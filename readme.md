@@ -1,19 +1,17 @@
 Urho3D-Blender
 ==============
 
-This plugin is **work in progress**....
-
-
 **Use this:**
    
 Wanna give it a try? **Download the latest release from the [release section](https://github.com/dertom95/Urho3D-Blender/releases)**
 
-**Caution**: Just using github-zip won't work due to missing submodules and missing urho3d-runtime
-
+**Caution: Just using github-zip won't work due to missing submodules and missing urho3d-runtime**
 
 * install plugin in blender
   * navigate to: edit->preferences->addons
   * ->'Install...'->[downloaddir]/urho3d-blender-exporter.zip and enable the checkbox
+
+This plugin is **work in progress**....
 
 **Caution** Since this addon depends on pyzmq, pyzmq is installed automatically if not present. If blender makes problems try to execute blender (once) as admin  
 
