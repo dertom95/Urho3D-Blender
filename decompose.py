@@ -2125,7 +2125,8 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             #blender2.8: todo uv2 (untested).
             if mesh.urho_export.export_uv and uvs2:
                 if uvs2:
-                    uv2 = uvs2[faceLoops[i]]
+                    idx = faceLoops[i]
+                    uv2 = uvs2[idx].uv
                     tVertex.uv2 = Vector((uv2[0], 1.0 - uv2[1]))
                 elif tOptions.doForceElements:
                     tVertex.uv2 = Vector((0.0, 0.0))
