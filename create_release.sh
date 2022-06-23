@@ -25,6 +25,6 @@ rm -Rf temp
 rm -Rf __pycache__
 
 cd ..
-zip -r $HOME/urho3d-blender-exporter.zip $FOLDER -x '*.git*' -x '*pycache*' -x 'testing' 
+zip -r $HOME/urho3d-blender-exporter.zip $FOLDER -x '*.git*' -x '*pycache*' -x */testing/\* 
 cd $HOME/integration/cs && zip -r $HOME/urho3d-blender-cs-integration.zip blenderIntegration
 cd $HOME

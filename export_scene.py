@@ -830,7 +830,7 @@ def ProcessNodetreeMaterial(mesh,materialNT):
     # search for predef-material-node and use the material it defines
     for node in materialNT.nodes:
         if node.bl_idname=="urho3dmaterials__predefMaterialNode":
-            return node.prop_Material
+            return node.nodeData.prop_Material
     
     # add this material-nodetree in the list of used materialtrees for later export
     if materialNT not in usedMaterialTrees:

@@ -5,6 +5,11 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using System.IO;
 
+/// <summary>
+/// To export json this code is using Json.net. Please install like this on cli:
+/// dotnet add package Newtonsoft.Json --version 13.0.1
+/// </summary>
+
 namespace Blender
 {
     class DotNetComponentExporter
