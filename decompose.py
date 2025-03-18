@@ -1805,7 +1805,8 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
             CreateGeometry(materialName,geometriesList,materialGeometryMap)
 
     # Compute local space unit length split normals vectors
-    mesh.calc_normals_split()
+    # TODO: REPLACE THIS!?
+    #mesh.calc_normals_split()
     mesh.calc_loop_triangles()
 
     # If we use the object local origin (orange dot) we don't need transformations
@@ -2087,7 +2088,12 @@ def DecomposeMesh(scene, meshObj, tData, tOptions, errorsMem, onlyProcessMateria
 
             position = posMatrix @ vertex.co
 
-            if mesh.use_auto_smooth:
+            #TODO fix use_auto_smooth (I really don't know what that is used for and how)
+            
+            #use_auto_smooth = mesh.use_auto_smooth
+            use_auto_smooth = False
+
+            if use_auto_smooth:
                 # if using Data->Normals->Auto Smooth, use split normal vector
                 normal = Vector(face.split_normals[i])
             elif face.use_smooth:

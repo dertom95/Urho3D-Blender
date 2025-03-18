@@ -937,7 +937,7 @@ def UrhoExport(tData, uExportOptions, uExportData, errorsMem):
             warningNewVertices = False
             
             # Try to guess the most complete element mask
-            randomIndices = random.sample(tLodLevel.indexSet, min(30, len(tLodLevel.indexSet)) )
+            randomIndices = random.sample(sorted(tLodLevel.indexSet), min(30, len(tLodLevel.indexSet)) )
             guessedElementMask = GetMaxElementMask(randomIndices, tData.verticesList)
             if vertexBuffer.elementMask is None and guessedElementMask:
                 vertexBuffer.elementMask = guessedElementMask
