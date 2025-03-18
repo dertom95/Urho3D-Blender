@@ -1,5 +1,5 @@
 import bpy
-import bgl,os
+import os
 import json
 import ctypes
 import math
@@ -8,6 +8,10 @@ from threading import current_thread
 import weakref
 from mathutils import Vector
 import sys
+import gpu
+from gpu_extras.batch import batch_for_shader
+import numpy as np
+import time
 
 try:
     from PIL import Image,ImageDraw
@@ -45,10 +49,41 @@ class ViewRenderer:
             print("OnRuntimeMessage(%s): Topic:%s subtype:%s meta:'%s' data-len:%s" % (self.view_id,topic,subtype,meta,len(data)))
             if subtype == "draw":
                 if self.renderEngine().draw_data:
-                    self.renderEngine().draw_data.pixels = bgl.Buffer(bgl.GL_BYTE, len(data), data)
+                    if len(data) % 4 != 0:
+                        raise ValueError("The byte string length must be a multiple of 4 for RGBA data.")
+
+
+                    print ("Convert ImageData!")
+                    start_time = time.time()
+
+                    byte_array = np.frombuffer(data, dtype=np.uint8)
+
+                    # Normalize the values to the range [0.0, 1.0] and convert to float32
+                    float_array = byte_array.astype(np.float32) / 255.0
+
+                    self.renderEngine().draw_data.pixels = float_array.flatten().tolist()
+    
+                        # Stop the stopwatch
+                    end_time = time.time()
+
+
+                    # Calculate elapsed time
+                    elapsed_time = end_time - start_time
+                    print (f"Finished Convert ImageData! Took {elapsed_time:.6f}s")
+
+                    #self.renderEngine().draw_data.pixels_dim = meta.
+                    # normalized_floats = np.frombuffer(data, dtype=np.uint8) / 255.0
+
+                    # # Convert the normalized floats to float16
+                    # float16_array = normalized_floats.astype(np.float16)
+                   
+                    # self.renderEngine().draw_data.pixels = gpu.types.Buffer('FLOAT', len(float16_array), float16_array)
+                    #self.renderEngine().draw_data.pixels = bgl.Buffer(bgl.GL_BYTE, len(data), data)
                     self.renderEngine().draw_data.updateTextureOnDraw = True
+                    execution_queue.execute_or_queue_action(self.renderEngine().draw_data.update)    
                     print("draw_data finished")
                     self.renderEngine().tag_redraw()
+
         execution_queue.execute_or_queue_action(QueuedExecution)        
     
 
@@ -348,6 +383,10 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
             if depsgraph.id_type_updated('MATERIAL'):
                 print("Materials updated")
 
+        # if not self.draw_data or self.draw_data.dimensions != dimensions:
+        #     self.draw_data = CustomDrawData(dimensions)
+
+        # self.draw_data.update()
         # Loop over all object instances in the scene.
         # if first_time or depsgraph.id_type_updated('OBJECT'):
         #     for instance in depsgraph.object_instances:
@@ -370,8 +409,18 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         dimensions = region.width, region.height
 
         # Bind shader that converts from scene linear to display space,
-        bgl.glEnable(bgl.GL_BLEND)
-        bgl.glBlendFunc(bgl.GL_ONE, bgl.GL_ONE_MINUS_SRC_ALPHA);
+        # bgl.glEnable(bgl.GL_BLEND)
+        # bgl.glBlendFunc(bgl.GL_ONE, bgl.GL_ONE_MINUS_SRC_ALPHA);
+        # self.bind_display_space_shader(scene)
+
+        # if not self.draw_data or self.draw_data.dimensions != dimensions:
+        #     self.draw_data = CustomDrawData(dimensions)
+
+        # self.draw_data.draw()
+
+        # self.unbind_display_space_shader()
+        # bgl.glDisable(bgl.GL_BLEND)
+        gpu.state.blend_set('ALPHA_PREMULT')
         self.bind_display_space_shader(scene)
 
         if not self.draw_data or self.draw_data.dimensions != dimensions:
@@ -380,7 +429,7 @@ class UrhoRenderEngine(bpy.types.RenderEngine):
         self.draw_data.draw()
 
         self.unbind_display_space_shader()
-        bgl.glDisable(bgl.GL_BLEND)
+        gpu.state.blend_set('NONE')        
 
 
 urhoImage = Image.open(os.path.dirname(os.path.realpath(__file__))+"/res/urho3d.png","r")
@@ -388,6 +437,7 @@ urhoImage = Image.open(os.path.dirname(os.path.realpath(__file__))+"/res/urho3d.
 class CustomDrawData:
     def __init__(self, dimensions):
         global urhoImage
+
         # Generate dummy float image buffer
         self.dimensions = dimensions
         width, height = dimensions
@@ -397,86 +447,130 @@ class CustomDrawData:
         blank = Image.new('RGBA',(width,height),(100,100,100,255))
         blank.alpha_composite(urhoImage,dest=(int(width/2-urhoImage.width/2),int(height/2-urhoImage.height/2)))
 
+        self.render_image = bpy.data.images.new(name="__renderer__",width=width,height=height)
+
+        self.pixels = np.array(blank, dtype=np.float32)
+        self.pixels /= 255.0
+        self.pixels = self.pixels.flatten().tolist()
+
+        self.updateTextureOnDraw = True
+        execution_queue.queue_action(self.update)
+        
         #self.pixels = [255,0,0,255] * width * height
-        self.pixels = list(blank.tobytes())
-        self.pixels = bgl.Buffer(bgl.GL_BYTE, width * height * 4, self.pixels)
+        #self.pixels = list(blank.tobytes())
+        #self.pixels = bgl.Buffer(bgl.GL_BYTE, width * height * 4, self.pixels)
+
+        #convert from byte to float
+        #self.pixels = np.array(self.pixels, dtype=np.float32) / 255.0
+
+        #self.pixels = gpu.types.Buffer('FLOAT', width * height * 4, self.pixels)
+
+
+        #self.texture = gpu.types.GPUTexture((width, height), format='RGBA16F', data=self.pixels)
+
 
         # Generate texture
-        self.updateTextureOnDraw = False
-        self.texture = bgl.Buffer(bgl.GL_INT, 1)
-        bgl.glGenTextures(1, self.texture)
-        bgl.glActiveTexture(bgl.GL_TEXTURE0)
-        bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.texture[0])
-        bgl.glTexImage2D(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, width, height, 0, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, self.pixels)
-        bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
-        bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
-        bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
+        # self.texture = bgl.Buffer(bgl.GL_INT, 1)
+        # bgl.glGenTextures(1, self.texture)
+        # bgl.glActiveTexture(bgl.GL_TEXTURE0)
+        # bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.texture[0])
+        # bgl.glTexImage2D(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, width, height, 0, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, self.pixels)
+        # bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
+        # bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
+        # bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
 
-        # Bind shader that converts from scene linear to display space,
-        # use the scene's color management settings.
-        shader_program = bgl.Buffer(bgl.GL_INT, 1)
-        bgl.glGetIntegerv(bgl.GL_CURRENT_PROGRAM, shader_program);
+        # # Bind shader that converts from scene linear to display space,
+        # # use the scene's color management settings.
+        # shader_program = bgl.Buffer(bgl.GL_INT, 1)
+        # bgl.glGetIntegerv(bgl.GL_CURRENT_PROGRAM, shader_program);
 
-        # Generate vertex array
-        self.vertex_array = bgl.Buffer(bgl.GL_INT, 1)
-        bgl.glGenVertexArrays(1, self.vertex_array)
-        bgl.glBindVertexArray(self.vertex_array[0])
+        # # Generate vertex array
+        # self.vertex_array = bgl.Buffer(bgl.GL_INT, 1)
+        # bgl.glGenVertexArrays(1, self.vertex_array)
+        # bgl.glBindVertexArray(self.vertex_array[0])
 
-        texturecoord_location = bgl.glGetAttribLocation(shader_program[0], "texCoord")
-        position_location = bgl.glGetAttribLocation(shader_program[0], "pos")
+        # texturecoord_location = bgl.glGetAttribLocation(shader_program[0], "texCoord")
+        # position_location = bgl.glGetAttribLocation(shader_program[0], "pos")
 
-        bgl.glEnableVertexAttribArray(texturecoord_location);
-        bgl.glEnableVertexAttribArray(position_location);
+        # bgl.glEnableVertexAttribArray(texturecoord_location);
+        # bgl.glEnableVertexAttribArray(position_location);
 
-        # Generate geometry buffers for drawing textured quad
-        position = [0.0, 0.0, width, 0.0, width, height, 0.0, height]
-        position = bgl.Buffer(bgl.GL_FLOAT, len(position), position)
-        texcoord = [0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
-        texcoord = bgl.Buffer(bgl.GL_FLOAT, len(texcoord), texcoord)
+        # # Generate geometry buffers for drawing textured quad
+        # position = [0.0, 0.0, width, 0.0, width, height, 0.0, height]
+        # position = bgl.Buffer(bgl.GL_FLOAT, len(position), position)
+        # texcoord = [0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
+        # texcoord = bgl.Buffer(bgl.GL_FLOAT, len(texcoord), texcoord)
 
-        self.vertex_buffer = bgl.Buffer(bgl.GL_INT, 2)
+        # self.vertex_buffer = bgl.Buffer(bgl.GL_INT, 2)
 
-        bgl.glGenBuffers(2, self.vertex_buffer)
-        bgl.glBindBuffer(bgl.GL_ARRAY_BUFFER, self.vertex_buffer[0])
-        bgl.glBufferData(bgl.GL_ARRAY_BUFFER, 32, position, bgl.GL_STATIC_DRAW)
-        bgl.glVertexAttribPointer(position_location, 2, bgl.GL_FLOAT, bgl.GL_FALSE, 0, None)
+        # bgl.glGenBuffers(2, self.vertex_buffer)
+        # bgl.glBindBuffer(bgl.GL_ARRAY_BUFFER, self.vertex_buffer[0])
+        # bgl.glBufferData(bgl.GL_ARRAY_BUFFER, 32, position, bgl.GL_STATIC_DRAW)
+        # bgl.glVertexAttribPointer(position_location, 2, bgl.GL_FLOAT, bgl.GL_FALSE, 0, None)
 
-        bgl.glBindBuffer(bgl.GL_ARRAY_BUFFER, self.vertex_buffer[1])
-        bgl.glBufferData(bgl.GL_ARRAY_BUFFER, 32, texcoord, bgl.GL_STATIC_DRAW)
-        bgl.glVertexAttribPointer(texturecoord_location, 2, bgl.GL_FLOAT, bgl.GL_FALSE, 0, None)
+        # bgl.glBindBuffer(bgl.GL_ARRAY_BUFFER, self.vertex_buffer[1])
+        # bgl.glBufferData(bgl.GL_ARRAY_BUFFER, 32, texcoord, bgl.GL_STATIC_DRAW)
+        # bgl.glVertexAttribPointer(texturecoord_location, 2, bgl.GL_FLOAT, bgl.GL_FALSE, 0, None)
 
-        bgl.glBindBuffer(bgl.GL_ARRAY_BUFFER, 0)
-        bgl.glBindVertexArray(0)
+        # bgl.glBindBuffer(bgl.GL_ARRAY_BUFFER, 0)
+        # bgl.glBindVertexArray(0)
 
     def __del__(self):
-        bgl.glDeleteBuffers(2, self.vertex_buffer)
-        bgl.glDeleteVertexArrays(1, self.vertex_array)
-        bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
-        bgl.glDeleteTextures(1, self.texture)
+        if self.texture:
+            del self.texture
+        # bgl.glDeleteBuffers(2, self.vertex_buffer)
+        # bgl.glDeleteVertexArrays(1, self.vertex_array)
+        # bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
+        # bgl.glDeleteTextures(1, self.texture)
 
     def updateTexture(self):
         print("UPDATE TEXTURE")
-        bgl.glActiveTexture(bgl.GL_TEXTURE0)
-        bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.texture[0])
-        width, height = self.dimensions
-        bgl.glTexImage2D(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, width, height, 0, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, self.pixels)
+        #old_texture = self.texture
+        #gpu.texture.update(self.texture,self.pixels)
 
-        #bgl.glTexImage2D(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA16F, self.dimensions.width, self.dimensions.height, 0, bgl.GL_RGBA, bgl.GL_FLOAT, self.pixels)
-        bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
-        bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
-        bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
+        start_time = time.time()
 
-    def draw(self):
+        self.render_image.pixels = self.pixels
+        self.render_image.update()
+        self.texture = gpu.texture.from_image(self.render_image)
+
+        end_time = time.time()
+
+        # Calculate elapsed time
+        elapsed_time = end_time - start_time
+        print (f"UPDATE TEXTURE! Took {elapsed_time:.6f}s")
+
+        #self.texture = gpu.types.GPUTexture((self.texture.width, self.texture.height), format='RGBA16F', data=self.pixels)        
+        #del old_texture
+        #self.texture = gpu.types.GPUTexture((self.width, self.height), format='RGBA8', data=self.pixels)
+        
+        # bgl.glActiveTexture(bgl.GL_TEXTURE0)
+        # bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.texture[0])
+        # width, height = self.dimensions
+        # bgl.glTexImage2D(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, width, height, 0, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, self.pixels)
+
+        # #bgl.glTexImage2D(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA16F, self.dimensions.width, self.dimensions.height, 0, bgl.GL_RGBA, bgl.GL_FLOAT, self.pixels)
+        # bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
+        # bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
+        # bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
+
+    def update(self):
         if self.updateTextureOnDraw:
             self.updateTexture()
             self.updateTextureOnDraw = False
 
-        bgl.glActiveTexture(bgl.GL_TEXTURE0)
-        bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.texture[0])
-        bgl.glBindVertexArray(self.vertex_array[0])
-        bgl.glDrawArrays(bgl.GL_TRIANGLE_FAN, 0, 4);
-        bgl.glBindVertexArray(0)
-        bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
+    def draw(self):
+
+        if self.texture:
+            from gpu_extras.presets import draw_texture_2d
+            draw_texture_2d(self.texture, (0, self.texture.height), self.texture.width, -self.texture.height)
+
+        # bgl.glActiveTexture(bgl.GL_TEXTURE0)
+        # bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.texture[0])
+        # bgl.glBindVertexArray(self.vertex_array[0])
+        # bgl.glDrawArrays(bgl.GL_TRIANGLE_FAN, 0, 4);
+        # bgl.glBindVertexArray(0)
+        # bgl.glBindTexture(bgl.GL_TEXTURE_2D, 0)
 
 
 # RenderEngines also need to tell UI Panels that they are compatible with.
